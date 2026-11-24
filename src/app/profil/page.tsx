@@ -37,7 +37,7 @@ async function saveProfile(formData: FormData) {
       ...(formData.has("weightKg") ? { weightKg: kg === null ? null : Math.round(kg * 10) / 10 } : {}),
       ...(formData.has("guardianEmail") ? { guardianName: guardianName || null, guardianEmail: guardianEmail || null } : {}),
       // Leaderboard kræver køn og fødselsdato; samtykket vises ikke i velkomstformularen
-      ...(welcome ? {} : { leaderboard: formData.get("leaderboard") === "on" && !!gender && !!birthDate }),
+      ...(welcome ? {} : { leaderboard: formData.get("leaderboard") === "on" && !!gender && !!birthDate, newsMail: formData.get("newsMail") === "on" }),
     },
   });
   revalidatePath("/", "layout");
@@ -81,6 +81,12 @@ export default async function Profile({ searchParams }: { searchParams: Promise<
           <label className="check">
             <input type="checkbox" name="leaderboard" defaultChecked={user.leaderboard} />
             <span>Vis mine bedste præstationer fra uret på klubbens <Link href="/leaderboard">leaderboard</Link> (kræver fødselsdato og klasse)</span>
+          </label>
+        )}
+        {!velkommen && (
+          <label className="check">
+            <input type="checkbox" name="newsMail" defaultChecked={user.newsMail} />
+            <span>Send mig nyheder fra klubben på mail (vigtige beskeder som aflysninger får du altid)</span>
           </label>
         )}
         <p className="muted" style={{ margin: 0 }}>

@@ -789,3 +789,9 @@ label.check { display: flex; gap: 8px; align-items: center; font-weight: 400; }
 @media (max-width: 560px) { .join-guest .row2 { grid-template-columns: 1fr; } }
 .join-guest .guardian { display: grid; }
 .drift-list { list-style: none; padding: 0; display: grid; gap: 6px; } .status-warn-text { color: var(--warn); font-weight: 650; }
+.mail-form { max-width: 760px; }
+.mail-form .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.mail-form input, .mail-form select, .mail-form textarea { width: 100%; box-sizing: border-box; }
+.mail-form .small { font-size: 0.85rem; }
+form.stack.mail-form { max-width: 760px; }
+@media (max-width: 560px) { .mail-form .row2 { grid-template-columns: 1fr; } }

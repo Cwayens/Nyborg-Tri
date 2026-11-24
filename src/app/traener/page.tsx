@@ -24,6 +24,7 @@ export default async function TrainerHome({ searchParams }: { searchParams: Prom
         <Link className="button" href="/traener/ny">Opret træning</Link>
         <Link className="button secondary" href="/kalender?gruppe=alle">Se kalenderen</Link>
         <Link className="button ghost" href="/traener/tests">Testresultater</Link>
+        <Link className="button ghost" href="/admin/mail">Mail til holdet</Link>
       </p>
       <div className="table-scroll">
         <table className="list">
