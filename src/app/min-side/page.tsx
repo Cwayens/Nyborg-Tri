@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/auth";
-import { canSignUp } from "@/lib/access";
+import { canSignUp, membershipExpired } from "@/lib/access";
 import { prisma } from "@/lib/db";
 import { formatHours, startOfWeek } from "@/lib/activities";
 import { dato } from "@/lib/format";
@@ -80,7 +80,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         )}
       </div>
 
-      {!eligible && (
+      {!eligible && !(await membershipExpired(user.id)) && (
         <section className="card" style={{ borderLeft: "4px solid var(--accent)", marginBottom: 18 }}>
           <strong>Kom i gang</strong>
           <p style={{ margin: "6px 0 12px" }}>Betal kontingent, søg om 14 dages gratis prøveperiode eller brug en kode fra klubben. Så kan du tilmelde dig træninger og hoppe med på ture.</p>

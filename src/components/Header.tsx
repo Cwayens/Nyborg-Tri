@@ -2,12 +2,15 @@ import Link from "next/link";
 import { auth, signOut } from "@/auth";
 import { navigation } from "@/lib/navigation";
 import { hasRole } from "@/lib/roles";
+import { membershipExpired } from "@/lib/access";
+import { dato } from "@/lib/format";
 import { AppNav } from "./AppNav";
 import { Logo, MenuIcon, initials } from "./Icons";
 
 export async function Header() {
   const session = await auth();
   const user = session?.user;
+  const expired = user ? await membershipExpired(user.id) : null;
 
   async function logout() {
     "use server";
@@ -74,6 +77,14 @@ export async function Header() {
           )}
         </div>
       </header>
+      {expired && (
+        <div className="unpaid-bar" role="status">
+          <div className="wrap">
+            <strong>Mangler betaling.</strong> Dit medlemskab udløb {dato(expired.endDate)}, så du kan ikke tilmelde dig træninger.{" "}
+            <Link href="/bliv-medlem">Forny medlemskab</Link>
+          </div>
+        </div>
+      )}
       {user && <AppNav variant="bottom" />}
     </>
   );

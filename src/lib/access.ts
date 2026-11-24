@@ -14,6 +14,20 @@ export async function canSignUp(userId: string): Promise<boolean> {
   return !!m;
 }
 
+/**
+ * Er medlemskabet udløbet? Brugeren har haft et medlemskab, der giver adgang til træning,
+ * men har intet aktivt nu. Man kan stadig logge ind og se sine data, men ikke tilmelde sig.
+ */
+export async function membershipExpired(userId: string): Promise<{ endDate: Date } | null> {
+  if (await canSignUp(userId)) return null;
+  const last = await prisma.membership.findFirst({
+    where: { userId, endDate: { lte: new Date() }, type: { code: { not: "PASSIVE" } } },
+    orderBy: { endDate: "desc" },
+    select: { endDate: true },
+  });
+  return last;
+}
+
 export function addDays(d: Date, days: number): Date {
   return new Date(d.getTime() + days * 24 * 3600 * 1000);
 }

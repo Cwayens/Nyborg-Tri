@@ -465,3 +465,8 @@ label.check { display: flex; gap: 8px; align-items: center; font-weight: 400; }
   .month-grid { gap: 3px; }
   .month-wd { font-size: 0.68rem; }
 }
+
+/* Udløbet medlemskab: tynd rød bjælke under headeren */
+.unpaid-bar { background: #fdecec; color: #8a1c1c; border-top: 2px solid #d92d20; border-bottom: 1px solid #f5c2c0; font-size: 0.88rem; padding: 6px 0; }
+.unpaid-bar a { color: #8a1c1c; font-weight: 700; }
+@media (prefers-color-scheme: dark) { .unpaid-bar { background: #3a1513; color: #ffb4ab; border-bottom-color: #5c201c; } .unpaid-bar a { color: #ffb4ab; } }

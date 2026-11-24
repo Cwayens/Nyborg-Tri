@@ -7,7 +7,7 @@ export const demoEnabled = () => process.env.DEMO_MODE === "1";
 
 export type DemoUser = {
   key: string; name: string; role: Role; group: AthleteGroup | null; describe: string;
-  membership: "ADULT" | "YOUTH" | null; source?: "PAYMENT" | "TRIAL" | "CODE"; trial?: "PENDING"; shares?: boolean; birthYear?: number;
+  membership: "ADULT" | "YOUTH" | null; source?: "PAYMENT" | "TRIAL" | "CODE"; trial?: "PENDING"; expired?: boolean; shares?: boolean; birthYear?: number;
 };
 
 export const DEMO_USERS: DemoUser[] = [
@@ -19,6 +19,7 @@ export const DEMO_USERS: DemoUser[] = [
   { key: "proeve", name: "Pia Prøve", role: "ATHLETE", group: "BREDDE", membership: "ADULT", source: "TRIAL", describe: "Ny i klubben med godkendt 14 dages prøveperiode" },
   { key: "kode", name: "Karl Kode", role: "ATHLETE", group: "BREDDE", membership: "ADULT", source: "CODE", describe: "Fik adgang med en engangskode fra klubben" },
   { key: "ansoeger", name: "Asta Ansøger", role: "ATHLETE", group: null, membership: null, trial: "PENDING", describe: "Har søgt om prøveperiode – afventer godkendelse fra admin" },
+  { key: "udloebet", name: "Ulla Udløbet", role: "ATHLETE", group: "BREDDE", membership: "ADULT", source: "PAYMENT", expired: true, describe: "Medlemskabet er udløbet – kan se sine data, men ikke tilmelde sig" },
   { key: "ny", name: "Niels Ny", role: "ATHLETE", group: null, membership: null, describe: "Har lige oprettet sig – ingen adgang til tilmelding endnu" },
 ];
 

@@ -74,7 +74,7 @@ async function main() {
     if (d.membership) {
       const type = types[d.membership];
       const days = d.source === "TRIAL" ? 14 : 365;
-      const start = new Date(Date.now() - (d.source === "TRIAL" ? 3 : 200) * DAY);
+      const start = new Date(Date.now() - (d.expired ? 380 : d.source === "TRIAL" ? 3 : 200) * DAY);
       const m = await prisma.membership.create({ data: { userId: uid, typeId: type.id, source: d.source ?? "PAYMENT", startDate: start, endDate: new Date(start.getTime() + days * DAY) } });
       if (d.source === "PAYMENT") {
         await prisma.payment.create({ data: { userId: uid, membershipId: m.id, amountOre: type.priceOre, description: `Kontingent ${type.name}`, status: "PAID", paidAt: start, accountingStatus: "SKIPPED" } });
@@ -110,7 +110,7 @@ async function main() {
   if (toCancel) await prisma.trainingSession.update({ where: { id: toCancel.id }, data: { cancelledAt: new Date(), cancelReason: "Svømmehallen er lukket pga. stævne" } });
 
   // Tilmeldinger
-  const members = DEMO_USERS.filter((d) => d.membership);
+  const members = DEMO_USERS.filter((d) => d.membership && !d.expired);
   const now0 = Date.now();
   const future = created.filter((t) => t.startsAt.getTime() > now0);
   const past = created.filter((t) => t.startsAt.getTime() <= now0);
