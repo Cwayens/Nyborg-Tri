@@ -6,6 +6,7 @@ import { DISCIPLINE_LABEL } from "@/lib/roles";
 import { TIMES, matchBuddy, minSec, type Time } from "@/lib/buddy";
 import { DisciplineIcon, initials } from "@/components/Icons";
 import { removeBuddy, saveBuddy } from "./actions";
+import { CLUB } from "@/lib/club";
 
 export const metadata = { title: "Find en makker" };
 
@@ -102,7 +103,7 @@ export default async function Buddies({ searchParams }: { searchParams: Promise<
                 </ul>
                 {o.note && <p className="buddy-note">“{o.note}”</p>}
                 <div className="buddy-actions">
-                  <a className="button small" href={`mailto:${o.user.email}?subject=${encodeURIComponent("Skal vi træne sammen? (NyborgTri)")}`}>Skriv</a>
+                  <a className="button small" href={`mailto:${o.user.email}?subject=${encodeURIComponent(`Skal vi træne sammen? (${CLUB.shortName})`)}`}>Skriv</a>
                   <Link className="button small ghost" href="/traen-sammen?ny=1">Slå en tur op</Link>
                 </div>
               </article>

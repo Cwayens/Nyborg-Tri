@@ -9,6 +9,7 @@ import { SponsorBar } from "@/components/SponsorBar";
 import { AthleteCard } from "@/components/AthleteCard";
 import { VISIBLE_ATHLETE } from "@/lib/athletes";
 import { isOn } from "@/lib/features";
+import { CLUB } from "@/lib/club";
 
 // Forsiden er til nye medlemmer: hvad får jeg, passer det til mig, hvad koster det, og hvordan starter jeg.
 // Logoet fører altid hertil; medlemmer, der er logget ind, får en knap til deres overblik i stedet for "Prøv gratis".
@@ -68,7 +69,7 @@ export default async function Home() {
     <div className="landing">
       <section className="lp-hero">
         <div className="lp-hero-inner">
-          <p className="eyebrow">Nyborg Triathlon Klub</p>
+          <p className="eyebrow">{CLUB.name}</p>
           <h1>Svøm, cykl og løb sammen med os på Østfyn</h1>
           <p className="lead">
             Uanset om du skal i mål på din første sprint eller jagter en ny rekord, så træner du bedre sammen med andre.

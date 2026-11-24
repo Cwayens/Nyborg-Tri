@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { kr } from "@/lib/format";
 import { sendMail } from "@/lib/mail";
 import { baseUrl } from "@/lib/url";
+import { CLUB } from "@/lib/club";
 
 /** Opretter (eller genbruger) et hemmeligt betalingslink og sender det til medlemmets forælder/værge. */
 export async function sendPayLink(paymentId: string): Promise<{ url: string; sent: boolean }> {
@@ -15,20 +16,20 @@ export async function sendPayLink(paymentId: string): Promise<{ url: string; sen
   const child = p.user.name ?? "dit barn";
   const sent = await sendMail(
     to,
-    `Betaling af kontingent for ${child} – Nyborg Triathlon Klub`,
+    `Betaling af kontingent for ${child} – ${CLUB.name}`,
     [
       `Hej ${p.user.guardianName ?? ""}`.trim(),
       "",
-      `${child} har meldt sig ind i Nyborg Triathlon Klub og har skrevet dig som forælder eller værge.`,
+      `${child} har meldt sig ind i ${CLUB.name} og har skrevet dig som forælder eller værge.`,
       `Kontingentet er ${kr(p.amountOre)} (${p.description}). Du kan betale med kort eller MobilePay her:`,
       "",
       url,
       "",
       "Kvitteringen og påmindelser om fornyelse sendes også til dig.",
-      "Har du spørgsmål, så skriv til nyborgtri@gmail.com.",
+      `Har du spørgsmål, så skriv til ${CLUB.email}.`,
       "",
       "Venlig hilsen",
-      "Nyborg Triathlon Klub",
+      CLUB.name,
     ].join("\n"),
   );
   return { url, sent };

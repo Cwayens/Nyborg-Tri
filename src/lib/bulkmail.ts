@@ -3,6 +3,7 @@ import { prisma } from "./db";
 import { billingEmail } from "./guardian";
 import { sendMail } from "./mail";
 import { GROUP_LABEL, GROUPS } from "./roles";
+import { CLUB } from "@/lib/club";
 
 // Mail til hold og medlemmer. Børn under 18 får mailen gennem deres forælder/værge.
 
@@ -37,8 +38,8 @@ export async function recipients(audience: Audience, kind: MailKind, now = new D
 
 export function mailFooter(kind: MailKind): string {
   return kind === "NEWS"
-    ? "\n\n—\nDu får denne mail, fordi du er medlem af Nyborg Triathlon Klub. Vil du ikke have nyheder på mail, kan du slå det fra under Min profil på nyborgtri.dk."
-    : "\n\n—\nVigtig besked fra Nyborg Triathlon Klub til medlemmer.";
+    ? `\n\n—\nDu får denne mail, fordi du er medlem af ${CLUB.name}. Vil du ikke have nyheder på mail, kan du slå det fra under Min profil${CLUB.domain ? ` på ${CLUB.domain}` : ""}.`
+    : `\n\n—\nVigtig besked fra ${CLUB.name} til medlemmer.`;
 }
 
 /** Sender én mail pr. modtager (ingen kan se de andres adresser), fem ad gangen. */

@@ -6,7 +6,7 @@ import { MailIcon, PhoneIcon, PinIcon, initials } from "@/components/Icons";
 import { sendContact } from "./actions";
 import { isOn } from "@/lib/features";
 
-export const metadata = { title: "Kontakt", description: "Skriv eller ring til Nyborg Triathlon Klub." };
+export const metadata = { title: "Kontakt", description: `Skriv eller ring til ${CLUB.name}.` };
 
 type Props = { searchParams: Promise<{ sendt?: string; fejl?: string; emne?: string }> };
 
@@ -102,7 +102,7 @@ export default async function Contact({ searchParams }: Props) {
               <dt>Navn</dt><dd>{CLUB.name}</dd>
               <dt>CVR</dt><dd>{CLUB.cvr}</dd>
               <dt>Bank</dt><dd>{CLUB.bank}</dd>
-              <dt>Facebook</dt><dd><a href={CLUB.facebook}>facebook.com/NyborgTri</a></dd>
+              <dt>Facebook</dt><dd><a href={CLUB.facebook}>{CLUB.facebook.replace(/^https?:\/\/(www\.)?/, "")}</a></dd>
             </dl>
           </section>
         </aside>

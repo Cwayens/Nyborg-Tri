@@ -1,15 +1,16 @@
 import type { MetadataRoute } from "next";
+import { CLUB } from "@/lib/club";
 
 // Gør det muligt at lægge siden på telefonens hjemmeskærm som en app
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Nyborg Triathlon Klub",
-    short_name: "NyborgTri",
-    description: "Træning, kalender og fællesskab i Nyborg Triathlon Klub",
+    name: CLUB.name,
+    short_name: CLUB.shortName,
+    description: `Træning, kalender og fællesskab i ${CLUB.name}`,
     start_url: "/min-side",
     display: "standalone",
     background_color: "#ffffff",
-    theme_color: "#454e5c",
+    theme_color: CLUB.colors.theme,
     lang: "da",
     icons: [
       { src: "/icon-192.png", sizes: "192x192", type: "image/png" },

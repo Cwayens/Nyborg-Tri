@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { requireFeature } from "@/lib/features";
 import { sendMail } from "@/lib/mail";
 import { baseUrl } from "@/lib/url";
+import { CLUB } from "@/lib/club";
 
 export async function setMentor(formData: FormData) {
   const user = await requireUser("/mentor");
@@ -33,11 +34,11 @@ export async function requestMentor(formData: FormData) {
   await sendMail(
     mentor.email,
     "Du er blevet mentor for et nyt medlem",
-    `Hej ${mentor.name ?? ""}\n\n${me.name ?? "Et nyt medlem"} er ny i NyborgTri og vil gerne have en mentor. Det er dig!\n\n` +
+    `Hej ${mentor.name ?? ""}\n\n${me.name ?? "Et nyt medlem"} er ny i ${CLUB.shortName} og vil gerne have en mentor. Det er dig!\n\n` +
       `Skriv eller ring og aftal en tur sammen, og vis rundt til en klubtræning.\nMail: ${me.email}${me.phone ? `\nTelefon: ${me.phone}` : ""}` +
-      `${note ? `\n\nBesked: ${note}` : ""}\n\nSe mere: ${url}\n\nTak fordi du hjælper!\nNyborg Triathlon Klub`,
+      `${note ? `\n\nBesked: ${note}` : ""}\n\nSe mere: ${url}\n\nTak fordi du hjælper!\n${CLUB.name}`,
   );
-  await sendMail(me.email, "Din mentor i NyborgTri", `Hej ${me.name ?? ""}\n\n${mentor.name} er din mentor og kontakter dig snart. Du kan også selv skrive til ${mentor.email}.\n\nSe mere: ${url}\n\nNyborg Triathlon Klub`);
+  await sendMail(me.email, `Din mentor i ${CLUB.shortName}`, `Hej ${me.name ?? ""}\n\n${mentor.name} er din mentor og kontakter dig snart. Du kan også selv skrive til ${mentor.email}.\n\nSe mere: ${url}\n\nNyborg Triathlon Klub`);
   revalidatePath("/mentor");
   redirect("/mentor?ny=1");
 }

@@ -1,4 +1,5 @@
 import type { Discipline } from "@prisma/client";
+import { CLUB } from "@/lib/club";
 
 type P = { size?: number; className?: string };
 const base = (size: number) => ({ width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true });
@@ -65,8 +66,8 @@ export function DisciplineIcon({ discipline, size = 20 }: { discipline: Discipli
 export function Logo() {
   return (
     <>
-      <img src="/logo-mark.webp" alt="" width={120} height={34} />
-      <span className="logo-text"><b>Nyborg</b><small>Triathlon Klub</small></span>
+      <img src={CLUB.logoImage} alt="" width={120} height={34} />
+      <span className="logo-text"><b>{CLUB.logoTop}</b><small>{CLUB.logoSub}</small></span>
     </>
   );
 }

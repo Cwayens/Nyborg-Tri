@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { CLUB } from "@/lib/club";
 
 // Sender mails via EMAIL_SERVER (samme SMTP som login-links). Uden EMAIL_SERVER skrives mailen i loggen,
 // så testversionen stadig kan bruges.
@@ -10,7 +11,7 @@ export async function sendMail(to: string, subject: string, text: string): Promi
   }
   try {
     await nodemailer.createTransport(server).sendMail({
-      from: process.env.EMAIL_FROM ?? "Nyborg Triathlon Klub <noreply@nyborgtri.dk>",
+      from: process.env.EMAIL_FROM ?? `${CLUB.name} <noreply@${CLUB.domain || "localhost"}>`,
       to,
       subject,
       text,

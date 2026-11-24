@@ -1,5 +1,6 @@
 import type { Discipline } from "@prisma/client";
 import type { References, Step, Workout } from "./workout";
+import { CLUB } from "./club";
 
 // Træningsprogram som FIT-workout-fil (Garmin, Wahoo, Coros, Hammerhead m.fl.) med atletens egne watt og tempi,
 // og som .zwo til Zwift, TrainerRoad og Wahoo SYSTM. FIT-formatet: https://developer.garmin.com/fit/protocol/
@@ -151,7 +152,7 @@ export function workoutToZwo(w: Workout, name: string, d: Discipline): string {
   }
   return [
     "<workout_file>",
-    `  <author>Nyborg Triathlon Klub</author>`,
+    `  <author>${CLUB.name}</author>`,
     `  <name>${esc(name)}</name>`,
     `  <sportType>${d === "RUN" ? "run" : "bike"}</sportType>`,
     "  <workout>",

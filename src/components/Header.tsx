@@ -7,6 +7,7 @@ import { dato } from "@/lib/format";
 import { AppNav } from "./AppNav";
 import { hiddenHrefs } from "@/lib/features";
 import { Logo, MenuIcon, initials } from "./Icons";
+import { CLUB } from "@/lib/club";
 
 export async function Header() {
   const session = await auth();
@@ -24,7 +25,7 @@ export async function Header() {
     <>
       <header className="site-header">
         <div className="wrap header-row">
-          <Link href="/" className="logo" aria-label="Nyborg Triathlon Klub – til forsiden">
+          <Link href="/" className="logo" aria-label={`${CLUB.name} – til forsiden`}>
             <Logo />
           </Link>
 

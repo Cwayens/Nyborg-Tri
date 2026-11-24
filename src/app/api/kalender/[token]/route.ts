@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { baseUrl } from "@/lib/url";
 import { buildIcs, type IcsEvent } from "@/lib/ics";
 import { DISCIPLINE_LABEL } from "@/lib/roles";
+import { CLUB } from "@/lib/club";
 
 // Personligt kalender-abonnement: dine tilmeldte træninger, din gruppes træninger og Træn sammen-ture.
 export async function GET(_req: Request, { params }: { params: Promise<{ token: string }> }) {
@@ -32,7 +33,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
       title: `Træn sammen – ${DISCIPLINE_LABEL[w.discipline]}: ${w.title}`, description: w.description ?? undefined, url: `${base}/traen-sammen`,
     })),
   ];
-  return new Response(buildIcs("Nyborg Tri – min træning", events), {
+  return new Response(buildIcs(`${CLUB.shortName} – min træning`, events), {
     headers: { "Content-Type": "text/calendar; charset=utf-8", "Cache-Control": "private, max-age=900" },
   });
 }

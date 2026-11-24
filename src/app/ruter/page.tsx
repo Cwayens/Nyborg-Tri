@@ -17,7 +17,7 @@ export default async function RoutesPage() {
       <header>
         <h1>Ruter og træningssteder</h1>
         <p className="lead">
-          Vi har base i Nyborg Idræts- og Fritidscenter, og herfra starter de fleste træninger. Klik på en rute for at se den og hente den til uret.
+          Vi har base i {HOME.name}, og herfra starter de fleste træninger. Klik på en rute for at se den og hente den til uret.
         </p>
       </header>
       <RouteMap places={PLACES} routes={ROUTES} home={HOME} />

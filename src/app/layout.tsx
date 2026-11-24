@@ -5,20 +5,23 @@ import { MenuCloser } from "@/components/MenuCloser";
 import { demoEnabled } from "@/lib/demo";
 import "./globals.css";
 import { hiddenHrefs } from "@/lib/features";
+import { CLUB, clubCss } from "@/lib/club";
 
 export const metadata: Metadata = {
-  title: { default: "Nyborg Triathlon Klub", template: "%s · Nyborg Triathlon Klub" },
-  description: "Din triatlonklub på Østfyn. Svømning, cykling og løb for alle niveauer.",
+  title: { default: CLUB.name, template: `%s · ${CLUB.name}` },
+  description: CLUB.tagline,
   icons: { icon: "/icon-192.png", apple: "/apple-icon.png" },
-  appleWebApp: { capable: true, title: "NyborgTri", statusBarStyle: "black-translucent" },
+  appleWebApp: { capable: true, title: CLUB.shortName, statusBarStyle: "black-translucent" },
 };
 
-export const viewport: Viewport = { themeColor: "#454e5c", width: "device-width", initialScale: 1 };
+export const viewport: Viewport = { themeColor: CLUB.colors.theme, width: "device-width", initialScale: 1 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const hidden = await hiddenHrefs();
+  const css = clubCss();
   return (
     <html lang="da">
+      {css && <head><style dangerouslySetInnerHTML={{ __html: css }} /></head>}
       <body>
         <a href="#indhold" className="skip">Spring til indhold</a>
         {demoEnabled() && (
@@ -30,12 +33,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <footer className="site-footer">
           <div className="wrap footer-row">
             <div>
-              <strong>Nyborg Triathlon Klub</strong>
-              <br />CVR 34371571 · <a href="mailto:nyborgtri@gmail.com">nyborgtri@gmail.com</a>
+              <strong>{CLUB.name}</strong>
+              <br />{CLUB.cvr && <>CVR {CLUB.cvr} · </>}{CLUB.email && <a href={`mailto:${CLUB.email}`}>{CLUB.email}</a>}
             </div>
             <div>
               <Link href="/om">Om klubben</Link> · {!hidden.includes("/ruter") && <><Link href="/ruter">Ruter</Link> · </>}{!hidden.includes("/sponsorer") && <><Link href="/sponsorer">Sponsorer</Link> · </>}
-              <a href="https://www.facebook.com/NyborgTri">Facebook</a> · <Link href="/om/kontakt">Kontakt</Link> ·{" "}
+              {CLUB.facebook && <><a href={CLUB.facebook}>Facebook</a> · </>}<Link href="/om/kontakt">Kontakt</Link> ·{" "}
               <Link href="/privatlivspolitik">Privatlivspolitik</Link>
             </div>
           </div>

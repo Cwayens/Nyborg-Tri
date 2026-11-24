@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import type { AthleteGroup, Role } from "@prisma/client";
 import { hasRole } from "@/lib/roles";
 import { prisma } from "@/lib/db";
+import { CLUB } from "@/lib/club";
 
 declare module "next-auth" {
   interface Session {
@@ -23,7 +24,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             // Ingen mailserver sat op endnu (fx testversion): login-linket skrives i serverloggen
             // (Vercel → Logs), så man stadig kan logge ind. Sæt EMAIL_SERVER før rigtig brug.
             server: "smtp://localhost:25",
-            from: process.env.EMAIL_FROM ?? "noreply@nyborgtri.dk",
+            from: process.env.EMAIL_FROM ?? `noreply@${CLUB.domain || "localhost"}`,
             async sendVerificationRequest({ identifier, url }) {
               console.warn(`[login] EMAIL_SERVER mangler – login-link til ${identifier}: ${url}`);
             },

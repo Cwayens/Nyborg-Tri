@@ -3,13 +3,14 @@ import { prisma } from "@/lib/db";
 import { VISIBLE_ATHLETE } from "@/lib/athletes";
 import { AthleteCard } from "@/components/AthleteCard";
 import { requireFeature } from "@/lib/features";
+import { CLUB } from "@/lib/club";
 
 export const metadata = {
   title: "Atleter",
-  description: "Mød Nyborg Triathlon Klubs elite-atleter, og se hvordan din virksomhed kan støtte dem.",
+  description: `Mød ${CLUB.name}s elite-atleter, og se hvordan din virksomhed kan støtte dem.`,
 };
 
-const CONTACT = "nyborgtri@gmail.com";
+const CONTACT = CLUB.email;
 
 export default async function Athletes() {
   await requireFeature("atleter");
@@ -18,7 +19,7 @@ export default async function Athletes() {
     orderBy: [{ featured: "desc" }, { sortOrder: "asc" }],
     include: { user: { select: { name: true } } },
   });
-  const mail = `mailto:${CONTACT}?subject=${encodeURIComponent("Sponsorat af atlet i Nyborg Triathlon Klub")}`;
+  const mail = `mailto:${CONTACT}?subject=${encodeURIComponent(`Sponsorat af atlet i ${CLUB.name}`)}`;
 
   return (
     <div className="athletes">

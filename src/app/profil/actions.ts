@@ -5,6 +5,7 @@ import { requireUser } from "@/auth";
 import { deleteAccount } from "@/lib/account";
 import { prisma } from "@/lib/db";
 import { sendMail } from "@/lib/mail";
+import { CLUB } from "@/lib/club";
 
 export async function deleteMyAccount(formData: FormData) {
   const sessionUser = await requireUser("/profil");
@@ -16,8 +17,8 @@ export async function deleteMyAccount(formData: FormData) {
   if (!r.ok) redirect("/profil?fejl=" + encodeURIComponent(r.error) + "#slet");
   await sendMail(
     email,
-    "Din profil hos Nyborg Triathlon Klub er slettet",
-    `Hej ${name ?? ""}\n\nDin profil og dine data hos Nyborg Triathlon Klub er nu slettet. Betalinger gemmes i 5 år, fordi bogføringsloven kræver det, men uden dit navn og din mail.\n\nDu er altid velkommen tilbage.\n\nVenlig hilsen\nNyborg Triathlon Klub`,
+    `Din profil hos ${CLUB.name} er slettet`,
+    `Hej ${name ?? ""}\n\nDin profil og dine data hos ${CLUB.name} er nu slettet. Betalinger gemmes i 5 år, fordi bogføringsloven kræver det, men uden dit navn og din mail.\n\nDu er altid velkommen tilbage.\n\nVenlig hilsen\nNyborg Triathlon Klub`,
   );
   redirect("/konto-slettet");
 }

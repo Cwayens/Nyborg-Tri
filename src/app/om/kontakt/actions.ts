@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { sendMail } from "@/lib/mail";
-import { TOPICS, contactInbox } from "@/lib/club";
+import { CLUB, TOPICS, contactInbox } from "@/lib/club";
 import { isEmail } from "@/lib/guardian";
 
 const back = (q: string) => redirect(`/om/kontakt?${q}#skriv`);
@@ -31,7 +31,7 @@ export async function sendContact(formData: FormData) {
   await sendMail(
     contactInbox(),
     `Ny henvendelse${topic ? ` (${topic})` : ""} fra ${name}`,
-    `${name} <${email}>${phone ? `, tlf. ${phone}` : ""} skrev via nyborgtri.dk:\n\n${message}\n\nSvar direkte til ${email}. Alle henvendelser kan også ses under Admin > Kontakt.`,
+    `${name} <${email}>${phone ? `, tlf. ${phone}` : ""} skrev via ${CLUB.domain || "hjemmesiden"}:\n\n${message}\n\nSvar direkte til ${email}. Alle henvendelser kan også ses under Admin > Kontakt.`,
   );
   back("sendt=1");
 }

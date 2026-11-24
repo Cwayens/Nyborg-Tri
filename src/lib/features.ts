@@ -24,7 +24,7 @@ export const FEATURES = {
   staevner: { group: "Bredden", href: "/staevner", label: "Stævner og samkørsel", text: "Hvem skal til hvilke stævner, samkørsel og klubtelt." },
   atleter: { group: "Offentlig side", href: "/atleter", label: "Atleter", text: "Offentlige profiler af klubbens atleter (kun med samtykke)." },
   sponsorer: { group: "Offentlig side", href: "/sponsorer", label: "Sponsorer", text: "Sponsorside og sponsorbjælken på forsiden." },
-  ruter: { group: "Offentlig side", href: "/ruter", label: "Ruter og kort", text: "Kort over Nyborg med træningssteder og ruter, som kan hentes som GPX." },
+  ruter: { group: "Offentlig side", href: "/ruter", label: "Ruter og kort", text: "Kort med klubbens træningssteder og ruter, som kan hentes som GPX." },
   mail: { group: "Administration", href: "/admin/mail", label: "Mail til hold og medlemmer", text: "Trænere og admin kan sende mail til hold, prøvetrænende eller alle medlemmer." },
 } as const satisfies Record<string, Def>;
 

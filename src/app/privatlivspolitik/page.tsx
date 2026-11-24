@@ -3,7 +3,7 @@ import { CLUB } from "@/lib/club";
 
 export const metadata = {
   title: "Privatlivspolitik",
-  description: "Sådan behandler Nyborg Triathlon Klub dine personoplysninger: hvad vi gemmer, hvorfor, hvor længe og dine rettigheder.",
+  description: `Sådan behandler ${CLUB.name} dine personoplysninger: hvad vi gemmer, hvorfor, hvor længe og dine rettigheder.`,
 };
 
 // Gennemgås af bestyrelsen før lancering (se docs/go-live-tjekliste.md). Opdater datoen ved ændringer.

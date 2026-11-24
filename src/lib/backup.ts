@@ -32,7 +32,7 @@ export function encrypt(data: Buffer): Buffer {
 }
 
 export function decrypt(file: Buffer): Buffer {
-  if (file.subarray(0, 4).toString() !== "NTB1") throw new Error("Ikke en NyborgTri-backup");
+  if (file.subarray(0, 4).toString() !== "NTB1") throw new Error("Ikke en backup fra dette system");
   const iv = file.subarray(4, 16);
   const tag = file.subarray(16, 32);
   const d = createDecipheriv("aes-256-gcm", key(), iv);

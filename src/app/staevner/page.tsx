@@ -35,10 +35,10 @@ export default async function Races({ searchParams }: { searchParams: Promise<{ 
 
       {ny && (
         <form action={createRace} className="card stack" style={{ marginBottom: 20 }}>
-          <label>Stævne<input name="name" required placeholder="fx NyborgTri Cup, Challenge Denmark" /></label>
+          <label>Stævne<input name="name" required placeholder="fx Challenge Denmark" /></label>
           <div className="row">
             <label>Dato<input type="date" name="date" min={today} required /></label>
-            <label>Sted<input name="location" required placeholder="fx Nyborg Strand" /></label>
+            <label>Sted<input name="location" required placeholder="fx Vejle" /></label>
           </div>
           <div className="row">
             <label>Distancer (valgfrit)<input name="distances" placeholder="fx Sprint, Olympisk, Kids" /></label>
@@ -114,7 +114,7 @@ export default async function Races({ searchParams }: { searchParams: Promise<{ 
                       </select>
                     </label>
                     <label>Ledige pladser<input type="number" name="seats" min={1} max={8} defaultValue={mine?.seats ?? ""} placeholder="hvis du kører" /></label>
-                    <label>Fra<input name="rideFrom" defaultValue={mine?.rideFrom ?? ""} placeholder="fx Nyborg station" /></label>
+                    <label>Fra<input name="rideFrom" defaultValue={mine?.rideFrom ?? ""} placeholder="fx klubhuset" /></label>
                   </div>
                   <p className="muted" style={{ margin: 0 }}>Dit navn og din distance vises for andre medlemmer. Kører du eller søger lift, kan de også se din mail.</p>
                   <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>

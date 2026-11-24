@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { listBackups } from "@/lib/backup";
 import { sendMail } from "@/lib/mail";
 import { blobEnabled } from "@/lib/upload";
+import { CLUB } from "@/lib/club";
 
 export const metadata = { title: "Admin – drift" };
 
@@ -12,7 +13,7 @@ async function testAlert() {
   "use server";
   const admin = await requireAdmin();
   const to = process.env.ALERT_EMAIL;
-  if (to) await sendMail(to, "[NyborgTri] Testmail fra overvågningen", `Overvågningen virker. Sendt af ${admin.email} fra Admin → Drift.`);
+  if (to) await sendMail(to, `[${CLUB.shortName}] Testmail fra overvågningen`, `Overvågningen virker. Sendt af ${admin.email} fra Admin → Drift.`);
   revalidatePath("/admin/drift");
 }
 

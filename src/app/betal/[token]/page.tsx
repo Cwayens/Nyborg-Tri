@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
 import { baseUrl } from "@/lib/url";
 import { kr } from "@/lib/format";
+import { CLUB } from "@/lib/club";
 
 // Betalingslink til forælder/værge. Kræver ikke login: linket er hemmeligt og sendes kun til værgens e-mail.
 export const metadata = { title: "Betal kontingent", robots: { index: false } };
@@ -27,7 +28,7 @@ async function pay(formData: FormData) {
       price_data: {
         currency: "dkk",
         unit_amount: p.amountOre,
-        product_data: { name: `Medlemskab Nyborg Triathlon Klub – ${p.user.name ?? "medlem"}`, description: `${p.description}, gælder 1 år` },
+        product_data: { name: `Medlemskab ${CLUB.name} – ${p.user.name ?? "medlem"}`, description: `${p.description}, gælder 1 år` },
       },
     }],
     metadata: { paymentId: p.id, userId: p.userId, typeId: p.typeId },
@@ -55,10 +56,10 @@ export default async function PayPage({ params, searchParams }: { params: Promis
           Kvitteringen er sendt til din e-mail.
         </p>
       ) : p.status === "REFUNDED" ? (
-        <p>Betalingen er refunderet. Skriv til nyborgtri@gmail.com, hvis du har spørgsmål.</p>
+        <p>Betalingen er refunderet. Skriv til {CLUB.email}, hvis du har spørgsmål.</p>
       ) : (
         <>
-          <p>{name} har meldt sig ind i Nyborg Triathlon Klub og har skrevet dig som forælder eller værge.</p>
+          <p>{name} har meldt sig ind i {CLUB.name} og har skrevet dig som forælder eller værge.</p>
           <p className="amount" style={{ fontSize: "1.6rem", fontWeight: 800, margin: 0 }}>{kr(p.amountOre)}</p>
           <p className="muted" style={{ marginTop: 0 }}>{p.description}. Medlemskabet gælder 1 år.</p>
           <form action={pay}>

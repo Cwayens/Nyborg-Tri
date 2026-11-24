@@ -2,14 +2,15 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { requireFeature } from "@/lib/features";
+import { CLUB } from "@/lib/club";
 
-export const metadata = { title: "Sponsorer", description: "Virksomhederne bag Nyborg Triathlon Klub, og de fordele medlemmerne får." };
+export const metadata = { title: "Sponsorer", description: `Virksomhederne bag ${CLUB.name}, og de fordele medlemmerne får.` };
 
 export default async function Sponsors() {
   await requireFeature("sponsorer");
   const member = !!(await auth())?.user;
   const sponsors = await prisma.sponsor.findMany({ where: { active: true }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }] });
-  const mail = `mailto:nyborgtri@gmail.com?subject=${encodeURIComponent("Sponsorat af Nyborg Triathlon Klub")}`;
+  const mail = `mailto:${CLUB.email}?subject=${encodeURIComponent(`Sponsorat af ${CLUB.name}`)}`;
 
   return (
     <>

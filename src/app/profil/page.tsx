@@ -8,6 +8,7 @@ import { userTypeLabel } from "@/lib/roles";
 import { isEmail, needsGuardian } from "@/lib/guardian";
 import { deleteMyAccount } from "./actions";
 import { featuresOff } from "@/lib/features";
+import { CLUB } from "@/lib/club";
 
 export const metadata = { title: "Min profil" };
 
@@ -53,7 +54,7 @@ export default async function Profile({ searchParams }: { searchParams: Promise<
   const off = await featuresOff();
   return (
     <>
-      <h1>{velkommen ? "Velkommen til NyborgTri!" : "Min profil"}</h1>
+      <h1>{velkommen ? `Velkommen til ${CLUB.shortName}!` : "Min profil"}</h1>
       {velkommen && <p>Skriv dit navn, så de andre kan se, hvem der kommer til træning.</p>}
       {fejl && <p className="status-warn">{fejl}</p>}
       {gemt && <p className="notice">Din profil er gemt.</p>}

@@ -3,6 +3,7 @@ import { AdminNav } from "@/components/AdminNav";
 import { prisma } from "@/lib/db";
 import { initials } from "@/components/Icons";
 import { addContact, deleteContact, moveContact, toggleHandled, updateContact } from "./actions";
+import { CLUB } from "@/lib/club";
 
 export const metadata = { title: "Admin – kontakt" };
 
@@ -30,7 +31,7 @@ export default async function AdminContact({ searchParams }: { searchParams: Pro
           {messages.map((m) => (
             <li key={m.id} className={`card${m.handledAt ? " done" : ""}`}>
               <header>
-                <b>{m.name}</b> <a href={`mailto:${m.email}?subject=${encodeURIComponent("Sv: " + (m.topic ?? "Din henvendelse til NyborgTri"))}`}>{m.email}</a>
+                <b>{m.name}</b> <a href={`mailto:${m.email}?subject=${encodeURIComponent("Sv: " + (m.topic ?? `Din henvendelse til ${CLUB.shortName}`))}`}>{m.email}</a>
                 {m.phone && <span className="muted"> · {m.phone}</span>}
                 {m.topic && <span className="pill">{m.topic}</span>}
                 <span className="muted small" style={{ marginLeft: "auto" }}>{m.createdAt.toLocaleString("da-DK", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Copenhagen" })}</span>

@@ -75,7 +75,7 @@ export function RouteMap({ places, routes, home }: { places: Place[]; routes: Ro
   return (
     <div className="rm">
       <div className="rm-map-wrap">
-        <div ref={el} className="rm-map" role="region" aria-label="Kort over Nyborg med træningssteder og ruter" />
+        <div ref={el} className="rm-map" role="region" aria-label="Kort med klubbens træningssteder og ruter" />
         <button type="button" className="button small secondary rm-home" onClick={goHome}>Tilbage til klubben</button>
       </div>
       <aside className="rm-side">

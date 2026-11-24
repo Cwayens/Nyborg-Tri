@@ -8,6 +8,7 @@ import { TRIAL_DAYS } from "@/lib/access";
 import { joinAsGuest, requestTrial, resendPayLink, startCheckout, redeemCodeAction } from "./actions";
 import { needsGuardian } from "@/lib/guardian";
 import { demoEnabled } from "@/lib/demo";
+import { CLUB } from "@/lib/club";
 
 export const metadata = { title: "Bliv medlem" };
 
@@ -97,7 +98,7 @@ export default async function JoinPage({ searchParams }: { searchParams: Promise
           <label>Adresse<input name="address" required autoComplete="street-address" /></label>
           <div className="row2">
             <label>Postnr.<input name="zip" required inputMode="numeric" autoComplete="postal-code" /></label>
-            <label>By<input name="city" required autoComplete="address-level2" defaultValue="Nyborg" /></label>
+            <label>By<input name="city" required autoComplete="address-level2" defaultValue={CLUB.city} /></label>
           </div>
           <fieldset className="guardian">
             <legend>Forælder eller værge</legend>
@@ -162,7 +163,7 @@ export default async function JoinPage({ searchParams }: { searchParams: Promise
             ) : trial.status === "APPROVED" ? (
               <p className="status-ok">Din prøveperiode er godkendt.</p>
             ) : (
-              <p>Din ansøgning blev ikke godkendt. Skriv til nyborgtri@gmail.com, hvis du har spørgsmål.</p>
+              <p>Din ansøgning blev ikke godkendt. Skriv til {CLUB.email}, hvis du har spørgsmål.</p>
             )}
           </section>
           <section id="kode" className="card">

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { VISIBLE_ATHLETE, instagramUrl, lines } from "@/lib/athletes";
 import { AthletePhoto } from "@/components/AthleteCard";
 import { requireFeature } from "@/lib/features";
+import { CLUB } from "@/lib/club";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -28,7 +29,7 @@ export default async function AthletePage({ params }: Props) {
   const ig = instagramUrl(a.instagram);
   const goals = lines(a.goals);
   const results = lines(a.results);
-  const mail = `mailto:nyborgtri@gmail.com?subject=${encodeURIComponent(`Sponsorat af ${name}`)}`;
+  const mail = `mailto:${CLUB.email}?subject=${encodeURIComponent(`Sponsorat af ${name}`)}`;
 
   return (
     <article className="athlete-page">
@@ -36,7 +37,7 @@ export default async function AthletePage({ params }: Props) {
       <header className="athlete-head">
         <AthletePhoto a={a} className="athlete-photo" />
         <div>
-          <p className="eyebrow">Nyborg Triathlon Klub · Elite</p>
+          <p className="eyebrow">{CLUB.name} · Elite</p>
           <h1>{name}</h1>
           {a.headline && <p className="lead">{a.headline}</p>}
           {ig && <p><a href={ig} target="_blank" rel="noopener">Følg på Instagram</a></p>}

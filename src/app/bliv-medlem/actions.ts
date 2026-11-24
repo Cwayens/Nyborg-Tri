@@ -9,6 +9,7 @@ import { redeemCode } from "@/lib/access";
 import { baseUrl } from "@/lib/url";
 import { ageOn, isEmail, needsGuardian } from "@/lib/guardian";
 import { sendPayLink } from "@/lib/paylink";
+import { CLUB } from "@/lib/club";
 
 const schema = z.object({
   typeCode: z.string().min(1),
@@ -73,7 +74,7 @@ async function checkoutUrl(paymentId: string, userId: string, email: string | un
         price_data: {
           currency: "dkk",
           unit_amount: type.priceOre,
-          product_data: { name: `Medlemskab Nyborg Triathlon Klub – ${type.name}`, description: "Gælder 1 år" },
+          product_data: { name: `Medlemskab ${CLUB.name} – ${type.name}`, description: "Gælder 1 år" },
         },
       },
     ],

@@ -8,6 +8,8 @@ Ny hjemmeside for [Nyborg Triathlon Klub](https://www.nyborgtri.dk), der erstatt
 
 Se [docs/arkitektur.md](docs/arkitektur.md) for teknologivalg og plan, og [docs/go-live-tjekliste.md](docs/go-live-tjekliste.md) for det der mangler før go-live.
 
+Skal systemet bruges af en anden klub, se [docs/ny-klub.md](docs/ny-klub.md).
+
 ## Kom i gang lokalt
 
 Kræver Node.js 22 og en PostgreSQL-database.

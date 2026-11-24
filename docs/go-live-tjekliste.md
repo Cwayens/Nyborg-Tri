@@ -117,6 +117,12 @@ Alle otte, og 10 af de øvrige funktioner (Træn sammen, programmer til uret, Mi
 - [ ] **Polar, Wahoo, Coros, Suunto**: søg API-adgang hos dem, der bruges mest i klubben.
 - [ ] **Program direkte på uret ved tilmelding**: i dag henter atleten en personlig .fit/.zwo-fil (virker med Garmin, Wahoo, Coros, Hammerhead og Zwift). For at sende automatisk skal klubben have adgang til *Garmin Connect Developer Program → Training API* (kræver ansøgning som virksomhed/forening), *Wahoo Cloud API* (workouts og planer) og evt. Coros/Suunto partnerprogrammer. Stravas API kan ikke sende workouts.
 
+## Andre klubber (senere)
+
+- [ ] Beslut ejerskab af selskabet (ApS) og aftalen med NyborgTri. Se planen "Platformen til andre klubber".
+- [ ] Hver ny klub sættes op som egen installation efter `docs/ny-klub.md`.
+- [ ] Spørg Strava om en større kvote, før flere klubber bruger samme Strava-app.
+
 ## Kommunikation
 
 - [ ] Mails ved vigtige hændelser (aflyst træning, godkendt prøveperiode, medlemskab udløber snart) – kræver mailudbyder.
