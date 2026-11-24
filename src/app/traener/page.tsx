@@ -26,14 +26,14 @@ export default async function TrainerHome({ searchParams }: { searchParams: Prom
       </p>
       <div className="table-scroll">
         <table className="list">
-          <thead><tr><th>Dag</th><th>Tid</th><th>Træning</th><th>Grupper</th><th>Træner</th><th>Tilmeldte</th><th /></tr></thead>
+          <thead><tr><th>Dag</th><th>Tid</th><th>Træning</th><th>Gruppe</th><th>Træner</th><th>Tilmeldte</th><th /></tr></thead>
           <tbody>
             {sessions.map((s) => (
               <tr key={s.id}>
                 <td>{formatDay(s.startsAt)}</td>
                 <td>{formatTime(s.startsAt)}–{formatTime(s.endsAt)}</td>
                 <td>{DISCIPLINE_LABEL[s.discipline]}: {s.title}<br /><span className="muted">{s.location}</span></td>
-                <td>{s.groups.length ? s.groups.map((g) => GROUP_LABEL[g]).join(", ") : "Alle"}</td>
+                <td>{GROUP_LABEL[s.group]}</td>
                 <td>{s.createdBy.id === user.id ? "Dig" : s.createdBy.name}</td>
                 <td>{s._count.signups}</td>
                 <td><Link href={`/traener/${s.id}`}>Ret / deltagere</Link></td>

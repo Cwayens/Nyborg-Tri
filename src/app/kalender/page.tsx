@@ -3,7 +3,7 @@ import type { AthleteGroup } from "@prisma/client";
 import { auth } from "@/auth";
 import { canSignUp } from "@/lib/access";
 import { prisma } from "@/lib/db";
-import { DISCIPLINE_LABEL, GROUP_LABEL, GROUPS, trainingVisibleFor } from "@/lib/roles";
+import { DISCIPLINE_LABEL, GROUP_LABEL, GROUPS, canJoinGroup, trainingVisibleFor } from "@/lib/roles";
 import { dayKey, formatDay, formatTime } from "@/lib/time";
 import { toggleSignup } from "./actions";
 
@@ -32,7 +32,7 @@ export default async function Calendar({ searchParams }: Props) {
       },
       orderBy: { startsAt: "asc" },
     })
-  ).filter((s) => trainingVisibleFor(s.groups, group));
+  ).filter((s) => trainingVisibleFor(s.group, group));
 
   const days = new Map<string, typeof sessions>();
   for (const s of sessions) days.set(dayKey(s.startsAt), [...(days.get(dayKey(s.startsAt)) ?? []), s]);
@@ -66,6 +66,10 @@ export default async function Calendar({ searchParams }: Props) {
         </p>
       )}
 
+      {userId && eligible && !own && session!.user.role === "ATHLETE" && (
+        <p className="card">Du er endnu ikke tilknyttet en gruppe (Elite, Bredde eller Børn). Kontakt bestyrelsen, så du kan tilmelde dig træninger.</p>
+      )}
+
       {days.size === 0 && <p className="muted">Ingen træninger de næste {weeks} uger.</p>}
       {[...days.entries()].map(([key, list]) => (
         <section key={key} className="day">
@@ -82,12 +86,12 @@ export default async function Calendar({ searchParams }: Props) {
                   {s.location}
                   {s.createdBy.name ? ` · Træner: ${s.createdBy.name}` : ""}
                   {" · "}
-                  {s.groups.length === 0 ? "Alle grupper" : s.groups.map((g) => GROUP_LABEL[g]).join(", ")}
+                  {GROUP_LABEL[s.group]}
                 </p>
                 {s.description && <p style={{ whiteSpace: "pre-line" }}>{s.description}</p>}
                 <Attendees names={userId ? s.signups.map((x) => x.user.name ?? "Unavngivet") : null} count={s.signups.length} />
               </div>
-              {userId && eligible && s.startsAt > new Date() && (
+              {userId && s.startsAt > new Date() && (s.signups.some((x) => x.user.id === userId) || (eligible && canJoinGroup(session!.user, s.group))) && (
                 <form action={toggleSignup} className="signup">
                   <input type="hidden" name="sessionId" value={s.id} />
                   {s.signups.some((x) => x.user.id === userId) ? (

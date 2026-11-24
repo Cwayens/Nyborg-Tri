@@ -45,7 +45,7 @@ scripts/import-wordpress.ts  engangsimport af indhold
 ## Brugertyper (tilføjet 24. nov. 2026)
 
 `User.role` (ATHLETE < TRAINER < ADMIN) styrer rettigheder, og `User.athleteGroup` (ELITE, BREDDE, BOERN) styrer hvilke træninger man ser.
-`TrainingSession` med `groups` (tom = alle) og `seriesId` for ugentlige serier. Kalenderen findes på `/kalender` (samme adresse som den gamle).
+`TrainingSession` med præcis én `group` og `seriesId` for ugentlige serier. Kalenderen findes på `/kalender` (samme adresse som den gamle).
 
 ## Fase 2 – træningstilmelding (plan)
 

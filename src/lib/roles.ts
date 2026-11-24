@@ -28,7 +28,12 @@ export function defaultGroupFor(membershipCode: string): AthleteGroup {
   return membershipCode === "YOUTH" ? "BOERN" : "BREDDE";
 }
 
-/** Er træningen relevant for en atlet i denne gruppe? Tom gruppeliste = for alle. */
-export function trainingVisibleFor(groups: AthleteGroup[], group: AthleteGroup | null): boolean {
-  return groups.length === 0 || group === null || groups.includes(group);
+/** Vises træningen, når kalenderen er filtreret til en gruppe? null = alle grupper. */
+export function trainingVisibleFor(trainingGroup: AthleteGroup, filter: AthleteGroup | null): boolean {
+  return filter === null || trainingGroup === filter;
+}
+
+/** Atleter kan kun tilmelde sig træninger for egen gruppe. Trænere og admins kan tilmelde sig alle. */
+export function canJoinGroup(user: { role: Role; athleteGroup: AthleteGroup | null }, trainingGroup: AthleteGroup): boolean {
+  return hasRole(user.role, "TRAINER") || user.athleteGroup === trainingGroup;
 }

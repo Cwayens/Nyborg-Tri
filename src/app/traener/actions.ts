@@ -17,14 +17,14 @@ const schema = z.object({
   end: z.string().regex(/^\d{2}:\d{2}$/, "Vælg sluttid"),
   description: z.string().trim().optional(),
   repeatWeeks: z.coerce.number().int().min(1).max(52).default(1),
+  group: z.enum(["ELITE", "BREDDE", "BOERN"], { message: "Vælg hvilken gruppe træningen er for" }),
 });
 
 function parse(formData: FormData) {
   const r = schema.safeParse(Object.fromEntries(formData));
   if (!r.success) throw new Error(r.error.issues[0].message);
   if (r.data.end <= r.data.start) throw new Error("Sluttid skal være efter starttid");
-  const groups = formData.getAll("groups").map(String).filter((g): g is "ELITE" | "BREDDE" | "BOERN" => ["ELITE", "BREDDE", "BOERN"].includes(g));
-  return { ...r.data, groups };
+  return r.data;
 }
 
 function fail(path: string, e: unknown): never {
@@ -46,7 +46,7 @@ export async function createTraining(formData: FormData) {
       discipline: d.discipline,
       location: d.location,
       description: d.description || null,
-      groups: d.groups,
+      group: d.group,
       startsAt: parseLocal(addWeeksLocal(`${d.date}T${d.start}`, i)),
       endsAt: parseLocal(addWeeksLocal(`${d.date}T${d.end}`, i)),
       seriesId,
@@ -68,7 +68,7 @@ export async function updateTraining(id: string, formData: FormData) {
   await prisma.trainingSession.update({
     where: { id },
     data: {
-      title: d.title, discipline: d.discipline, location: d.location, description: d.description || null, groups: d.groups,
+      title: d.title, discipline: d.discipline, location: d.location, description: d.description || null, group: d.group,
       startsAt: parseLocal(`${d.date}T${d.start}`), endsAt: parseLocal(`${d.date}T${d.end}`),
     },
   });

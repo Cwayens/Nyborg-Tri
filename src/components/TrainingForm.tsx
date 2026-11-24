@@ -23,10 +23,10 @@ export function TrainingForm({ action, training, allowRepeat }: Props) {
         <label>Til<input type="time" name="end" defaultValue={end.slice(11)} required /></label>
       </div>
       <fieldset>
-        <legend>For hvilke grupper? (ingen valgt = alle)</legend>
+        <legend>Gruppe (vælg én)</legend>
         {GROUPS.map((g) => (
           <label key={g} className="check">
-            <input type="checkbox" name="groups" value={g} defaultChecked={training?.groups.includes(g)} /> {GROUP_LABEL[g]}
+            <input type="radio" name="group" value={g} defaultChecked={training?.group === g} required /> {GROUP_LABEL[g]}
           </label>
         ))}
       </fieldset>

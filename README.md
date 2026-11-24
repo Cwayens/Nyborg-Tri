@@ -58,11 +58,11 @@ Medlemskabet oprettes først, når Stripe bekræfter betalingen. Fornyelse før 
 |---|---|
 | Admin | Alt: medlemmer, betalinger, indhold, brugertyper, træninger |
 | Træner | Oprette, rette og slette træninger i klubbens kalender (`/traener`) |
-| Atlet – Elite / Bredde / Børn | Se kalenderen filtreret til egen gruppe, betale kontingent, se Min side |
+| Atlet – Elite / Bredde / Børn | Se kalenderen, tilmelde sig træninger for egen gruppe, betale kontingent, se Min side |
 
 Rolle og atletgruppe sættes af en admin under **Admin → Medlemmer**. En træner kan også have en atletgruppe.
 Nye betalende medlemmer får automatisk gruppen Bredde (eller Børn ved ungdomskontingent), indtil en admin ændrer den.
-Træninger kan målrettes én eller flere grupper (ingen valgt = alle) og gentages ugentligt.
+Træneren vælger præcis én gruppe for hver træning (Elite, Bredde eller Børn), og træninger kan gentages ugentligt. Atleter kan kun tilmelde sig træninger for deres egen gruppe; trænere og admins (med medlemskab) kan tilmelde sig alle. Er man allerede tilmeldt, kan man altid afmelde sig.
 
 ## Tilmelding til træninger
 

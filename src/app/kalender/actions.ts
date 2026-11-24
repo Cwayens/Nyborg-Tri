@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { canSignUp } from "@/lib/access";
+import { canJoinGroup } from "@/lib/roles";
 import { prisma } from "@/lib/db";
 
 export async function toggleSignup(formData: FormData) {
@@ -18,8 +19,10 @@ export async function toggleSignup(formData: FormData) {
   } else {
     // Tilmelding kræver betalt medlemskab, godkendt prøveperiode eller indløst kode
     if (!(await canSignUp(userId))) redirect("/bliv-medlem?fejl=" + encodeURIComponent("Du skal være medlem for at tilmelde dig træninger"));
-    const training = await prisma.trainingSession.findUnique({ where: { id: sessionId }, select: { startsAt: true } });
+    const training = await prisma.trainingSession.findUnique({ where: { id: sessionId }, select: { startsAt: true, group: true } });
     if (!training || training.startsAt < new Date()) return;
+    // Atleter kan kun tilmelde sig træninger for deres egen gruppe
+    if (!canJoinGroup(session.user, training.group)) return;
     await prisma.trainingSignup.upsert({
       where: { sessionId_userId: { sessionId, userId } },
       update: {},

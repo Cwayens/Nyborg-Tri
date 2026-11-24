@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { hasRole, trainingVisibleFor, userTypeLabel } from "./roles";
+import { canJoinGroup, hasRole, trainingVisibleFor, userTypeLabel } from "./roles";
 
 test("rettigheder: admin > træner > atlet", () => {
   assert.equal(hasRole("ADMIN", "TRAINER"), true);
@@ -9,10 +9,17 @@ test("rettigheder: admin > træner > atlet", () => {
   assert.equal(hasRole(undefined, "ATHLETE"), false);
 });
 
-test("atleter ser træninger for egen gruppe og fælles træninger", () => {
-  assert.equal(trainingVisibleFor([], "BOERN"), true);
-  assert.equal(trainingVisibleFor(["ELITE"], "BOERN"), false);
-  assert.equal(trainingVisibleFor(["ELITE", "BOERN"], "BOERN"), true);
+test("kalenderfilter viser kun den valgte gruppe", () => {
+  assert.equal(trainingVisibleFor("ELITE", null), true);
+  assert.equal(trainingVisibleFor("ELITE", "BOERN"), false);
+  assert.equal(trainingVisibleFor("BOERN", "BOERN"), true);
+});
+
+test("atleter kan kun tilmelde sig egen gruppe, trænere alle", () => {
+  assert.equal(canJoinGroup({ role: "ATHLETE", athleteGroup: "BREDDE" }, "BREDDE"), true);
+  assert.equal(canJoinGroup({ role: "ATHLETE", athleteGroup: "BREDDE" }, "ELITE"), false);
+  assert.equal(canJoinGroup({ role: "ATHLETE", athleteGroup: null }, "ELITE"), false);
+  assert.equal(canJoinGroup({ role: "TRAINER", athleteGroup: null }, "BOERN"), true);
 });
 
 test("brugertype-navne", () => {

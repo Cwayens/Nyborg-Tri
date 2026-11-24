@@ -225,7 +225,7 @@ model TrainingSession {
   location    String
   startsAt    DateTime
   endsAt      DateTime
-  groups      AthleteGroup[] // tom = for alle grupper
+  group       AthleteGroup // hver træning er for præcis én gruppe
   seriesId    String? // fælles id for ugentligt gentagne træninger
   createdById String
   createdAt   DateTime       @default(now())
@@ -235,6 +235,7 @@ model TrainingSession {
   signups   TrainingSignup[]
 
   @@index([startsAt])
+  @@index([group, startsAt])
   @@index([seriesId])
 }
 
