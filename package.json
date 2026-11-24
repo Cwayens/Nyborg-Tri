@@ -15,17 +15,20 @@
     "db:seed": "tsx prisma/seed.ts",
     "import:wordpress": "tsx scripts/import-wordpress.ts",
     "vercel-build": "bash scripts/build.sh",
-    "db:demo": "tsx scripts/seed-demo.ts"
+    "db:demo": "tsx scripts/seed-demo.ts",
+    "images:move": "tsx scripts/move-images.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "2.11.3",
     "@prisma/client": "6.19.3",
+    "@vercel/blob": "^1.1.1",
     "marked": "15.0.12",
     "next": "15.5.29",
     "next-auth": "5.0.0-beta.29",
     "nodemailer": "6.10.1",
     "react": "19.1.10",
     "react-dom": "19.1.10",
+    "sharp": "^0.35.5",
     "stripe": "18.5.0",
     "zod": "3.25.76"
   },

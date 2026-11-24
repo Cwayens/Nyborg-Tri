@@ -18,14 +18,14 @@ async function fields(f: FormData) {
   const role = String(f.get("role") ?? "").trim().slice(0, 60);
   const name = String(f.get("name") ?? "").trim().slice(0, 100);
   if (!role || !name) fail("Skriv både rolle og navn");
-  const photo = await readImage(f.get("photo"), 300, false);
+  const photo = await readImage(f.get("photo"), { folder: "kontakt", maxWidth: 400 });
   if (!photo.ok) fail(photo.error);
   return {
     role,
     name,
     phone: String(f.get("phone") ?? "").trim().slice(0, 30) || null,
     email: String(f.get("email") ?? "").trim().slice(0, 200) || null,
-    ...(photo.ok && photo.dataUrl ? { photo: photo.dataUrl } : {}),
+    ...(photo.ok && photo.url ? { photo: photo.url } : {}),
   };
 }
 

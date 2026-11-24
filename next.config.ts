@@ -12,12 +12,17 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Billeder fra telefonen kan fylde et par MB; de skaleres ned på serveren (src/lib/upload.ts)
+  experimental: { serverActions: { bodySizeLimit: "4mb" } },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
   images: {
     // Billeder fra den gamle WordPress-side, indtil de er flyttet til egen lagring
-    remotePatterns: [{ protocol: "https", hostname: "www.nyborgtri.dk" }],
+    remotePatterns: [
+      { protocol: "https", hostname: "www.nyborgtri.dk" },
+      { protocol: "https", hostname: "*.public.blob.vercel-storage.com" },
+    ],
   },
 };
 

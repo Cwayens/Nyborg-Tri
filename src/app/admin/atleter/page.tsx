@@ -62,7 +62,7 @@ export default async function AdminAthletes({ searchParams }: { searchParams: Pr
                   <label>Resultater (én pr. linje)<textarea name="results" rows={3} defaultValue={p.results ?? ""} /></label>
                 </div>
                 <div className="row">
-                  <label>Profilbillede (højst 400 KB)<input type="file" name="photo" accept="image/png,image/jpeg,image/webp" /></label>
+                  <label>Profilbillede<input type="file" name="photo" accept="image/png,image/jpeg,image/webp" /></label>
                   <label>Instagram<input name="instagram" defaultValue={p.instagram ?? ""} placeholder="@brugernavn" /></label>
                 </div>
                 {p.photo && <label className="check"><input type="checkbox" name="removePhoto" /> Fjern billede</label>}

@@ -788,3 +788,4 @@ label.check { display: flex; gap: 8px; align-items: center; font-weight: 400; }
 .join-guest .small { font-size: 0.85rem; }
 @media (max-width: 560px) { .join-guest .row2 { grid-template-columns: 1fr; } }
 .join-guest .guardian { display: grid; }
+.drift-list { list-style: none; padding: 0; display: grid; gap: 6px; } .status-warn-text { color: var(--warn); font-weight: 650; }

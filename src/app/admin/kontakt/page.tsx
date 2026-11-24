@@ -81,7 +81,7 @@ export default async function AdminContact({ searchParams }: { searchParams: Pro
           <label>Telefon (valgfri)<input name="phone" type="tel" maxLength={30} /></label>
           <label>Mail (valgfri)<input name="email" type="email" maxLength={200} /></label>
         </div>
-        <label>Billede (valgfrit, højst 300 KB)<input type="file" name="photo" accept={IMG} /></label>
+        <label>Billede (valgfrit)<input type="file" name="photo" accept={IMG} /></label>
         <button className="button" type="submit" style={{ justifySelf: "start" }}>Tilføj</button>
       </form>
     </>

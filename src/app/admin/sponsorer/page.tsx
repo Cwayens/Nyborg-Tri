@@ -56,7 +56,7 @@ export default async function AdminSponsors({ searchParams }: { searchParams: Pr
         </div>
         <label>Detaljer kun for medlemmer (adresse, rabatkode)<textarea name="details" rows={2} maxLength={1000} /></label>
         <label>Logo<input type="file" name="logo" required accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif" /></label>
-        <p className="muted" style={{ margin: 0 }}>Brug gerne et logo med hvid eller gennemsigtig baggrund, højst 300 KB.</p>
+        <p className="muted" style={{ margin: 0 }}>Brug gerne et logo med hvid eller gennemsigtig baggrund. Det bliver skaleret ned automatisk.</p>
         <button className="button" type="submit" style={{ justifySelf: "start" }}>Tilføj</button>
       </form>
     </>

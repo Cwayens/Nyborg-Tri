@@ -35,7 +35,7 @@ export async function createProfile(formData: FormData) {
 export async function saveProfile(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id"));
-  const photo = await readImage(formData.get("photo"), 400);
+  const photo = await readImage(formData.get("photo"), { folder: "atleter", maxWidth: 1000 });
   if (!photo.ok) back("fejl=" + encodeURIComponent(photo.error));
   const sponsorIds = formData.getAll("sponsor").map(String);
   await prisma.athleteProfile.update({
@@ -50,7 +50,7 @@ export async function saveProfile(formData: FormData) {
       featured: formData.get("featured") === "on",
       sortOrder: Number(formData.get("sortOrder")) || 0,
       sponsors: { set: sponsorIds.map((sid) => ({ id: sid })) },
-      ...(photo.ok && photo.dataUrl ? { photo: photo.dataUrl } : {}),
+      ...(photo.ok && photo.url ? { photo: photo.url } : {}),
       ...(formData.get("removePhoto") === "on" ? { photo: null } : {}),
     },
   });

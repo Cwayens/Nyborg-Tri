@@ -21,11 +21,11 @@ function cleanUrl(v: FormDataEntryValue | null): string | null {
   }
 }
 
-/** Logoet gemmes direkte i databasen som data-URL, så der ikke skal sættes fillager op. */
+/** Logoet skaleres ned og gemmes i billedlageret (se src/lib/upload.ts). */
 async function readLogo(v: FormDataEntryValue | null): Promise<string | null> {
-  const r = await readImage(v, 300, true);
+  const r = await readImage(v, { folder: "sponsorer", maxWidth: 600, allowSvg: true });
   if (!r.ok) fail(r.error);
-  return r.ok ? r.dataUrl : null;
+  return r.ok ? r.url : null;
 }
 
 const extra = (f: FormData) => ({

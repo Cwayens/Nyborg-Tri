@@ -20,7 +20,7 @@ function refresh() {
 async function save(formData: FormData) {
   "use server";
   const user = await requireUser("/profil/atlet");
-  const photo = await readImage(formData.get("photo"), 400);
+  const photo = await readImage(formData.get("photo"), { folder: "atleter", maxWidth: 1000 });
   if (!photo.ok) redirect("/profil/atlet?fejl=" + encodeURIComponent(photo.error));
   await prisma.athleteProfile.update({
     where: { userId: user.id },
@@ -30,7 +30,7 @@ async function save(formData: FormData) {
       goals: text(formData.get("goals"), 1000),
       results: text(formData.get("results"), 2000),
       instagram: text(formData.get("instagram"), 100),
-      ...(photo.ok && photo.dataUrl ? { photo: photo.dataUrl } : {}),
+      ...(photo.ok && photo.url ? { photo: photo.url } : {}),
     },
   });
   refresh();
@@ -81,7 +81,7 @@ export default async function MyAthleteProfile({ searchParams }: { searchParams:
       <form action={save} className="card stack" style={{ marginTop: 18 }}>
         <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
           <AthletePhoto a={p} className="ath-admin-img big" />
-          <label style={{ flex: 1 }}>Profilbillede (højst 400 KB)<input type="file" name="photo" accept="image/png,image/jpeg,image/webp" /></label>
+          <label style={{ flex: 1 }}>Profilbillede<input type="file" name="photo" accept="image/png,image/jpeg,image/webp" /></label>
         </div>
         <label>Overskrift<input name="headline" defaultValue={p.headline ?? ""} maxLength={120} placeholder="fx Ironman-atlet, AG 25-29" /></label>
         <label>Om mig<textarea name="bio" rows={5} defaultValue={p.bio ?? ""} maxLength={3000} placeholder="Hvem er du, hvordan startede du, hvad driver dig?" /></label>
