@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { requireUser } from "@/auth";
 import { canSignUp } from "@/lib/access";
 import { prisma } from "@/lib/db";
@@ -18,6 +19,8 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   const { betaling, kode } = await searchParams;
   const sessionUser = await requireUser();
   const user = await prisma.user.findUniqueOrThrow({ where: { id: sessionUser.id }, include: { wearableConnections: { select: { provider: true } } } });
+  // Nye brugere skriver først deres navn, så andre kan se hvem der kommer
+  if (!user.name) redirect("/profil?velkommen=1");
   const now = new Date();
   const in7 = new Date(now.getTime() + 7 * 24 * 3600 * 1000);
   const endOfToday = new Date(now); endOfToday.setHours(23, 59, 59, 999);
@@ -42,7 +45,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   ]);
   const myWorkouts = workouts.filter((w) => w.participants.some((p) => p.user.id === user.id));
   const upcoming = [
-    ...mine.map((t) => ({ id: t.id, at: t.startsAt, title: t.title, where: t.location, d: t.discipline, kind: "Klubtræning", href: "/kalender" })),
+    ...mine.map((t) => ({ id: t.id, at: t.startsAt, title: t.cancelledAt ? `Aflyst: ${t.title}` : t.title, where: t.location, d: t.discipline, kind: "Klubtræning", href: "/kalender" })),
     ...myWorkouts.map((w) => ({ id: w.id, at: w.startsAt, title: w.title, where: w.location, d: w.discipline, kind: "Træn sammen", href: "/traen-sammen" })),
   ].sort((a, b) => a.at.getTime() - b.at.getTime()).slice(0, 5);
   const firstName = user.name?.split(" ")[0];
@@ -123,11 +126,12 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                 <DisciplineIcon discipline={t.discipline} />
                 <div>
                   <span className="disc-label">{DISCIPLINE_LABEL[t.discipline]}</span>
-                  <h3>{t.title}</h3>
+                  <h3 style={t.cancelledAt ? { textDecoration: "line-through" } : undefined}>{t.title}</h3>
+                  {t.cancelledAt && <span className="pill warn">Aflyst{t.cancelReason ? `: ${t.cancelReason}` : ""}</span>}
                   <p className="muted">{formatDay(t.startsAt)} kl. {formatTime(t.startsAt)}–{formatTime(t.endsAt)} · {t.location}</p>
                   <Attendees names={t.signups.map((s) => s.user.name)} />
                 </div>
-                {eligible && (
+                {eligible && !t.cancelledAt && (
                   <form action={toggleSignup} className="signup">
                     <input type="hidden" name="sessionId" value={t.id} />
                     <button className={`button small${joined ? " secondary" : ""}`} type="submit">{joined ? "✓ Tilmeldt" : "Tilmeld"}</button>

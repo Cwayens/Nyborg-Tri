@@ -59,11 +59,23 @@ Sæt `[x]`, når et punkt er klaret.
 
 - [ ] **Økonomisystem**: sat på pause. Beslut system (e-conomic, Dinero, Billy …) og aftal kontonumre med kassereren.
 - [ ] **TrainingPeaks**: søg om partneradgang til API'et (kan tage tid).
-- [ ] **Wearables**: opret API-adgang hos de udbydere der bruges (Strava, Garmin, Polar m.fl.), og læs deres vilkår for hvad der må vises til andre medlemmer.
+- [ ] **Strava**: opret app på strava.com/settings/api (callback-domæne = sidens domæne), sæt `STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET` og `STRAVA_VERIFY_TOKEN`, og opret webhook-abonnement (kommando står i `src/app/api/wearables/strava/webhook/route.ts`).
+- [ ] Strava giver som udgangspunkt kun plads til 1 atlet på en ny app. Søg om højere grænse hos Strava, før alle medlemmer forbinder.
+- [ ] Bekræft Stravas API-vilkår: vi viser Strava-data kun for ejeren selv (ikke i klubstatistikken). Tjek om det stadig gælder.
+- [ ] **Garmin**: søg om adgang til Garmin Connect Developer Program, så Garmin-data kan indgå direkte (og i klubstatistikken).
+- [ ] **Polar, Wahoo, Coros, Suunto**: søg API-adgang hos dem, der bruges mest i klubben.
+
+## Kommunikation
+
+- [ ] Mails ved vigtige hændelser (aflyst træning, godkendt prøveperiode, medlemskab udløber snart) – kræver mailudbyder.
+- [ ] Beslut om den interne Facebook-gruppe fortsat skal bruges til beskeder, eller om det skal ske i værktøjet.
 
 ## Sidste test
 
 - [ ] Hele forløbet på mobil: opret bruger → betal → tilmeld træning → afmeld.
 - [ ] Træner: opret træning for hver gruppe, se deltagere.
 - [ ] Admin: godkend prøveperiode, opret kode, ret brugertype, hent CSV.
+- [ ] Træn sammen: slå en tur op, hop med, aflys.
+- [ ] Kalender-abonnement i Google og Apple Kalender.
+- [ ] Aflys en træning og tjek at den vises som aflyst i kalender og abonnement.
 - [ ] Fejlovervågning (fx Vercel Logs eller Sentry), så fejl opdages.

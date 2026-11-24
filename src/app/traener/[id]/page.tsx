@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { requireTrainer } from "@/auth";
 import { prisma } from "@/lib/db";
 import { TrainingForm } from "@/components/TrainingForm";
-import { createTraining, deleteTraining, updateTraining } from "../actions";
+import { cancelTraining, createTraining, deleteTraining, updateTraining } from "../actions";
 
 export const metadata = { title: "Træning" };
 
@@ -43,6 +43,18 @@ export default async function EditTraining({ params, searchParams }: Props) {
       </section>
       {fejl && <p className="status-warn">{fejl}</p>}
       <TrainingForm action={updateTraining.bind(null, id)} training={training} />
+      <section className="card" style={{ marginTop: 32 }}>
+        <h2 style={{ marginTop: 0 }}>{training.cancelledAt ? "Træningen er aflyst" : "Aflys træning"}</h2>
+        <p className="muted">
+          {training.cancelledAt
+            ? `Aflyst${training.cancelReason ? `: ${training.cancelReason}` : ""}. De tilmeldte kan se det i kalenderen.`
+            : "Træningen bliver stående i kalenderen som aflyst, så de tilmeldte kan se det."}
+        </p>
+        <form action={cancelTraining.bind(null, id)} className="inline-form">
+          {!training.cancelledAt && <input name="reason" placeholder="Årsag, fx svømmehallen er lukket" style={{ flex: 1, minWidth: 220 }} />}
+          <button className={`button small${training.cancelledAt ? " secondary" : ""}`} type="submit">{training.cancelledAt ? "Genåbn træningen" : "Aflys"}</button>
+        </form>
+      </section>
       <form action={deleteTraining.bind(null, id)} className="stack" style={{ marginTop: 32 }}>
         {training.seriesId && (
           <label className="check">

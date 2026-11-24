@@ -21,6 +21,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
   ]);
   const events: IcsEvent[] = [
     ...trainings.map((t) => ({
+      cancelled: !!t.cancelledAt,
       uid: `training-${t.id}`, start: t.startsAt, end: t.endsAt, location: t.location, url: `${base}/kalender`,
       title: `${t.signups.length ? "✓ " : ""}${DISCIPLINE_LABEL[t.discipline]}: ${t.title}`,
       description: t.description ?? undefined,

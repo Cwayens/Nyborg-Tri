@@ -87,3 +87,13 @@ export async function deleteTraining(id: string, formData: FormData) {
   revalidatePath("/kalender");
   redirect("/traener?slettet=1");
 }
+
+export async function cancelTraining(id: string, formData: FormData) {
+  await requireTrainer();
+  const reason = String(formData.get("reason") ?? "").trim().slice(0, 200) || null;
+  const t = await prisma.trainingSession.findUniqueOrThrow({ where: { id } });
+  await prisma.trainingSession.update({ where: { id }, data: { cancelledAt: t.cancelledAt ? null : new Date(), cancelReason: t.cancelledAt ? null : reason } });
+  revalidatePath("/kalender");
+  revalidatePath("/min-side");
+  redirect(`/traener/${id}`);
+}

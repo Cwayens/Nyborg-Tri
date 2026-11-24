@@ -1,5 +1,5 @@
 // Minimal iCalendar-generator (RFC 5545) til kalender-abonnement.
-export type IcsEvent = { uid: string; start: Date; end: Date; title: string; location?: string; description?: string; url?: string };
+export type IcsEvent = { cancelled?: boolean; uid: string; start: Date; end: Date; title: string; location?: string; description?: string; url?: string };
 
 const stamp = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
 const esc = (s: string) => s.replace(/\\/g, "\\\\").replace(/\n/g, "\\n").replace(/([,;])/g, "\\$1");
@@ -25,7 +25,8 @@ export function buildIcs(name: string, events: IcsEvent[]): string {
   for (const e of events) {
     lines.push(
       "BEGIN:VEVENT", `UID:${e.uid}@nyborgtri.dk`, `DTSTAMP:${now}`, `DTSTART:${stamp(e.start)}`, `DTEND:${stamp(e.end)}`,
-      `SUMMARY:${esc(e.title)}`,
+      `SUMMARY:${esc((e.cancelled ? "AFLYST: " : "") + e.title)}`,
+      ...(e.cancelled ? ["STATUS:CANCELLED"] : []),
       ...(e.location ? [`LOCATION:${esc(e.location)}`] : []),
       ...(e.description ? [`DESCRIPTION:${esc(e.description)}`] : []),
       ...(e.url ? [`URL:${e.url}`] : []),

@@ -225,18 +225,20 @@ enum Discipline {
 }
 
 model TrainingSession {
-  id          String       @id @default(cuid())
-  title       String
-  description String?      @db.Text
-  discipline  Discipline
-  location    String
-  startsAt    DateTime
-  endsAt      DateTime
-  group       AthleteGroup // hver træning er for præcis én gruppe
-  seriesId    String? // fælles id for ugentligt gentagne træninger
-  createdById String
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id           String       @id @default(cuid())
+  title        String
+  description  String?      @db.Text
+  discipline   Discipline
+  location     String
+  startsAt     DateTime
+  endsAt       DateTime
+  group        AthleteGroup // hver træning er for præcis én gruppe
+  cancelledAt  DateTime? // aflyst af træner – vises i kalenderen i stedet for at forsvinde
+  cancelReason String?
+  seriesId     String? // fælles id for ugentligt gentagne træninger
+  createdById  String
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
   createdBy User             @relation(fields: [createdById], references: [id])
   signups   TrainingSignup[]

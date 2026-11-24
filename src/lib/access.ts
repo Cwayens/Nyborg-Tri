@@ -61,6 +61,14 @@ export async function redeemCode(userId: string, input: string): Promise<RedeemR
     });
     if (claimed.count !== 1) return { ok: false, error: "Koden er allerede brugt" };
     const m = await grantMembership(tx, { userId, typeId: found.typeId, days: found.days, source: "CODE" });
+    // Giv en atletgruppe ud fra medlemstypen, hvis brugeren ikke har en, så man kan tilmelde sig med det samme
+    const [user, type] = await Promise.all([
+      tx.user.findUniqueOrThrow({ where: { id: userId } }),
+      tx.membershipType.findUniqueOrThrow({ where: { id: found.typeId } }),
+    ]);
+    if (!user.athleteGroup && type.code !== "PASSIVE") {
+      await tx.user.update({ where: { id: userId }, data: { athleteGroup: type.code === "YOUTH" ? "BOERN" : "BREDDE" } });
+    }
     return { ok: true, endDate: m.endDate };
   });
 }

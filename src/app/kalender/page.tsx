@@ -84,7 +84,8 @@ export default async function Calendar({ searchParams }: Props) {
               </div>
               <div>
                 <span className="disc-label">{DISCIPLINE_LABEL[s.discipline]}</span>
-                <h3>{s.title}</h3>
+                <h3 style={s.cancelledAt ? { textDecoration: "line-through" } : undefined}>{s.title}</h3>
+                {s.cancelledAt && <p><span className="pill warn">Aflyst{s.cancelReason ? `: ${s.cancelReason}` : ""}</span></p>}
                 <p className="muted">
                   {s.location}
                   {s.createdBy.name ? ` · Træner: ${s.createdBy.name}` : ""}
@@ -94,7 +95,7 @@ export default async function Calendar({ searchParams }: Props) {
                 {s.description && <p style={{ whiteSpace: "pre-line" }}>{s.description}</p>}
                 <Attendees names={userId ? s.signups.map((x) => x.user.name ?? "Unavngivet") : null} count={s.signups.length} />
               </div>
-              {userId && s.startsAt > new Date() && (s.signups.some((x) => x.user.id === userId) || (eligible && canJoinGroup(session!.user, s.group))) && (
+              {userId && !s.cancelledAt && s.startsAt > new Date() && (s.signups.some((x) => x.user.id === userId) || (eligible && canJoinGroup(session!.user, s.group))) && (
                 <form action={toggleSignup} className="signup">
                   <input type="hidden" name="sessionId" value={s.id} />
                   {s.signups.some((x) => x.user.id === userId) ? (

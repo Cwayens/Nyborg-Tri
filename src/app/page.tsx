@@ -13,7 +13,7 @@ export default async function Home() {
 
   const [posts, next] = await Promise.all([
     prisma.post.findMany({ where: { published: true }, orderBy: { publishedAt: "desc" }, take: 3 }),
-    prisma.trainingSession.findMany({ where: { startsAt: { gte: new Date() } }, orderBy: { startsAt: "asc" }, take: 4 }),
+    prisma.trainingSession.findMany({ where: { startsAt: { gte: new Date() }, cancelledAt: null }, orderBy: { startsAt: "asc" }, take: 4 }),
   ]);
 
   return (

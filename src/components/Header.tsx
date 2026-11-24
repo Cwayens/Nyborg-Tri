@@ -35,6 +35,7 @@ export async function Header() {
                     <strong>{user.name ?? "Min profil"}</strong>
                     <span className="muted">{user.email}</span>
                   </div>
+                  <Link href="/profil">Min profil</Link>
                   <Link href="/aktiviteter">Mine aktiviteter</Link>
                   <Link href="/forbindelser">Ure, apps og kalender</Link>
                   <Link href="/bliv-medlem">Medlemskab og betaling</Link>

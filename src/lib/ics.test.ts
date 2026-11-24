@@ -8,6 +8,6 @@ test("iCal-fil med korrekt format, escaping og UTC-tider", () => {
   ]);
   assert.match(ics, /^BEGIN:VCALENDAR\r\n/);
   assert.match(ics, /DTSTART:20261201T170000Z\r\n/);
-  assert.match(ics, /SUMMARY:Svøm\\, intervaller\; hårdt/);
+  assert.match(ics, /SUMMARY:Svøm\\, intervaller\\; hårdt/);
   assert.match(ics, /END:VCALENDAR\r\n$/);
 });
