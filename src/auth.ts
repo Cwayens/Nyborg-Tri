@@ -16,10 +16,19 @@ declare module "next-auth" {
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   providers: [
-    Nodemailer({
-      server: process.env.EMAIL_SERVER,
-      from: process.env.EMAIL_FROM,
-    }),
+    Nodemailer(
+      process.env.EMAIL_SERVER
+        ? { server: process.env.EMAIL_SERVER, from: process.env.EMAIL_FROM }
+        : {
+            // Ingen mailserver sat op endnu (fx testversion): login-linket skrives i serverloggen
+            // (Vercel → Logs), så man stadig kan logge ind. Sæt EMAIL_SERVER før rigtig brug.
+            server: "smtp://localhost:25",
+            from: process.env.EMAIL_FROM ?? "noreply@nyborgtri.dk",
+            async sendVerificationRequest({ identifier, url }) {
+              console.warn(`[login] EMAIL_SERVER mangler – login-link til ${identifier}: ${url}`);
+            },
+          },
+    ),
   ],
   session: { strategy: "database" },
   pages: { signIn: "/login", verifyRequest: "/login/tjek-mail" },

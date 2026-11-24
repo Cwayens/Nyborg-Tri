@@ -6,7 +6,7 @@ Ny hjemmeside for [Nyborg Triathlon Klub](https://www.nyborgtri.dk), der erstatt
 **Fase 2:** tilmelding til træninger, så man kan se hvem der kommer.
 **Fase 3:** TrainingPeaks – find medlemmer med samme træning samme dag og send invitationer.
 
-Se [docs/arkitektur.md](docs/arkitektur.md) for teknologivalg og plan.
+Se [docs/arkitektur.md](docs/arkitektur.md) for teknologivalg og plan, og [docs/go-live-tjekliste.md](docs/go-live-tjekliste.md) for det der mangler før go-live.
 
 ## Kom i gang lokalt
 
