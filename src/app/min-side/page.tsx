@@ -15,6 +15,7 @@ import { FROM_WEARABLE, TESTS, formatResult, score } from "@/lib/benchmarks";
 import { WorkoutView } from "@/components/WorkoutView";
 import { isWorkout, referencesFrom } from "@/lib/workout";
 import { toggleSignup } from "../kalender/actions";
+import { GrowSection } from "@/components/GrowSection";
 
 export const metadata = { title: "Overblik" };
 
@@ -175,6 +176,8 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
           })}
         </>
       )}
+
+      <GrowSection userId={user.id} joinedAt={user.createdAt} />
 
       <div className="section-head">
         <h2>Træn sammen</h2>

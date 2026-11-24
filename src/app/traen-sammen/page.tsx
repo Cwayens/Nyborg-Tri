@@ -6,6 +6,7 @@ import { DISCIPLINE_LABEL } from "@/lib/roles";
 import { WorkoutCard } from "@/components/WorkoutCard";
 import { createWorkout } from "./actions";
 import { referencesFor } from "@/lib/program-upload";
+import { isOn } from "@/lib/features";
 
 export const metadata = { title: "Træn sammen" };
 
@@ -29,7 +30,10 @@ export default async function TrainTogether({ searchParams }: Props) {
       <div className="section-head" style={{ marginTop: 0 }}>
         <div>
           <h1 style={{ marginBottom: 4 }}>Træn sammen</h1>
-          <p className="muted" style={{ margin: 0 }}>Skal du ud at løbe, cykle eller svømme? Slå det op, så andre kan hoppe med.</p>
+          <p className="muted" style={{ margin: 0 }}>
+            Skal du ud at løbe, cykle eller svømme? Slå det op, så andre kan hoppe med.
+            {(await isOn("makker")) && <> Eller <Link href="/makker">find en makker i dit tempo</Link>.</>}
+          </p>
         </div>
         {!ny && eligible && <Link href="/traen-sammen?ny=1" className="button">+ Slå en tur op</Link>}
       </div>

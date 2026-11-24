@@ -73,11 +73,21 @@ model User {
   chatMessages             ChatMessage[]
   efforts                  Effort[]
   athleteProfile           AthleteProfile?
+  buddyProfile             BuddyProfile?
+  mentorFor                Mentorship[]              @relation("Mentor")
+  mentee                   Mentorship?               @relation("Mentee")
+  beginnerPlan             BeginnerPlan?
+  tips                     Tip[]
+  challengesCreated        Challenge[]
+  challenges               ChallengeParticipant[]
+  racesCreated             Race[]
+  raceEntries              RaceEntry[]
 
-  shareActivities Boolean @default(false) // samtykke: vis mine aktiviteter i klubstatistikken
-  leaderboard     Boolean @default(false) // samtykke: vis mine bedste præstationer på leaderboardet
-  calendarToken   String? @unique // hemmeligt link til kalender-abonnement
-  newsMail        Boolean @default(true) // vil have nyheder på mail (vigtige beskeder sendes altid)
+  shareActivities Boolean   @default(false) // samtykke: vis mine aktiviteter i klubstatistikken
+  leaderboard     Boolean   @default(false) // samtykke: vis mine bedste præstationer på leaderboardet
+  calendarToken   String?   @unique // hemmeligt link til kalender-abonnement
+  newsMail        Boolean   @default(true) // vil have nyheder på mail (vigtige beskeder sendes altid)
+  mentor          Boolean   @default(false) // frivillig mentor for nye medlemmer
   deletedAt       DateTime? // kontoen er slettet; rækken er anonymiseret, men betalinger gemmes efter bogføringsloven
 }
 
@@ -244,9 +254,9 @@ enum Discipline {
 }
 
 model TrainingSession {
-  id           String       @id @default(cuid())
+  id           String         @id @default(cuid())
   title        String
-  description  String?      @db.Text
+  description  String?        @db.Text
   discipline   Discipline
   location     String
   startsAt     DateTime
@@ -256,9 +266,11 @@ model TrainingSession {
   cancelReason String?
   seriesId     String? // fælles id for ugentligt gentagne træninger
   workout      Json? // struktureret program (fx fra TrainingPeaks), se src/lib/workout.ts
+  paceGroups   String[]       @default([]) // tempogrupper, fx ["5:00 /km", "5:30 /km"]; tom = ingen
+  testDay      BenchmarkTest? // fælles testdag: hvilken test der køres
   createdById  String
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
 
   createdBy User             @relation(fields: [createdById], references: [id])
   signups   TrainingSignup[]
@@ -272,6 +284,7 @@ model TrainingSignup {
   id        String   @id @default(cuid())
   sessionId String
   userId    String
+  paceGroup String? // valgt tempogruppe
   createdAt DateTime @default(now())
 
   session TrainingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
@@ -578,4 +591,137 @@ model MailLog {
   createdAt  DateTime @default(now())
 
   @@index([createdAt])
+}
+
+// ---------- Funktioner der kan slås til og fra ----------
+
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+// ---------- Bredden: makker, mentor, begynderforløb, tips, udfordringer og stævner ----------
+
+// Frivillig makkerprofil, så medlemmer på samme niveau kan finde hinanden
+model BuddyProfile {
+  userId      String       @id
+  disciplines Discipline[]
+  runPace     Int? // sekunder pr. km på en rolig tur
+  bikeSpeed   Int? // km/t på en rolig tur
+  swimPace    Int? // sekunder pr. 100 m
+  times       String[] // MORGEN, DAG, AFTEN, WEEKEND
+  note        String?
+  updatedAt   DateTime     @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Mentorship {
+  id        String    @id @default(cuid())
+  menteeId  String    @unique
+  mentorId  String
+  createdAt DateTime  @default(now())
+  endedAt   DateTime?
+
+  mentee User @relation("Mentee", fields: [menteeId], references: [id], onDelete: Cascade)
+  mentor User @relation("Mentor", fields: [mentorId], references: [id], onDelete: Cascade)
+
+  @@index([mentorId])
+}
+
+model BeginnerPlan {
+  userId    String   @id
+  startedAt DateTime
+  done      String[] @default([]) // id'er på gennemførte pas, fx "u3-2"
+  checklist String[] @default([]) // afkrydsede punkter på stævne-tjeklisten
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Tip {
+  id          String      @id @default(cuid())
+  title       String
+  body        String      @db.Text
+  discipline  Discipline?
+  videoUrl    String?
+  authorId    String
+  publishedAt DateTime    @default(now())
+
+  author User @relation(fields: [authorId], references: [id])
+
+  @@index([publishedAt])
+}
+
+enum ChallengeMetric {
+  KM
+  HOURS
+  SESSIONS
+}
+
+model Challenge {
+  id          String          @id @default(cuid())
+  title       String
+  description String?
+  discipline  Discipline? // null = alle sportsgrene
+  metric      ChallengeMetric
+  goal        Int
+  startsAt    DateTime
+  endsAt      DateTime
+  createdById String
+  createdAt   DateTime        @default(now())
+
+  createdBy    User                   @relation(fields: [createdById], references: [id])
+  participants ChallengeParticipant[]
+}
+
+model ChallengeParticipant {
+  id          String   @id @default(cuid())
+  challengeId String
+  userId      String
+  joinedAt    DateTime @default(now())
+
+  challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([challengeId, userId])
+}
+
+model Race {
+  id          String   @id @default(cuid())
+  name        String
+  date        DateTime
+  location    String
+  url         String?
+  distances   String? // fx "Sprint, Olympisk"
+  clubTent    Boolean  @default(false)
+  createdById String
+  createdAt   DateTime @default(now())
+
+  createdBy User        @relation(fields: [createdById], references: [id])
+  entries   RaceEntry[]
+
+  @@index([date])
+}
+
+enum RideRole {
+  NONE
+  DRIVER
+  PASSENGER
+}
+
+model RaceEntry {
+  id        String   @id @default(cuid())
+  raceId    String
+  userId    String
+  distance  String?
+  ride      RideRole @default(NONE)
+  seats     Int? // ledige pladser i bilen
+  rideFrom  String? // fx "Nyborg station"
+  createdAt DateTime @default(now())
+
+  race Race @relation(fields: [raceId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([raceId, userId])
 }

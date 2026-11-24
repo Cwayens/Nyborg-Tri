@@ -5,7 +5,10 @@ import { canSignUp } from "@/lib/access";
 import { prisma } from "@/lib/db";
 import { DISCIPLINE_LABEL, GROUP_LABEL, GROUPS, canJoinGroup, trainingVisibleFor } from "@/lib/roles";
 import { dayKey, formatDay, formatTime, parseLocal } from "@/lib/time";
-import { toggleSignup } from "@/app/kalender/actions";
+import { setPaceGroup, toggleSignup } from "@/app/kalender/actions";
+import { isOn } from "@/lib/features";
+import { suggestGroup } from "@/lib/pace";
+import { TEST_BY_KEY } from "@/lib/benchmarks";
 import { WorkoutView } from "@/components/WorkoutView";
 import { isWorkout, referencesFrom } from "@/lib/workout";
 import { FROM_WEARABLE } from "@/lib/benchmarks";
@@ -55,6 +58,7 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
   for (const s of sessions) days.set(dayKey(s.startsAt), [...(days.get(dayKey(s.startsAt)) ?? []), s]);
 
   const userId = session?.user.id ?? null;
+  const [tempo, testdage] = await Promise.all([isOn("tempo"), isOn("testdage")]);
   const eligible = userId ? await canSignUp(userId) : false;
   const refs = userId
     ? referencesFrom(await prisma.benchmarkResult.findMany({ where: { userId, ...FROM_WEARABLE }, select: { test: true, seconds: true, watts: true } }))
@@ -156,6 +160,7 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
             </div>
             <div>
               <span className="disc-label">{DISCIPLINE_LABEL[s.discipline]}</span>
+              {testdage && s.testDay && <span className="pill test-pill">Testdag: {TEST_BY_KEY[s.testDay].label}</span>}
               <h3 style={s.cancelledAt ? { textDecoration: "line-through" } : undefined}>{s.title}</h3>
               {s.cancelledAt && <p><span className="pill warn">Aflyst{s.cancelReason ? `: ${s.cancelReason}` : ""}</span></p>}
               <p className="muted">
@@ -168,7 +173,23 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
               {!publicView && isWorkout(s.workout) && (
                 <WorkoutView workout={s.workout} discipline={s.discipline} refs={refs} downloadId={s.signups.some((x) => x.user.id === userId) ? s.id : undefined} />
               )}
-              {!publicView && <Attendees names={s.signups.map((x) => x.user.name ?? "Unavngivet")} count={s.signups.length} />}
+              {!publicView && tempo && s.paceGroups.length > 0 ? (
+                <PaceAttendees groups={s.paceGroups} signups={s.signups.map((x) => ({ name: x.user.name ?? "Unavngivet", pace: x.paceGroup }))} />
+              ) : (
+                !publicView && <Attendees names={s.signups.map((x) => x.user.name ?? "Unavngivet")} count={s.signups.length} />
+              )}
+              {!publicView && tempo && s.paceGroups.length > 0 && s.signups.some((x) => x.user.id === userId) && s.startsAt > new Date() && (
+                <form action={setPaceGroup} className="pace-change">
+                  <input type="hidden" name="sessionId" value={s.id} />
+                  <label>Din gruppe
+                    <select name="paceGroup" defaultValue={s.signups.find((x) => x.user.id === userId)?.paceGroup ?? ""}>
+                      <option value="">Ved ikke endnu</option>
+                      {s.paceGroups.map((g) => <option key={g} value={g}>{g}</option>)}
+                    </select>
+                  </label>
+                  <button className="button small ghost" type="submit">Skift</button>
+                </form>
+              )}
             </div>
             {publicView && !s.cancelledAt && s.startsAt > new Date() && (
               <Link href="/bliv-medlem" className="button small secondary signup">Prøv gratis</Link>
@@ -179,7 +200,15 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
                 {s.signups.some((x) => x.user.id === userId) ? (
                   <button className="button secondary small" type="submit">✓ Tilmeldt · Afmeld</button>
                 ) : (
-                  <button className="button small" type="submit">Tilmeld</button>
+                  <>
+                    {tempo && s.paceGroups.length > 0 && (
+                      <select name="paceGroup" aria-label="Vælg tempogruppe" defaultValue={suggestGroup(s.paceGroups, refs ?? {}, s.discipline) ?? ""}>
+                        <option value="">Vælg tempo</option>
+                        {s.paceGroups.map((g) => <option key={g} value={g}>{g}</option>)}
+                      </select>
+                    )}
+                    <button className="button small" type="submit">Tilmeld</button>
+                  </>
                 )}
               </form>
             )}
@@ -187,6 +216,22 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
         ))}
       </section>
     </>
+  );
+}
+
+// Tilmeldte fordelt på tempogrupper
+function PaceAttendees({ groups, signups }: { groups: string[]; signups: { name: string; pace: string | null }[] }) {
+  if (signups.length === 0) return <p className="muted attendees">Ingen tilmeldte endnu. Vælg din tempogruppe, når du tilmelder dig.</p>;
+  const rows = [...groups, null].map((g) => ({ g, names: signups.filter((x) => (g ? x.pace === g : !x.pace || !groups.includes(x.pace))).map((x) => x.name) }));
+  return (
+    <div className="attendees pace-groups">
+      <strong>{signups.length} kommer</strong>
+      <ul>
+        {rows.filter((r) => r.g || r.names.length).map((r) => (
+          <li key={r.g ?? "-"}><span className="pill">{r.g ?? "Ingen gruppe"}</span> {r.names.length ? <span className="muted">{r.names.join(", ")}</span> : <span className="muted">Ingen endnu</span>}</li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

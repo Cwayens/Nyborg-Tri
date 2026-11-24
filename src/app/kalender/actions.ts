@@ -19,15 +19,32 @@ export async function toggleSignup(formData: FormData) {
   } else {
     // Tilmelding kræver betalt medlemskab, godkendt prøveperiode eller indløst kode
     if (!(await canSignUp(userId))) redirect("/bliv-medlem?fejl=" + encodeURIComponent("Du skal være medlem for at tilmelde dig træninger"));
-    const training = await prisma.trainingSession.findUnique({ where: { id: sessionId }, select: { startsAt: true, group: true, cancelledAt: true } });
+    const training = await prisma.trainingSession.findUnique({ where: { id: sessionId }, select: { startsAt: true, group: true, cancelledAt: true, paceGroups: true } });
     if (!training || training.startsAt < new Date() || training.cancelledAt) return;
     // Atleter kan kun tilmelde sig træninger for deres egen gruppe
     if (!canJoinGroup(session.user, training.group)) return;
     await prisma.trainingSignup.upsert({
       where: { sessionId_userId: { sessionId, userId } },
       update: {},
-      create: { sessionId, userId },
+      create: { sessionId, userId, paceGroup: pickPace(formData, training.paceGroups) },
     });
   }
+  revalidatePath("/kalender");
+  revalidatePath("/min-side");
+}
+
+const pickPace = (formData: FormData, groups: string[]) => {
+  const v = String(formData.get("paceGroup") ?? "");
+  return groups.includes(v) ? v : null;
+};
+
+/** Skift tempogruppe på en træning, man allerede er tilmeldt. */
+export async function setPaceGroup(formData: FormData) {
+  const session = await auth();
+  if (!session?.user) redirect("/login?callbackUrl=/kalender");
+  const sessionId = String(formData.get("sessionId"));
+  const training = await prisma.trainingSession.findUnique({ where: { id: sessionId }, select: { paceGroups: true } });
+  if (!training) return;
+  await prisma.trainingSignup.updateMany({ where: { sessionId, userId: session.user.id }, data: { paceGroup: pickPace(formData, training.paceGroups) } });
   revalidatePath("/kalender");
 }

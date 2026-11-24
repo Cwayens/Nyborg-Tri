@@ -22,6 +22,14 @@ export async function exportUserData(userId: string) {
       groupWorkoutParticipants: { select: { workout: { select: { title: true, startsAt: true } } } },
       athleteProfile: { select: { headline: true, bio: true, goals: true, results: true, instagram: true, published: true, consentAt: true } },
       trialRequest: { select: { status: true, createdAt: true } },
+      mentor: true,
+      buddyProfile: { select: { disciplines: true, runPace: true, bikeSpeed: true, swimPace: true, times: true, note: true } },
+      mentee: { select: { createdAt: true, mentor: { select: { name: true } } } },
+      mentorFor: { select: { createdAt: true, mentee: { select: { name: true } } } },
+      beginnerPlan: { select: { startedAt: true, done: true, checklist: true } },
+      challenges: { select: { joinedAt: true, challenge: { select: { title: true } } } },
+      raceEntries: { select: { distance: true, ride: true, seats: true, rideFrom: true, race: { select: { name: true, date: true } } } },
+      tips: { select: { title: true, publishedAt: true } },
     },
   });
   const contact = await prisma.contactMessage.findMany({ where: { email: user.email }, select: { topic: true, message: true, createdAt: true } });
@@ -52,6 +60,11 @@ export async function deleteAccount(userId: string): Promise<DeleteResult> {
     prisma.chatMessage.deleteMany({ where: { userId } }),
     prisma.athleteProfile.deleteMany({ where: { userId } }),
     prisma.trialRequest.deleteMany({ where: { userId } }),
+    prisma.buddyProfile.deleteMany({ where: { userId } }),
+    prisma.mentorship.deleteMany({ where: { OR: [{ menteeId: userId }, { mentorId: userId }] } }),
+    prisma.beginnerPlan.deleteMany({ where: { userId } }),
+    prisma.challengeParticipant.deleteMany({ where: { userId } }),
+    prisma.raceEntry.deleteMany({ where: { userId } }),
     prisma.contactMessage.deleteMany({ where: { email: user.email } }),
     prisma.account.deleteMany({ where: { userId } }),
     prisma.session.deleteMany({ where: { userId } }), // logger ud på alle enheder
@@ -60,7 +73,7 @@ export async function deleteAccount(userId: string): Promise<DeleteResult> {
       data: {
         name: "Slettet medlem", email: `slettet-${userId}@slettet.invalid`, emailVerified: null, image: null, phone: null,
         birthDate: null, gender: null, weightKg: null, guardianName: null, guardianEmail: null, address: null, zip: null, city: null,
-        role: "ATHLETE", athleteGroup: null, shareActivities: false, leaderboard: false, calendarToken: null, deletedAt: new Date(),
+        role: "ATHLETE", athleteGroup: null, shareActivities: false, leaderboard: false, calendarToken: null, mentor: false, newsMail: false, deletedAt: new Date(),
       },
     }),
   ]);

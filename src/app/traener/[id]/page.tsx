@@ -36,7 +36,7 @@ export default async function EditTraining({ params, searchParams }: Props) {
         ) : (
           <ol>
             {training.signups.map((s) => (
-              <li key={s.id}>{s.user.name ?? s.user.email}{s.user.phone ? ` · ${s.user.phone}` : ""}</li>
+              <li key={s.id}>{s.user.name ?? s.user.email}{s.user.phone ? ` · ${s.user.phone}` : ""}{s.paceGroup ? <span className="pill" style={{ marginLeft: 6 }}>{s.paceGroup}</span> : null}</li>
             ))}
           </ol>
         )}

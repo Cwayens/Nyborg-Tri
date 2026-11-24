@@ -8,6 +8,7 @@ import { requireTrainer } from "@/auth";
 import { prisma } from "@/lib/db";
 import { addWeeksLocal, parseLocal } from "@/lib/time";
 import { readProgram, workoutValue } from "@/lib/program-upload";
+import { splitPaceGroups } from "@/lib/pace";
 
 const schema = z.object({
   title: z.string().trim().min(2, "Skriv en titel"),
@@ -19,7 +20,10 @@ const schema = z.object({
   description: z.string().trim().optional(),
   repeatWeeks: z.coerce.number().int().min(1).max(52).default(1),
   group: z.enum(["ELITE", "BREDDE", "BOERN"], { message: "Vælg hvilken gruppe træningen er for" }),
+  paceGroups: z.string().optional(),
+  testDay: z.enum(["RUN_5K", "RUN_10K", "BIKE_FTP20", "SWIM_100", "SWIM_1500", ""]).optional(),
 });
+
 
 function parse(formData: FormData) {
   const r = schema.safeParse(Object.fromEntries([...formData.entries()].filter(([, v]) => typeof v === "string")));
@@ -53,6 +57,8 @@ export async function createTraining(formData: FormData) {
       endsAt: parseLocal(addWeeksLocal(`${d.date}T${d.end}`, i)),
       seriesId,
       workout: workoutValue(workout),
+      ...(formData.has("paceGroups") ? { paceGroups: splitPaceGroups(d.paceGroups) } : {}),
+      ...(formData.has("testDay") ? { testDay: d.testDay || null } : {}),
       createdById: user.id,
     })),
   });
@@ -75,6 +81,8 @@ export async function updateTraining(id: string, formData: FormData) {
       title: d.title, discipline: d.discipline, location: d.location, description: d.description || null, group: d.group,
       startsAt: parseLocal(`${d.date}T${d.start}`), endsAt: parseLocal(`${d.date}T${d.end}`),
       workout: workoutValue(workout),
+      ...(formData.has("paceGroups") ? { paceGroups: splitPaceGroups(d.paceGroups) } : {}),
+      ...(formData.has("testDay") ? { testDay: d.testDay || null } : {}),
     },
   });
   revalidatePath("/kalender");

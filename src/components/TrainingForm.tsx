@@ -2,10 +2,13 @@ import type { TrainingSession } from "@prisma/client";
 import { DISCIPLINE_LABEL, GROUP_LABEL, GROUPS } from "@/lib/roles";
 import { toLocalInput } from "@/lib/time";
 import { isWorkout, toText } from "@/lib/workout";
+import { TESTS } from "@/lib/benchmarks";
+import { isOn } from "@/lib/features";
 
 type Props = { action: (formData: FormData) => Promise<void>; training?: TrainingSession; allowRepeat?: boolean };
 
-export function TrainingForm({ action, training, allowRepeat }: Props) {
+export async function TrainingForm({ action, training, allowRepeat }: Props) {
+  const [tempo, testdage] = await Promise.all([isOn("tempo"), isOn("testdage")]);
   const start = training ? toLocalInput(training.startsAt) : "";
   const end = training ? toLocalInput(training.endsAt) : "";
   return (
@@ -48,6 +51,23 @@ export function TrainingForm({ action, training, allowRepeat }: Props) {
           />
         </label>
       </fieldset>
+      {tempo && (
+        <label>
+          Tempogrupper (valgfrit)
+          <input name="paceGroups" defaultValue={training?.paceGroups.join(", ") ?? ""} placeholder="fx 5:00 /km, 5:30 /km, 6:15 /km" />
+          <span className="muted hint">Adskil med komma. Atleterne vælger gruppe, når de tilmelder sig, så ingen bliver sat af.</span>
+        </label>
+      )}
+      {testdage && (
+        <label>
+          Testdag (valgfrit)
+          <select name="testDay" defaultValue={training?.testDay ?? ""}>
+            <option value="">Nej, almindelig træning</option>
+            {TESTS.map((t) => <option key={t.test} value={t.test}>{t.label}</option>)}
+          </select>
+          <span className="muted hint">Vises som testdag i kalenderen. Resultatet hentes automatisk fra uret bagefter.</span>
+        </label>
+      )}
       <label>Beskrivelse (valgfri)<textarea name="description" defaultValue={training?.description ?? ""} style={{ minHeight: 120 }} /></label>
       {allowRepeat && (
         <label>

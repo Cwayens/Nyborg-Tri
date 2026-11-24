@@ -8,6 +8,9 @@ import { Sparkline } from "@/components/Sparkline";
 import { dato } from "@/lib/format";
 import { formatWkg, wattsPerKg } from "@/lib/efforts";
 import { deleteBenchmark, saveEffort } from "./actions";
+import { ProgressChart } from "@/components/ProgressChart";
+import { isOn } from "@/lib/features";
+import { formatDay, formatTime } from "@/lib/time";
 
 export const metadata = { title: "Mine tests" };
 
@@ -30,6 +33,11 @@ export default async function Benchmarks({ searchParams }: Props) {
     prisma.user.findUniqueOrThrow({ where: { id: user.id }, select: { weightKg: true } }),
   ]);
 
+  const testdage = await isOn("testdage");
+  const testDays = testdage
+    ? await prisma.trainingSession.findMany({ where: { testDay: { not: null }, cancelledAt: null }, select: { id: true, testDay: true, startsAt: true, title: true, location: true }, orderBy: { startsAt: "asc" } })
+    : [];
+  const nextTest = testDays.find((d) => d.startsAt > new Date());
   const byTest = new Map<string, BenchmarkResult[]>();
   for (const r of results) byTest.set(r.test, [...(byTest.get(r.test) ?? []), r]);
   const savedDef = isTest(sp.gemt) ? TEST_BY_KEY[sp.gemt] : null;
@@ -60,6 +68,13 @@ export default async function Benchmarks({ searchParams }: Props) {
         <p className="notice">Vi gennemgår stadig {pending} af dine ture fra uret. Nye resultater dukker op her løbende.</p>
       )}
 
+      {nextTest && (
+        <p className="card next-test">
+          <span className="pill test-pill">Næste testdag</span> <b>{TEST_BY_KEY[nextTest.testDay!].label}</b> {formatDay(nextTest.startsAt)} kl. {formatTime(nextTest.startsAt)}, {nextTest.location}.{" "}
+          <Link href="/kalender">Tilmeld dig i kalenderen</Link>
+        </p>
+      )}
+
       <div className="bm-grid">
         {TESTS.map((def) => {
           const list = byTest.get(def.test) ?? [];
@@ -85,7 +100,15 @@ export default async function Benchmarks({ searchParams }: Props) {
                       ? <p className="bm-wkg"><b>{formatWkg(wattsPerKg(best.watts, me.weightKg))}</b> <span className="muted">ved {me.weightKg.toLocaleString("da-DK")} kg</span></p>
                       : <p className="muted bm-detail"><Link href="/profil">Skriv din vægt</Link> for at se W/kg</p>
                   )}
-                  <Sparkline values={list.map(score)} label={`Udvikling i ${def.label}`} />
+                  {testdage ? (
+                    <ProgressChart
+                      points={list.map((r) => ({ date: r.date, score: score(r), label: formatResult(r) }))}
+                      testDays={testDays.filter((d) => d.testDay === def.test && d.startsAt <= new Date()).map((d) => d.startsAt)}
+                      label={`Udvikling i ${def.label}`}
+                    />
+                  ) : (
+                    <Sparkline values={list.map(score)} label={`Udvikling i ${def.label}`} />
+                  )}
                   <p className="bm-latest">
                     Seneste: <b>{formatResult(latest!)}</b> {dato(latest!.date)}
                     {diff && <span className={`pill ${diff.better ? "ok" : "warn"}`}>{diff.text}</span>}

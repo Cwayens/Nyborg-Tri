@@ -10,7 +10,7 @@ const MISSING: Partial<Record<Discipline, string>> = {
 };
 
 // Programmet trin for trin med atletens personlige watt eller tempo
-export function WorkoutView({ workout, discipline, refs, downloadId, kind }: { workout: Workout; discipline: Discipline; refs: References | null; downloadId?: string; kind?: "tur" }) {
+export function WorkoutView({ workout, discipline, refs, downloadId, kind }: { workout: Workout; discipline: Discipline; refs: References | null; downloadId?: string; kind?: "tur" | "forloeb" }) {
   const total = totalDuration(workout);
   const anyTarget = workout.blocks.some((b) => b.steps.some((s) => personalTarget(discipline, s, refs ?? {})));
   return (
@@ -49,8 +49,8 @@ export function WorkoutView({ workout, discipline, refs, downloadId, kind }: { w
       {downloadId && (
         <div className="workout-export">
           <span>Læg på uret:</span>
-          <a href={`/api/program/${downloadId}?format=fit${kind ? "&kilde=tur" : ""}`} className="button small secondary" download>Hent til ur (.fit)</a>
-          {discipline !== "SWIM" && <a href={`/api/program/${downloadId}?format=zwo${kind ? "&kilde=tur" : ""}`} className="button small ghost" download>Zwift (.zwo)</a>}
+          <a href={`/api/program/${downloadId}?format=fit${kind ? `&kilde=${kind}` : ""}`} className="button small secondary" download>Hent til ur (.fit)</a>
+          {discipline !== "SWIM" && <a href={`/api/program/${downloadId}?format=zwo${kind ? `&kilde=${kind}` : ""}`} className="button small ghost" download>Zwift (.zwo)</a>}
           <Link href="/program-paa-uret" className="muted">Sådan gør du</Link>
         </div>
       )}

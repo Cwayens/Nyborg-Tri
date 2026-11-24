@@ -828,3 +828,82 @@ form.stack.mail-form { max-width: 760px; }
 }
 .seg button { padding: 6px 14px; border: 0; background: none; color: var(--text); font: inherit; font-weight: 600; font-size: 0.9rem; }
 .seg button.active { background: var(--navy); color: #fff; }
+
+/* ---------- Bredden: tempogrupper, testdage, makker, mentor, begynder, tips, udfordringer, stævner ---------- */
+.hint { display: block; font-size: 0.85rem; font-weight: 400; margin-top: 2px; }
+.features-form .check { align-items: flex-start; }
+.test-pill { background: #fff3d6; color: #7a4b00; margin-left: 6px; }
+.next-test { padding: 12px 16px; margin-bottom: 16px; }
+.signup select { margin-right: 6px; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line); font: inherit; font-size: 0.9rem; }
+.pace-groups ul { list-style: none; padding: 0; margin: 6px 0 0; display: grid; gap: 4px; }
+.pace-change { display: flex; gap: 8px; align-items: flex-end; margin-top: 8px; flex-wrap: wrap; }
+.pace-change label { display: flex; gap: 6px; align-items: center; font-size: 0.9rem; white-space: nowrap; }
+.pace-change select { padding: 4px 8px; border-radius: 8px; border: 1px solid var(--line); font: inherit; }
+.progress-chart { margin: 8px 0 4px; }
+.progress-chart svg { width: 100%; height: auto; display: block; color: var(--c, var(--sea)); }
+.pc-axis { stroke: var(--line); }
+.pc-testday { stroke: #d99a00; stroke-width: 1.5; stroke-dasharray: 3 3; }
+.pc-line { fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.pc-dot { fill: currentColor; stroke: var(--card); stroke-width: 2; }
+.pc-best { fill: currentColor; stroke: var(--card); stroke-width: 2; }
+.pc-label { font-size: 14px; font-weight: 700; fill: var(--text); }
+.pc-date { font-size: 12px; fill: var(--muted); }
+.progress-chart figcaption { font-size: 0.8rem; display: flex; align-items: center; gap: 6px; }
+.pc-key { display: inline-block; width: 14px; border-top: 2px dashed #d99a00; }
+.buddy-form fieldset { display: flex; gap: 16px; flex-wrap: wrap; border: 0; padding: 0; margin: 0; }
+.buddy-form legend { font-weight: 600; margin-bottom: 6px; width: 100%; }
+.buddy-me { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: center; padding: 12px 16px; }
+.buddy-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.buddy header { display: flex; gap: 10px; align-items: center; }
+.buddy-sports { list-style: none; padding: 0; margin: 10px 0; display: grid; gap: 4px; }
+.buddy-sports li { display: flex; gap: 6px; align-items: center; }
+.buddy-note { font-style: italic; margin: 0 0 10px; }
+.buddy-actions { display: flex; gap: 8px; }
+.begin-start { display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap; justify-content: space-between; }
+.begin-status { display: grid; gap: 8px; margin-bottom: 16px; }
+.meter { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
+.begin-weeks { display: grid; gap: 10px; margin-top: 16px; }
+.begin-week summary { display: flex; gap: 10px; align-items: center; cursor: pointer; flex-wrap: wrap; }
+.begin-week.now { border: 2px solid var(--accent); }
+.begin-num { color: var(--muted); font-size: 0.9rem; min-width: 52px; }
+.begin-tip { background: var(--bg); border-radius: var(--radius-sm); padding: 8px 12px; margin: 12px 0; }
+.begin-session { border-top: 1px solid var(--line); padding: 12px 0 4px; }
+.begin-head { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: start; }
+.begin-head h3 { margin: 0; font-size: 1rem; }
+.begin-checklist { list-style: none; padding: 0; display: grid; gap: 4px; }
+.check-btn { background: none; border: 0; padding: 4px 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+@media (max-width: 560px) { .begin-head { grid-template-columns: auto 1fr; } .begin-head form { grid-column: 1 / -1; } }
+.mentor-person { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; }
+.tips { display: grid; gap: 16px; max-width: 760px; }
+.tip header { display: flex; gap: 10px; align-items: flex-start; }
+.video { position: relative; aspect-ratio: 16 / 9; margin: 12px 0; border-radius: var(--radius-sm); overflow: hidden; background: #000; }
+.video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.challenges { display: grid; gap: 14px; }
+.challenge header { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.challenge h3 { margin: 2px 0 6px; }
+.meter.big { height: 14px; }
+.challenge-nums { margin: 8px 0 0; }
+.challenge-mine { margin: 6px 0 0; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 99px; background: #fff3d6; color: #7a4b00; font-size: 0.8rem; font-weight: 700; }
+.badge::before { content: "★"; }
+.past-challenges { list-style: none; padding: 0; display: grid; gap: 6px; }
+.past-challenges li { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.races { display: grid; gap: 16px; }
+.race header { display: flex; gap: 14px; align-items: flex-start; }
+.race-date { display: grid; place-items: center; min-width: 54px; padding: 6px; border-radius: var(--radius-sm); background: var(--bg); line-height: 1.1; }
+.race-date b { font-size: 1.4rem; }
+.race-date span { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; }
+.race-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin: 14px 0; }
+.race-h { font-size: 0.95rem; margin: 0 0 6px; }
+.race-people { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
+.race-people li { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.race-people .avatar { width: 26px; height: 26px; font-size: 0.7rem; }
+.race-join summary { list-style: none; display: inline-flex; cursor: pointer; }
+.race-join summary::-webkit-details-marker { display: none; }
+.race-admin { display: flex; gap: 14px; margin-top: 10px; font-size: 0.9rem; }
+.grow-tip { display: grid; gap: 4px; text-decoration: none; color: inherit; align-content: start; }
+.grow-links { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); margin-top: 14px; }
+.grow-links a { display: grid; gap: 4px; text-decoration: none; color: inherit; align-content: start; }
+.grow-links a:hover strong, .grow-tip:hover strong { color: var(--link); }
+.grow-tip .pill { justify-self: start; }

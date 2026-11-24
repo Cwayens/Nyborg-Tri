@@ -20,6 +20,9 @@ const DATA: [string, string, string, string][] = [
   ["Chat", "Dine beskeder i klubbens chat", "Kommunikation i klubben (legitim interesse). Børns chat kan læses af trænere", "Indtil du sletter dem eller din profil"],
   ["Atletprofil", "Billede, tekst, resultater og sponsorer på den offentlige atletside", "Kun med dit samtykke, som du kan trække tilbage", "Indtil du trækker samtykket tilbage"],
   ["Kontaktformular", "Navn, mail, telefon og din besked", "For at kunne svare dig (legitim interesse)", "1 år"],
+  ["Makkerprofil (frivillig)", "Sportsgrene, roligt tempo, tidspunkter, kort tekst. Navn og mail vises for andre med en makkerprofil", "Så medlemmer kan finde nogen at træne med (samtykke)", "Til du sletter profilen"],
+  ["Mentorordning (frivillig)", "Hvem der er mentor for hvem. Navn, mail og telefon deles mellem mentor og nyt medlem", "Hjælpe nye medlemmer i gang (samtykke)", "Til I afslutter forløbet"],
+  ["Begynderforløb, udfordringer og stævner", "Startdato og afkrydsede træninger, deltagelse i udfordringer, stævner, distance og samkørsel (mail vises ved samkørsel)", "Træning og fællesskab i klubben (samtykke)", "Til du melder dig fra eller sletter din profil"],
 ];
 
 export default function Privacy() {

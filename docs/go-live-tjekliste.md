@@ -86,6 +86,18 @@ Sæt `[x]`, når et punkt er klaret.
 - [ ] **Kort og ruter** (`/ruter`): ruterne er hentet fra den gamle side. Tjek at de stadig passer, og ret træningssteder i `src/lib/club.ts` og ruter i `src/data/ruter.json`. Kortet bruger OpenStreetMap, som er gratis ved lav trafik; ved meget trafik skal der skiftes til en betalt kortudbyder.
 - [x] **Indmeldelse uden login**: nye kan melde sig ind eller bede om prøvetræning direkte på /bliv-medlem. Der sendes et loginlink, og der er en bremse mod spam (30 nye pr. time).
 
+## Bredden (nye funktioner)
+
+Alle otte kan slås fra og til under **Administration → Funktioner**. Data gemmes, når en funktion er slået fra.
+
+- [ ] Gennemgå de otte funktioner med trænerne, og slå dem fra, I ikke vil bruge fra start: tempogrupper, find en makker, begynderforløb, mentorordning, ugens tip, testdage, klubudfordringer, stævner og samkørsel.
+- [ ] **Begynderforløbet** (`src/data/begynder.ts`) er et udkast. Lad en træner læse de 10 uger og stævnetjeklisten igennem.
+- [ ] Find 3-5 erfarne medlemmer, der vil være **mentor** (de melder sig selv under /mentor).
+- [ ] Læg de første **tips** og den første **udfordring** ud før lancering, så siderne ikke er tomme.
+- [ ] Læg sæsonens **stævner** ind under /staevner (alle medlemmer kan tilføje), og marker hvor klubteltet kommer med.
+- [ ] Planlæg **testdage** hver 8. uge i kalenderen (vælg "Testdag" når træningen oprettes).
+- [ ] Klubudfordringer tæller kun Strava-ture i klubbens fælles tal, når `STRAVA_LEADERBOARD=1` (skriftlig tilladelse fra Strava). Dit eget bidrag tæller altid.
+
 ## Integrationer
 
 - [ ] **TrainingPeaks API**: søg partneradgang hos TrainingPeaks (API-ansøgning til klubber/coach-platforme). Når den er godkendt, sættes `TRAININGPEAKS_CLIENT_ID` og `TRAININGPEAKS_CLIENT_SECRET`, og koblingen i `src/lib/trainingpeaks.ts` gøres færdig. Med API'et kan medlemmer hente deres planlagte TrainingPeaks-træninger direkte og dele dem under Træn sammen med ét klik. Indtil da eksporterer trænere og medlemmer træningen som .fit, .zwo eller .mrc og uploader filen (virker nu).
