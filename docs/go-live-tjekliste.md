@@ -32,12 +32,15 @@ Sæt `[x]`, når et punkt er klaret.
 - [ ] Sæt brugertype og gruppe (Elite/Bredde/Børn) på alle importerede medlemmer.
 - [ ] Opdater kontingentsatser hvis de ændres (`prisma/seed.ts` eller direkte i databasen).
 - [ ] Slet testdata (testbrugere, testtræninger, testkoder).
-- [ ] **Backup af databasen**: slå automatisk backup/point-in-time restore til hos databaseudbyderen, og test en gendannelse.
+- [ ] **Backup af databasen**: slå point-in-time restore til hos Neon, og test en gendannelse.
+- [ ] **Egen natlig backup** (bygget, kører kl. 2.15 via cron): sæt `BACKUP_KEY` (lang tilfældig tekst, gem den også uden for Vercel, fx i bestyrelsens kodeordsmanager) og `BLOB_READ_WRITE_TOKEN`. Backupper ligger krypteret i Vercel Blob i 30 dage. Læs en backup med `npx tsx scripts/read-backup.ts <fil>`.
+- [ ] **Overvågning**: sæt `ALERT_EMAIL` (fx formand og kasserer), så fejl på siden sendes på mail. Opret en gratis uptime-monitor (fx UptimeRobot eller Better Stack) på `https://<domæne>/api/health`. Status ses under Administration → Drift.
 
 ## Indhold
 
 - [ ] Kør WordPress-import én sidste gang, og fjern derefter `IMPORT_WP_ON_BUILD` (ellers overskrives rettelser ved hver udrulning).
-- [ ] Flyt billeder og PDF'er fra den gamle WordPress-server til egen lagring, før WordPress lukkes.
+- [ ] **Billedlagring**: opret en Vercel Blob-store og sæt `BLOB_READ_WRITE_TOKEN`. Nye uploads gemmes så som WebP i Blob (uden den gemmes de i databasen).
+- [ ] Efter sidste WordPress-import: kør `DRY_RUN=1 npm run images:move` og derefter `npm run images:move`, så billeder og PDF'er flyttes fra WordPress til egen lagring, før WordPress lukkes.
 - [ ] Gennemgå alle importerede sider (fx Kalender, Bliv medlem og gamle Cup-sider) og ret/slet forældet indhold.
 - [ ] Opdater "Bliv medlem"-teksten, så den ikke længere henviser til Klubmodul.
 - [ ] Tjek at gamle links (fx fra Facebook og Google) stadig virker.
@@ -56,8 +59,8 @@ Sæt `[x]`, når et punkt er klaret.
 
 ## GDPR og privatliv
 
-- [ ] **Privatlivspolitikken** (`/privatlivspolitik`, importeret fra WordPress) skal opdateres. Den nævner ikke de nye data: ur-/Strava-data, vægt, værgens mail, kontaktformularen, chat og atletprofiler.
-- [ ] Medlemmer kan endnu ikke selv slette deres konto. Indtil det er bygget, skal sletning ske via admin på anmodning.
+- [ ] **Privatlivspolitikken** (`/privatlivspolitik`) er skrevet på ny og dækker ur-/Strava-data, vægt, værge, kontaktformular, chat, atletprofiler, leaderboard, kort og opbevaringstider. Bestyrelsen skal læse den igennem og godkende den.
+- [x] Medlemmer kan selv hente deres data og slette deres profil under Min profil → Dine data. Betalinger og medlemskaber gemmes i 5 år (bogføringsloven), men uden navn og mail. Slettede medlemmer vises som "Slettet medlem" i admin.
 
 - [ ] **Kontaktformularen** gemmer navn, mail, telefon og besked. Nævn det i privatlivspolitikken, og slet gamle henvendelser jævnligt (fx efter et år).
 
@@ -75,7 +78,13 @@ Sæt `[x]`, når et punkt er klaret.
 - [ ] Nævn i privatlivspolitikken, at vi gemmer navn og e-mail på forælder/værge for medlemmer under 18.
 - [ ] **Atleter-siden** viser kun atleter, der selv har givet samtykke under Min profil → Min atletprofil. Billeder og tekster er offentlige. Vis aldrig data fra Strava eller ure på profilen.
 - [ ] Opret de rigtige atletprofiler under Administration → Atleter, og få atleterne til at give samtykke og uploade et billede.
-- [ ] Rutine for sletning af data, når et medlem melder sig ud.
+- [ ] Rutine for sletning af data, når et medlem melder sig ud (medlemmet kan selv slette, ellers gør admin det på anmodning). Henvendelser fra kontaktformularen slettes automatisk efter et år.
+
+## Mail og kort
+
+- [ ] **Mail til hold og medlemmer** (Administration → Mail): trænere kan maile deres hold, admin alle medlemmer. Mails til børn går til forælderen. Medlemmer kan fravælge nyheder på profilen. Aftal i bestyrelsen, hvem der må sende til alle.
+- [ ] **Kort og ruter** (`/ruter`): ruterne er hentet fra den gamle side. Tjek at de stadig passer, og ret træningssteder i `src/lib/club.ts` og ruter i `src/data/ruter.json`. Kortet bruger OpenStreetMap, som er gratis ved lav trafik; ved meget trafik skal der skiftes til en betalt kortudbyder.
+- [x] **Indmeldelse uden login**: nye kan melde sig ind eller bede om prøvetræning direkte på /bliv-medlem. Der sendes et loginlink, og der er en bremse mod spam (30 nye pr. time).
 
 ## Integrationer
 

@@ -98,8 +98,25 @@ Log ind med en mail der har rollen ADMIN (sættes af seed via `ADMIN_EMAIL`, ell
 - `/admin/betalinger` – betalinger og status i økonomisystemet
 - `/admin/indhold` – skriv nyheder og ret sider (Markdown)
 - `/admin/medlemmer.csv` – medlemsliste til Excel
+- `/admin/mail` – mail til et hold, prøvetrænende, trænere eller alle medlemmer (trænere kan maile deres hold)
+- `/admin/drift` – status for database, mail, backup og overvågning, og knap til testalarm
 
 ## Drift
 
 Anbefalet: [Vercel](https://vercel.com) (hosting, gratis/hobby er nok til start) + PostgreSQL i EU (fx Neon Frankfurt eller Supabase EU) + SMTP fra fx Brevo/Resend til login-mails.
 Byg-kommando `npm run build`, og kør `npm run db:deploy` ved hver udrulning med databaseændringer.
+
+### Billeder, backup og overvågning
+
+- **Billeder**: uploads skaleres og gemmes som WebP i Vercel Blob (`BLOB_READ_WRITE_TOKEN`). `npm run images:move` flytter gamle WordPress-billeder dertil (`DRY_RUN=1` viser først, hvad der flyttes).
+- **Backup**: `/api/cron/backup` kører hver nat og gemmer en krypteret kopi af databasen (AES-256 med `BACKUP_KEY`) i Blob i 30 dage. Læs den med `npx tsx scripts/read-backup.ts <fil>`.
+- **Overvågning**: `/api/health` til en uptime-monitor. Serverfejl mailes til `ALERT_EMAIL` (højst én mail i timen pr. fejl).
+
+### Medlemmernes data
+
+- `/privatlivspolitik` beskriver hvilke data vi gemmer og hvorfor.
+- Under Min profil → Dine data kan medlemmet hente alt som JSON (`/api/mine-data`) og slette sin profil. Betalinger beholdes anonymt i 5 år.
+
+### Kort og ruter
+
+`/ruter` viser træningssteder (`src/lib/club.ts`) og ruter (`src/data/ruter.json`) på et OpenStreetMap-kort centreret på Nyborg Idræts- og Fritidscenter. Hver rute kan hentes som GPX (`/ruter/<id>.gpx`).
