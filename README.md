@@ -23,6 +23,18 @@ npm run dev                 # http://localhost:3000
 
 Test: `npm test` · Typecheck: `npm run typecheck`
 
+## Se siden online (testversion på Vercel)
+
+1. Log ind på [vercel.com](https://vercel.com) med GitHub og vælg **Add New → Project → Import** `Cwayens/Nyborg-Tri`.
+2. Under **Environment Variables** tilføjes:
+   - `AUTH_SECRET` = en lang tilfældig tekst (fx 40 tilfældige tegn)
+   - `IMPORT_WP_ON_BUILD` = `1` (henter sider og nyheder fra nyborgtri.dk ved hver udrulning – fjernes, når siden går i drift)
+3. Klik **Deploy**. Første forsøg fejler, fordi der mangler en database. Det er forventet.
+4. Gå til projektets **Storage → Create Database → Neon (Postgres)**, vælg region Frankfurt og forbind til projektet. Så sættes `DATABASE_URL` automatisk.
+5. Gå til **Deployments → ⋯ → Redeploy**. Nu bygges siden med tabeller, kontingentsatser og indhold fra den gamle side, og du får et link.
+
+Login og betaling virker først, når `EMAIL_SERVER`/`EMAIL_FROM` og Stripe-nøgler er sat (se nedenfor).
+
 ## Betaling (Stripe)
 
 1. Opret en Stripe-konto for klubben (CVR 34371571) og slå **MobilePay** til under *Payment methods*.
