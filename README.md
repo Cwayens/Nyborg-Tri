@@ -69,7 +69,7 @@ Træneren vælger præcis én gruppe for hver træning (Elite, Bredde eller Bør
 ## Testresultater og chat
 
 - **Mine tests** (`/benchmarks`): 5 km, 10 km, FTP (20 min), 100 m og 1500 m svøm med historik og udvikling. Ture fra Strava eller manuelt på præcis testdistancen foreslås som resultat. Trænere ser gruppens bedste resultater under Trænerværktøj → Testresultater.
-- **Chat** (`/chat`): én kanal pr. gruppe for løb, cykling og svøm. Atleter skriver i egen gruppe, trænere og admin i alle og kan slette beskeder.
+- **Chat** (`/chat`): kanalerne Løb, Cykling, Svøm og Social. Elite og Bredde deler chat, Børn har deres egen. Trænere og admin har adgang til begge og kan slette beskeder.
 
 ## Træningsprogrammer (TrainingPeaks)
 

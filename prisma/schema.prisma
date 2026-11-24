@@ -420,20 +420,32 @@ model BenchmarkResult {
   @@index([userId, test, date])
 }
 
-// ---------- Gruppechat ----------
+// ---------- Chat ----------
 
-// Én kanal pr. gruppe og disciplin (fx Bredde · Løb). Atleter skriver i egen gruppe, trænere i alle.
+// Voksne (Elite og Bredde) deler kanaler. Børn har deres egne, som trænerne følger.
+enum ChatRoom {
+  VOKSNE
+  BOERN
+}
+
+enum ChatChannel {
+  RUN
+  BIKE
+  SWIM
+  SOCIAL
+}
+
 model ChatMessage {
-  id          String       @id @default(cuid())
-  group       AthleteGroup
-  channel     Discipline // SWIM, BIKE eller RUN
+  id          String      @id @default(cuid())
+  room        ChatRoom
+  channel     ChatChannel
   userId      String
-  body        String       @db.Text
-  createdAt   DateTime     @default(now())
+  body        String      @db.Text
+  createdAt   DateTime    @default(now())
   deletedAt   DateTime? // slettet af afsender eller træner (moderation)
   deletedById String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([group, channel, createdAt])
+  @@index([room, channel, createdAt])
 }

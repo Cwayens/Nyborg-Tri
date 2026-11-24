@@ -1,25 +1,23 @@
 import Link from "next/link";
-import type { AthleteGroup } from "@prisma/client";
+import type { ChatChannel, ChatRoom } from "@prisma/client";
 import { requireUser } from "@/auth";
 import { prisma } from "@/lib/db";
-import { CHANNELS, CHANNEL_LABEL, canDeleteMessage, canUseChat, isChannel, MAX_LENGTH } from "@/lib/chat";
-import { GROUPS, GROUP_LABEL, hasRole } from "@/lib/roles";
+import { CHANNELS, CHANNEL_LABEL, ROOM_LABEL, canDeleteMessage, isChannel, MAX_LENGTH, roomsFor } from "@/lib/chat";
 import { formatDay, formatTime } from "@/lib/time";
-import { DisciplineIcon, initials } from "@/components/Icons";
+import { ChatIcon, DisciplineIcon, initials } from "@/components/Icons";
 import { AutoRefresh } from "./AutoRefresh";
 import { deleteMessage, postMessage } from "./actions";
 
 export const metadata = { title: "Chat" };
 
-type Props = { searchParams: Promise<{ gruppe?: string; kanal?: string }> };
+type Props = { searchParams: Promise<{ rum?: string; kanal?: string }> };
 
 export default async function Chat({ searchParams }: Props) {
   const user = await requireUser("/chat");
   const sp = await searchParams;
-  const trainer = hasRole(user.role, "TRAINER");
-  const groups = trainer ? GROUPS : user.athleteGroup ? [user.athleteGroup] : [];
+  const rooms = roomsFor(user);
 
-  if (groups.length === 0) {
+  if (rooms.length === 0) {
     return (
       <>
         <h1>Chat</h1>
@@ -28,48 +26,47 @@ export default async function Chat({ searchParams }: Props) {
     );
   }
 
-  const group: AthleteGroup = groups.includes(sp.gruppe as AthleteGroup) ? (sp.gruppe as AthleteGroup) : groups[0];
-  const channel = isChannel(sp.kanal) ? sp.kanal : "RUN";
-  if (!canUseChat(user, group)) return null;
+  const room: ChatRoom = rooms.includes(sp.rum as ChatRoom) ? (sp.rum as ChatRoom) : rooms[0];
+  const channel: ChatChannel = isChannel(sp.kanal) ? sp.kanal : "SOCIAL";
 
   const [messages, latest] = await Promise.all([
     prisma.chatMessage.findMany({
-      where: { group, channel },
+      where: { room, channel },
       include: { user: { select: { name: true } } },
       orderBy: { createdAt: "desc" },
       take: 100,
     }),
-    prisma.chatMessage.groupBy({ by: ["channel"], where: { group, deletedAt: null }, _max: { createdAt: true } }),
+    prisma.chatMessage.groupBy({ by: ["channel"], where: { room, deletedAt: null }, _max: { createdAt: true } }),
   ]);
   messages.reverse();
   const lastAt = Object.fromEntries(latest.map((l) => [l.channel, l._max.createdAt]));
-  const url = (g: AthleteGroup, c: string) => `/chat?gruppe=${g}&kanal=${c}`;
+  const url = (r: ChatRoom, c: string) => `/chat?rum=${r}&kanal=${c}`;
 
   let lastDay = "";
   return (
     <div className="chat">
       <AutoRefresh />
       <h1>Chat</h1>
-      {groups.length > 1 && (
-        <nav className="filters" aria-label="Gruppe">
-          {groups.map((g) => (
-            <Link key={g} href={url(g, channel)} className={g === group ? "active" : undefined} aria-current={g === group ? "page" : undefined}>{GROUP_LABEL[g]}</Link>
+      {rooms.length > 1 && (
+        <nav className="filters" aria-label="Chatrum">
+          {rooms.map((r) => (
+            <Link key={r} href={url(r, channel)} className={r === room ? "active" : undefined} aria-current={r === room ? "page" : undefined}>{ROOM_LABEL[r]}</Link>
           ))}
         </nav>
       )}
       <nav className="chat-channels" aria-label="Kanal">
         {CHANNELS.map((c) => (
-          <Link key={c} href={url(group, c)} className={`disc disc-${c}${c === channel ? " active" : ""}`} aria-current={c === channel ? "page" : undefined}>
-            <DisciplineIcon discipline={c} size={18} />
+          <Link key={c} href={url(room, c)} className={`disc disc-${c === "SOCIAL" ? "OTHER" : c}${c === channel ? " active" : ""}`} aria-current={c === channel ? "page" : undefined}>
+            {c === "SOCIAL" ? <span className="disc disc-OTHER disc-icon"><ChatIcon size={18} /></span> : <DisciplineIcon discipline={c} size={18} />}
             <span>{CHANNEL_LABEL[c]}</span>
             {lastAt[c] && c !== channel && <small className="muted">{formatTime(lastAt[c]!)}</small>}
           </Link>
         ))}
       </nav>
 
-      <section className="card chat-log" aria-label={`${GROUP_LABEL[group]} · ${CHANNEL_LABEL[channel]}`}>
+      <section className="card chat-log" aria-label={`${ROOM_LABEL[room]} · ${CHANNEL_LABEL[channel]}`}>
         {messages.length === 0 && (
-          <p className="empty">Ingen beskeder endnu. Skriv den første, fx om en tur, en aflysning eller et godt råd.</p>
+          <p className="empty">{channel === "SOCIAL" ? "Ingen beskeder endnu. Sig hej, del et billede fra weekendens løb eller foreslå en klubaften." : "Ingen beskeder endnu. Skriv den første, fx om en tur, en aflysning eller et godt råd."}</p>
         )}
         {messages.map((m) => {
           const day = formatDay(m.createdAt);
@@ -102,13 +99,13 @@ export default async function Chat({ searchParams }: Props) {
       </section>
 
       <form action={postMessage} className="chat-form">
-        <input type="hidden" name="group" value={group} />
+        <input type="hidden" name="room" value={room} />
         <input type="hidden" name="channel" value={channel} />
-        <label className="sr-only" htmlFor="besked">Besked til {GROUP_LABEL[group]} · {CHANNEL_LABEL[channel]}</label>
-        <textarea id="besked" name="body" rows={2} maxLength={MAX_LENGTH} required placeholder={`Skriv til ${GROUP_LABEL[group]} · ${CHANNEL_LABEL[channel]}`} />
+        <label className="sr-only" htmlFor="besked">Besked til {ROOM_LABEL[room]} · {CHANNEL_LABEL[channel]}</label>
+        <textarea id="besked" name="body" rows={2} maxLength={MAX_LENGTH} required placeholder={`Skriv til ${CHANNEL_LABEL[channel]} · ${ROOM_LABEL[room]}`} />
         <button className="button" type="submit">Send</button>
       </form>
-      {group === "BOERN" && <p className="muted" style={{ fontSize: "0.88rem" }}>Børnegruppens chat følges af trænerne, som kan slette beskeder.</p>}
+      {room === "BOERN" && <p className="muted" style={{ fontSize: "0.88rem" }}>Børnegruppens chat følges af trænerne, som kan slette beskeder.</p>}
     </div>
   );
 }

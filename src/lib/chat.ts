@@ -1,19 +1,34 @@
-import type { AthleteGroup, Discipline, Role } from "@prisma/client";
+import type { AthleteGroup, ChatChannel, ChatRoom, Role } from "@prisma/client";
 import { hasRole } from "./roles";
 
-export const CHANNELS = ["RUN", "BIKE", "SWIM"] as const satisfies readonly Discipline[];
-export type Channel = (typeof CHANNELS)[number];
-export const CHANNEL_LABEL: Record<Channel, string> = { RUN: "Løb", BIKE: "Cykling", SWIM: "Svøm" };
+export const CHANNELS = ["RUN", "BIKE", "SWIM", "SOCIAL"] as const satisfies readonly ChatChannel[];
+export const CHANNEL_LABEL: Record<ChatChannel, string> = { RUN: "Løb", BIKE: "Cykling", SWIM: "Svøm", SOCIAL: "Social" };
+export const ROOMS = ["VOKSNE", "BOERN"] as const satisfies readonly ChatRoom[];
+export const ROOM_LABEL: Record<ChatRoom, string> = { VOKSNE: "Elite og Bredde", BOERN: "Børn" };
 
-export function isChannel(v: unknown): v is Channel {
+export function isChannel(v: unknown): v is ChatChannel {
   return typeof v === "string" && (CHANNELS as readonly string[]).includes(v);
+}
+export function isRoom(v: unknown): v is ChatRoom {
+  return typeof v === "string" && (ROOMS as readonly string[]).includes(v);
 }
 
 type U = { role: Role; athleteGroup: AthleteGroup | null };
 
-/** Atleter læser og skriver kun i egen gruppe. Trænere og admin har adgang til alle grupper. */
-export function canUseChat(user: U, group: AthleteGroup): boolean {
-  return hasRole(user.role, "TRAINER") || user.athleteGroup === group;
+/** Elite og Bredde deler chat. Børn har deres egen. */
+export function roomFor(group: AthleteGroup | null): ChatRoom | null {
+  return group === "BOERN" ? "BOERN" : group ? "VOKSNE" : null;
+}
+
+/** Hvilke chatrum må brugeren bruge? Trænere og admin har adgang til begge. */
+export function roomsFor(user: U): ChatRoom[] {
+  if (hasRole(user.role, "TRAINER")) return [...ROOMS];
+  const r = roomFor(user.athleteGroup);
+  return r ? [r] : [];
+}
+
+export function canUseChat(user: U, room: ChatRoom): boolean {
+  return roomsFor(user).includes(room);
 }
 
 /** Afsender kan slette egne beskeder, trænere og admin kan slette alle (moderation). */

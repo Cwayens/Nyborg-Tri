@@ -385,7 +385,7 @@ label.check { display: flex; gap: 8px; align-items: center; font-weight: 400; }
 @media (max-width: 640px) { .bm-mini { grid-template-columns: repeat(3, 1fr); } }
 
 /* Chat */
-.chat-channels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 8px 0 12px; }
+.chat-channels { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 8px 0 12px; }
 .chat-channels a { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--line); background: var(--card); color: var(--text); text-decoration: none; font-weight: 600; }
 .chat-channels a small { margin-left: auto; font-weight: 400; }
 .chat-channels a.active { border-color: var(--c); box-shadow: inset 0 -3px 0 var(--c); }

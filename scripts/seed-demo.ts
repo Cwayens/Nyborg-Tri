@@ -192,20 +192,23 @@ async function main() {
 
   // Gruppechat
   await prisma.chatMessage.deleteMany({ where: { userId: { in: ids2 } } });
-  const CHAT: [string, AthleteGroup, "RUN" | "BIKE" | "SWIM", string, number][] = [
-    ["traener", "BREDDE", "RUN", "Husk lørdagsløb på Volden kl. 9. Vi deler op i to tempohold, så alle kan være med.", 26],
-    ["bredde", "BREDDE", "RUN", "Jeg kommer! Er der nogen, der vil tage en rolig tur bagefter?", 25],
-    ["kode", "BREDDE", "RUN", "Jeg er med på den rolige tur 🙌", 24],
-    ["proeve", "BREDDE", "SWIM", "Første gang i svømmehallen på torsdag. Skal jeg have noget særligt med?", 8],
-    ["traener", "BREDDE", "SWIM", "Velkommen Pia! Badehætte og svømmebriller. Vi har plader og pullbuoys.", 7],
-    ["bredde", "BREDDE", "BIKE", "Langtur søndag: 70 km i roligt tempo. Vi venter på hinanden ved bakkerne.", 30],
-    ["elite", "ELITE", "BIKE", "Hvem tager med på 4x10 min ved FTP i morgen tidlig?", 20],
-    ["admin", "ELITE", "BIKE", "Med! Mødes ved idrætscentret 6:30.", 19],
-    ["elite", "ELITE", "RUN", "Ny PR på 5 km til klubtesten 🎉", 50],
+  const CHAT: [string, "VOKSNE" | "BOERN", "RUN" | "BIKE" | "SWIM" | "SOCIAL", string, number][] = [
+    ["admin", "VOKSNE", "SOCIAL", "Klubaften fredag kl. 19 i klubhuset – vi griller og viser billeder fra sæsonen 🍔", 40],
+    ["bredde", "VOKSNE", "SOCIAL", "Jeg tager kartoffelsalat med!", 36],
+    ["elite", "VOKSNE", "SOCIAL", "Tak for i dag alle sammen, sikke et vejr til open water 🌊", 3],
+    ["traener", "VOKSNE", "RUN", "Husk lørdagsløb på Volden kl. 9. Vi deler op i to tempohold, så alle kan være med.", 26],
+    ["bredde", "VOKSNE", "RUN", "Jeg kommer! Er der nogen, der vil tage en rolig tur bagefter?", 25],
+    ["kode", "VOKSNE", "RUN", "Jeg er med på den rolige tur 🙌", 24],
+    ["proeve", "VOKSNE", "SWIM", "Første gang i svømmehallen på torsdag. Skal jeg have noget særligt med?", 8],
+    ["traener", "VOKSNE", "SWIM", "Velkommen Pia! Badehætte og svømmebriller. Vi har plader og pullbuoys.", 7],
+    ["bredde", "VOKSNE", "BIKE", "Langtur søndag: 70 km i roligt tempo. Vi venter på hinanden ved bakkerne.", 30],
+    ["elite", "VOKSNE", "BIKE", "Hvem tager med på 4x10 min ved FTP i morgen tidlig?", 20],
+    ["admin", "VOKSNE", "BIKE", "Med! Mødes ved idrætscentret 6:30.", 19],
+    ["elite", "VOKSNE", "RUN", "Ny PR på 5 km til klubtesten 🎉", 50],
     ["boern", "BOERN", "SWIM", "Jeg kunne svømme 100 m crawl uden at stoppe!", 12],
   ];
-  for (const [key, group, channel, body, hoursAgo] of CHAT) {
-    await prisma.chatMessage.create({ data: { userId: users[key].id, group, channel, body, createdAt: new Date(Date.now() - hoursAgo * 3600 * 1000) } });
+  for (const [key, room, channel, body, hoursAgo] of CHAT) {
+    await prisma.chatMessage.create({ data: { userId: users[key].id, room, channel, body, createdAt: new Date(Date.now() - hoursAgo * 3600 * 1000) } });
   }
 
   console.log(`Demodata oprettet: ${DEMO_USERS.length} testbrugere, ${created.length} træninger`);

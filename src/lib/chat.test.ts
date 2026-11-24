@@ -1,12 +1,15 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { canDeleteMessage, canUseChat } from "./chat";
+import { canDeleteMessage, canUseChat, roomsFor } from "./chat";
 
-test("atleter har kun adgang til egen gruppes chat", () => {
-  assert.equal(canUseChat({ role: "ATHLETE", athleteGroup: "BREDDE" }, "BREDDE"), true);
-  assert.equal(canUseChat({ role: "ATHLETE", athleteGroup: "BREDDE" }, "ELITE"), false);
-  assert.equal(canUseChat({ role: "ATHLETE", athleteGroup: null }, "BOERN"), false);
-  assert.equal(canUseChat({ role: "TRAINER", athleteGroup: null }, "BOERN"), true);
+test("Elite og Bredde deler chat, Børn har deres egen", () => {
+  assert.equal(canUseChat({ role: "ATHLETE", athleteGroup: "ELITE" }, "VOKSNE"), true);
+  assert.equal(canUseChat({ role: "ATHLETE", athleteGroup: "BREDDE" }, "VOKSNE"), true);
+  assert.equal(canUseChat({ role: "ATHLETE", athleteGroup: "BREDDE" }, "BOERN"), false);
+  assert.equal(canUseChat({ role: "ATHLETE", athleteGroup: "BOERN" }, "VOKSNE"), false);
+  assert.equal(canUseChat({ role: "ATHLETE", athleteGroup: "BOERN" }, "BOERN"), true);
+  assert.deepEqual(roomsFor({ role: "ATHLETE", athleteGroup: null }), []);
+  assert.deepEqual(roomsFor({ role: "TRAINER", athleteGroup: null }), ["VOKSNE", "BOERN"]);
 });
 
 test("kun afsender og trænere kan slette", () => {
