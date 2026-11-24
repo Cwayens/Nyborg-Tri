@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { requireUser } from "@/auth";
 import { prisma } from "@/lib/db";
 import { PostCard } from "@/components/PostCard";
 
@@ -6,6 +7,7 @@ export const metadata = { title: "Nyheder" };
 const PER_PAGE = 12;
 
 export default async function News({ searchParams }: { searchParams: Promise<{ side?: string; kategori?: string }> }) {
+  await requireUser("/nyheder");
   const { side, kategori } = await searchParams;
   const page = Math.max(1, Number(side) || 1);
   const where = { published: true, ...(kategori ? { categories: { has: kategori } } : {}) };

@@ -8,7 +8,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
   url       = env("DATABASE_URL")
   // Migrationer kører uden connection pooling (Neon sætter DATABASE_URL_UNPOOLED).
   // scripts/build.sh falder tilbage til DATABASE_URL, hvis den mangler.
@@ -63,6 +63,8 @@ model User {
   activities               Activity[]
   groupWorkouts            GroupWorkout[]
   groupWorkoutParticipants GroupWorkoutParticipant[]
+  benchmarks               BenchmarkResult[]
+  chatMessages             ChatMessage[]
 
   shareActivities Boolean @default(false) // samtykke: vis mine aktiviteter i klubstatistikken
   calendarToken   String? @unique // hemmeligt link til kalender-abonnement
@@ -389,4 +391,48 @@ model GroupWorkoutParticipant {
   user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([workoutId, userId])
+}
+
+// ---------- Benchmarks (testresultater) ----------
+
+enum BenchmarkTest {
+  RUN_5K
+  RUN_10K
+  BIKE_FTP20 // gennemsnitlig watt over 20 minutter; FTP = 95 %
+  SWIM_100
+  SWIM_1500
+}
+
+model BenchmarkResult {
+  id        String        @id @default(cuid())
+  userId    String
+  test      BenchmarkTest
+  date      DateTime
+  seconds   Int? // tid for løb og svøm
+  watts     Int? // for FTP-test
+  note      String?
+  source    Provider      @default(MANUAL)
+  createdAt DateTime      @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, test, date])
+}
+
+// ---------- Gruppechat ----------
+
+// Én kanal pr. gruppe og disciplin (fx Bredde · Løb). Atleter skriver i egen gruppe, trænere i alle.
+model ChatMessage {
+  id          String       @id @default(cuid())
+  group       AthleteGroup
+  channel     Discipline // SWIM, BIKE eller RUN
+  userId      String
+  body        String       @db.Text
+  createdAt   DateTime     @default(now())
+  deletedAt   DateTime? // slettet af afsender eller træner (moderation)
+  deletedById String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([group, channel, createdAt])
 }

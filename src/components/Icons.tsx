@@ -33,6 +33,9 @@ export const ChartIcon = ({ size = 20 }: P) => (
 export const LinkIcon = ({ size = 20 }: P) => (
   <svg {...base(size)}><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
 );
+export const ChatIcon = ({ size = 20 }: P) => (
+  <svg {...base(size)}><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1.1-4.6A8 8 0 1 1 21 12z" /></svg>
+);
 export const MenuIcon = ({ size = 24 }: P) => (
   <svg {...base(size)}><path d="M3 6h18M3 12h18M3 18h18" /></svg>
 );

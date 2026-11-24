@@ -50,6 +50,10 @@ Sæt `[x]`, når et punkt er klaret.
 
 ## GDPR og privatliv
 
+- [ ] **Billeder på forsiden** (`public/billeder/`) er hentet fra den gamle side. Bekræft, at de viste personer er ok med at være på forsiden, eller udskift dem med nye billeder.
+- [ ] **Gruppechat**: aftal regler for god tone, og hvem blandt trænerne der holder øje med børnegruppens kanaler. Overvej om forældre skal kunne læse med i børnenes chat.
+- [ ] **Testresultater** kan ses af trænere (bedste resultat pr. atlet). Nævn det i privatlivspolitikken.
+
 - [ ] Opdater **privatlivspolitikken**: hvilke data der gemmes (navn, adresse, fødselsdato, telefon, betalinger, træningsdata), hvorfor, hvor længe, og hvem der behandler dem.
 - [ ] **Databehandleraftaler** med Vercel, databaseudbyder, Stripe og mailudbyder.
 - [ ] Samtykke til deling af træningsdata med klubben (wearables) skal være frivilligt og kunne trækkes tilbage.
@@ -57,6 +61,8 @@ Sæt `[x]`, når et punkt er klaret.
 - [ ] Rutine for sletning af data, når et medlem melder sig ud.
 
 ## Integrationer
+
+- [ ] Hent 5 km- og 10 km-tider automatisk fra Stravas "best efforts" (i dag foreslås kun ture på præcis testdistancen).
 
 - [ ] **Økonomisystem**: sat på pause. Beslut system (e-conomic, Dinero, Billy …) og aftal kontonumre med kassereren.
 - [ ] **TrainingPeaks**: søg om partneradgang til API'et (kan tage tid).

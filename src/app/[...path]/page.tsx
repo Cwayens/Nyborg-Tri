@@ -1,11 +1,12 @@
-import { notFound, permanentRedirect } from "next/navigation";
+import { notFound, permanentRedirect, redirect } from "next/navigation";
+import { auth } from "@/auth";
+import { isMemberOnlyPath } from "@/lib/navigation";
 import { prisma } from "@/lib/db";
 import { renderBody } from "@/lib/content";
 
 // Viser indholdssider på de samme adresser som den gamle WordPress-side (fx /om/bestyrelse).
 // Gamle nyhedslinks (/indlaegets-slug/) sendes videre til /nyheder/indlaegets-slug.
 
-export const revalidate = 300;
 
 type Props = { params: Promise<{ path: string[] }> };
 
@@ -20,6 +21,9 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function ContentPage({ params }: Props) {
   const { path } = await params;
+  const joined = path.map(decodeURIComponent).join("/");
+  // Intern klubinfo kræver login (offentligt vises kun det, der informerer nye medlemmer)
+  if (isMemberOnlyPath(joined) && !(await auth())?.user) redirect(`/login?callbackUrl=${encodeURIComponent("/" + joined)}`);
   const page = await getPage(path);
   if (!page) {
     if (path.length === 1) {

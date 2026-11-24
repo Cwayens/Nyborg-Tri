@@ -11,6 +11,7 @@ import { personalTotals, personalWeeks } from "@/lib/stats";
 import { formatDay, formatTime } from "@/lib/time";
 import { DisciplineIcon, initials } from "@/components/Icons";
 import { WeekChart } from "@/components/WeekChart";
+import { TESTS, formatResult, score } from "@/lib/benchmarks";
 import { toggleSignup } from "../kalender/actions";
 
 export const metadata = { title: "Overblik" };
@@ -25,7 +26,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   const in7 = new Date(now.getTime() + 7 * 24 * 3600 * 1000);
   const endOfToday = new Date(now); endOfToday.setHours(23, 59, 59, 999);
 
-  const [membership, eligible, mine, groupTrainings, workouts, weeks, week, today] = await Promise.all([
+  const [membership, eligible, mine, groupTrainings, workouts, weeks, week, today, benchmarks, news] = await Promise.all([
     currentMembership(user.id),
     canSignUp(user.id),
     prisma.trainingSession.findMany({ where: { startsAt: { gte: now }, signups: { some: { userId: user.id } } }, orderBy: { startsAt: "asc" }, take: 5 }),
@@ -42,7 +43,14 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     personalWeeks(user.id, 6),
     personalTotals(user.id, startOfWeek(now)),
     prisma.trainingSession.count({ where: { startsAt: { gte: now, lte: endOfToday } } }),
+    prisma.benchmarkResult.findMany({ where: { userId: user.id }, select: { test: true, seconds: true, watts: true } }),
+    prisma.post.findMany({ where: { published: true }, orderBy: { publishedAt: "desc" }, take: 3, select: { slug: true, title: true, publishedAt: true } }),
   ]);
+  const bestByTest = new Map<string, (typeof benchmarks)[number]>();
+  for (const b of benchmarks) {
+    const cur = bestByTest.get(b.test);
+    if (!cur || score(b) > score(cur)) bestByTest.set(b.test, b);
+  }
   const myWorkouts = workouts.filter((w) => w.participants.some((p) => p.user.id === user.id));
   const upcoming = [
     ...mine.map((t) => ({ id: t.id, at: t.startsAt, title: t.cancelledAt ? `Aflyst: ${t.title}` : t.title, where: t.location, d: t.discipline, kind: "Klubtræning", href: "/kalender" })),
@@ -113,6 +121,24 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         </section>
       </div>
 
+      <section className="card" style={{ marginTop: 18 }}>
+        <div className="section-head" style={{ margin: "0 0 10px" }}>
+          <h2 style={{ fontSize: "1.1rem" }}>Mine tests</h2>
+          <Link href="/benchmarks">{bestByTest.size ? "Se udvikling" : "Tilføj resultat"}</Link>
+        </div>
+        <div className="bm-mini">
+          {TESTS.map((t) => {
+            const b = bestByTest.get(t.test);
+            return (
+              <Link key={t.test} href={b ? "/benchmarks" : `/benchmarks?test=${t.test}#ny`} className={`disc disc-${t.discipline}`}>
+                <span className="muted">{t.short}</span>
+                <b>{b ? formatResult(b) : "–"}</b>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+
       {user.athleteGroup && (
         <>
           <div className="section-head">
@@ -162,6 +188,25 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
             </Link>
           ))}
         </div>
+      )}
+
+      {news.length > 0 && (
+        <>
+          <div className="section-head">
+            <h2>Nyt fra klubben</h2>
+            <Link href="/klubben">Klubinfo</Link>
+          </div>
+          <div className="card">
+            {news.map((n) => (
+              <Link key={n.slug} href={`/nyheder/${n.slug}`} className="item" style={{ color: "inherit", textDecoration: "none" }}>
+                <div className="body">
+                  <div className="title">{n.title}</div>
+                  <div className="meta">{dato(n.publishedAt)}</div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </>
       )}
 
       {hasRole(user.role, "TRAINER") && <RoleShortcuts admin={user.role === "ADMIN"} />}

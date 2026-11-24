@@ -147,6 +147,52 @@ async function main() {
     }
   }
 
+  // Testresultater: fire tests over et år med fremgang
+  const ids2 = Object.values(users).map((u) => u.id);
+  await prisma.benchmarkResult.deleteMany({ where: { userId: { in: ids2 } } });
+  const BENCH: Record<string, Partial<Record<"RUN_5K" | "RUN_10K" | "BIKE_FTP20" | "SWIM_100" | "SWIM_1500", number>>> = {
+    elite: { RUN_5K: 1140, RUN_10K: 2400, BIKE_FTP20: 320, SWIM_100: 72, SWIM_1500: 1260 },
+    admin: { RUN_5K: 1260, RUN_10K: 2640, BIKE_FTP20: 260, SWIM_100: 88, SWIM_1500: 1500 },
+    traener: { RUN_5K: 1330, RUN_10K: 2790, BIKE_FTP20: 240, SWIM_100: 95 },
+    bredde: { RUN_5K: 1620, RUN_10K: 3420, BIKE_FTP20: 185, SWIM_100: 128, SWIM_1500: 2160 },
+    boern: { RUN_5K: 1500, SWIM_100: 110 },
+    kode: { RUN_5K: 1700 },
+  };
+  for (const [key, tests] of Object.entries(BENCH)) {
+    for (const [test, base] of Object.entries(tests)) {
+      const watts = test === "BIKE_FTP20";
+      // Fire tests med 3 måneders mellemrum; ældste er svagest
+      for (let i = 0; i < 4; i++) {
+        const factor = 1 + (3 - i) * 0.025 + (i === 2 ? 0.008 : 0);
+        const v = watts ? Math.round(base / factor) : Math.round(base * factor);
+        await prisma.benchmarkResult.create({
+          data: {
+            userId: users[key].id, test: test as never, date: parseLocal(`${localDate(-(3 - i) * 90 - 5)}T12:00`),
+            seconds: watts ? null : v, watts: watts ? v : null, note: i === 3 ? "Klubtest" : null,
+          },
+        });
+      }
+    }
+  }
+
+  // Gruppechat
+  await prisma.chatMessage.deleteMany({ where: { userId: { in: ids2 } } });
+  const CHAT: [string, AthleteGroup, "RUN" | "BIKE" | "SWIM", string, number][] = [
+    ["traener", "BREDDE", "RUN", "Husk lørdagsløb på Volden kl. 9. Vi deler op i to tempohold, så alle kan være med.", 26],
+    ["bredde", "BREDDE", "RUN", "Jeg kommer! Er der nogen, der vil tage en rolig tur bagefter?", 25],
+    ["kode", "BREDDE", "RUN", "Jeg er med på den rolige tur 🙌", 24],
+    ["proeve", "BREDDE", "SWIM", "Første gang i svømmehallen på torsdag. Skal jeg have noget særligt med?", 8],
+    ["traener", "BREDDE", "SWIM", "Velkommen Pia! Badehætte og svømmebriller. Vi har plader og pullbuoys.", 7],
+    ["bredde", "BREDDE", "BIKE", "Langtur søndag: 70 km i roligt tempo. Vi venter på hinanden ved bakkerne.", 30],
+    ["elite", "ELITE", "BIKE", "Hvem tager med på 4x10 min ved FTP i morgen tidlig?", 20],
+    ["admin", "ELITE", "BIKE", "Med! Mødes ved idrætscentret 6:30.", 19],
+    ["elite", "ELITE", "RUN", "Ny PR på 5 km til klubtesten 🎉", 50],
+    ["boern", "BOERN", "SWIM", "Jeg kunne svømme 100 m crawl uden at stoppe!", 12],
+  ];
+  for (const [key, group, channel, body, hoursAgo] of CHAT) {
+    await prisma.chatMessage.create({ data: { userId: users[key].id, group, channel, body, createdAt: new Date(Date.now() - hoursAgo * 3600 * 1000) } });
+  }
+
   console.log(`Demodata oprettet: ${DEMO_USERS.length} testbrugere, ${created.length} træninger`);
 }
 

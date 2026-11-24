@@ -46,3 +46,8 @@ export function formatDay(d: Date): string {
 export function dayKey(d: Date): string {
   return new Intl.DateTimeFormat("sv-SE", { timeZone: TZ }).format(d);
 }
+
+export function weekdayShort(d: Date): string {
+  const s = new Intl.DateTimeFormat("da-DK", { weekday: "short", timeZone: TZ }).format(d).replace(".", "");
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}

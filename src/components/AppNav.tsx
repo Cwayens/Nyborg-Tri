@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarIcon, ChartIcon, HomeIcon, UsersIcon } from "./Icons";
+import { CalendarIcon, ChartIcon, ChatIcon, HomeIcon, UsersIcon } from "./Icons";
 
-// Fire hovedfunktioner for medlemmer. Vises i toppen på computer og som fanebjælke i bunden på mobil.
+// Hovedfunktionerne for medlemmer. Vises i toppen på computer og som fanebjælke i bunden på mobil.
 export const APP_ITEMS = [
   { href: "/min-side", label: "Overblik", Icon: HomeIcon },
   { href: "/kalender", label: "Kalender", Icon: CalendarIcon },
   { href: "/traen-sammen", label: "Træn sammen", Icon: UsersIcon },
+  { href: "/chat", label: "Chat", Icon: ChatIcon },
   { href: "/statistik", label: "Statistik", Icon: ChartIcon },
 ];
 

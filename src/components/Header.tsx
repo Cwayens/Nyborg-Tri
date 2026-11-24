@@ -36,14 +36,14 @@ export async function Header() {
                     <span className="muted">{user.email}</span>
                   </div>
                   <Link href="/profil">Min profil</Link>
+                  <Link href="/benchmarks">Mine tests</Link>
                   <Link href="/aktiviteter">Mine aktiviteter</Link>
                   <Link href="/forbindelser">Ure, apps og kalender</Link>
                   <Link href="/bliv-medlem">Medlemskab og betaling</Link>
                   {hasRole(user.role, "TRAINER") && <Link href="/traener">Trænerværktøj</Link>}
                   {user.role === "ADMIN" && <Link href="/admin">Administration</Link>}
                   <div className="dropdown-sep" />
-                  <Link href="/nyheder">Nyheder</Link>
-                  <Link href="/om">Om klubben</Link>
+                  <Link href="/klubben">Klubinfo og nyheder</Link>
                   <form action={logout}>
                     <button type="submit" className="linklike">Log ud</button>
                   </form>
@@ -55,20 +55,7 @@ export async function Header() {
               <nav aria-label="Hovedmenu" className="publicnav">
                 <ul className="menu">
                   {navigation.map((item) => (
-                    <li key={item.label}>
-                      {item.href ? (
-                        <Link href={item.href}>{item.label}</Link>
-                      ) : (
-                        <details>
-                          <summary>{item.label}</summary>
-                          <ul>
-                            {item.children?.map((c) => (
-                              <li key={c.href}><Link href={c.href!}>{c.label}</Link></li>
-                            ))}
-                          </ul>
-                        </details>
-                      )}
-                    </li>
+                    <li key={item.href}><Link href={item.href}>{item.label}</Link></li>
                   ))}
                 </ul>
               </nav>
@@ -79,16 +66,8 @@ export async function Header() {
               <details className="burger">
                 <summary aria-label="Åbn menu"><MenuIcon /></summary>
                 <div className="burger-panel">
-                  {navigation.map((item) =>
-                    item.href ? (
-                      <Link key={item.label} href={item.href}>{item.label}</Link>
-                    ) : (
-                      <div key={item.label}>
-                        <div className="group-label">{item.label}</div>
-                        {item.children?.map((c) => <Link key={c.href} href={c.href!}>{c.label}</Link>)}
-                      </div>
-                    ),
-                  )}
+                  {navigation.map((item) => <Link key={item.href} href={item.href}>{item.label}</Link>)}
+                  <Link href="/bliv-medlem">Bliv medlem</Link>
                   <Link href="/login">Log ind</Link>
                 </div>
               </details>

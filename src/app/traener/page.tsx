@@ -23,6 +23,7 @@ export default async function TrainerHome({ searchParams }: { searchParams: Prom
       <p style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
         <Link className="button" href="/traener/ny">Opret træning</Link>
         <Link className="button secondary" href="/kalender?gruppe=alle">Se kalenderen</Link>
+        <Link className="button ghost" href="/traener/tests">Testresultater</Link>
       </p>
       <div className="table-scroll">
         <table className="list">

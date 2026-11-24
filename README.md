@@ -66,6 +66,11 @@ Rolle og atletgruppe sættes af en admin under **Admin → Medlemmer**. En træn
 Nye betalende medlemmer får automatisk gruppen Bredde (eller Børn ved ungdomskontingent), indtil en admin ændrer den.
 Træneren vælger præcis én gruppe for hver træning (Elite, Bredde eller Børn), og træninger kan gentages ugentligt. Atleter kan kun tilmelde sig træninger for deres egen gruppe; trænere og admins (med medlemskab) kan tilmelde sig alle. Er man allerede tilmeldt, kan man altid afmelde sig.
 
+## Testresultater og chat
+
+- **Mine tests** (`/benchmarks`): 5 km, 10 km, FTP (20 min), 100 m og 1500 m svøm med historik og udvikling. Ture fra Strava eller manuelt på præcis testdistancen foreslås som resultat. Trænere ser gruppens bedste resultater under Trænerværktøj → Testresultater.
+- **Chat** (`/chat`): én kanal pr. gruppe for løb, cykling og svøm. Atleter skriver i egen gruppe, trænere og admin i alle og kan slette beskeder.
+
 ## Tilmelding til træninger
 
 - Alle kan oprette en atletbruger (log ind med mail – profilen oprettes automatisk).

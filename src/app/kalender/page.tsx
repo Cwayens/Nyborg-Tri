@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { AthleteGroup } from "@prisma/client";
-import { auth } from "@/auth";
+import { auth, requireUser } from "@/auth";
 import { canSignUp } from "@/lib/access";
 import { prisma } from "@/lib/db";
 import { DISCIPLINE_LABEL, GROUP_LABEL, GROUPS, canJoinGroup, trainingVisibleFor } from "@/lib/roles";
@@ -12,6 +12,7 @@ export const metadata = { title: "Kalender" };
 type Props = { searchParams: Promise<{ gruppe?: string; uger?: string }> };
 
 export default async function Calendar({ searchParams }: Props) {
+  await requireUser("/kalender");
   const sp = await searchParams;
   const session = await auth();
   const own = session?.user.athleteGroup ?? null;

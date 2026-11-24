@@ -2,82 +2,165 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
-import { PostCard } from "@/components/PostCard";
-import { BikeIcon, CalendarIcon, RunIcon, SwimIcon, UsersIcon, ActivityIcon } from "@/components/Icons";
-import { DISCIPLINE_LABEL, GROUP_LABEL } from "@/lib/roles";
-import { formatDay, formatTime } from "@/lib/time";
+import { DisciplineIcon } from "@/components/Icons";
+import { GROUP_LABEL } from "@/lib/roles";
+import { formatTime, weekdayShort } from "@/lib/time";
+import { kr } from "@/lib/format";
+
+// Forsiden er til nye medlemmer: hvad får jeg, passer det til mig, hvad koster det, og hvordan starter jeg.
+// Medlemmer, der er logget ind, lander på deres eget overblik.
+
+const TEAMS = [
+  {
+    group: "BREDDE",
+    title: "Motionist eller nybegynder",
+    text: "Træn i dit eget tempo med andre, der også vil have det sjovt. Du behøver ikke kunne crawle eller eje en racercykel for at starte.",
+    img: "/billeder/cykeltur.jpg",
+    alt: "Medlemmer på fælles cykeltur",
+  },
+  {
+    group: "ELITE",
+    title: "Du vil konkurrere",
+    text: "Struktureret træning med trænere, tests og fælles mål mod sæsonens stævner, fra sprint til ironman.",
+    img: "/billeder/enkeltstart.jpg",
+    alt: "Klubbens atleter ved en enkeltstart",
+  },
+  {
+    group: "BOERN",
+    title: "Børn og unge",
+    text: "Leg, teknik og fællesskab i vand, på cykel og til fods. Og så er der Nyborg MiniTri hver sommer.",
+    img: "/billeder/maalgang.jpg",
+    alt: "Publikum heier på en triatlet ved målgang på stranden",
+  },
+] as const;
+
+const FAQ = [
+  ["Skal jeg være i god form for at starte?", "Nej. Bredde-gruppen er for alle niveauer, og trænerne hjælper dig i gang med den disciplin, du er mindst tryg ved."],
+  ["Hvad skal jeg have med første gang?", "Løbesko, badetøj og godt humør. Mangler du en cykel, kan du låne en af klubbens."],
+  ["Hvordan fungerer de 14 gratis dage?", "Du opretter en profil og søger om prøveperiode. Når den er godkendt, kan du tilmelde dig alle din gruppes træninger i 14 dage uden at betale."],
+  ["Kan jeg følge min træning?", "Ja. Forbind Strava, så tæller dine ture fra Garmin, Wahoo, Coros og andre ure med på din side, sammen med dine testresultater."],
+] as const;
 
 export default async function Home() {
-  // Indloggede medlemmer lander på deres eget overblik
   if ((await auth())?.user) redirect("/min-side");
 
-  const [posts, next] = await Promise.all([
-    prisma.post.findMany({ where: { published: true }, orderBy: { publishedAt: "desc" }, take: 3 }),
-    prisma.trainingSession.findMany({ where: { startsAt: { gte: new Date() }, cancelledAt: null }, orderBy: { startsAt: "asc" }, take: 4 }),
+  const now = new Date();
+  const [types, week] = await Promise.all([
+    prisma.membershipType.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
+    prisma.trainingSession.findMany({
+      where: { startsAt: { gte: now, lt: new Date(now.getTime() + 7 * 864e5) }, cancelledAt: null },
+      orderBy: { startsAt: "asc" },
+      select: { id: true, title: true, discipline: true, startsAt: true, group: true, location: true },
+    }),
   ]);
+  const adult = types.find((t) => t.code === "ADULT");
 
   return (
-    <>
-      <section className="hero">
-        <h1>Triatlon for alle på Østfyn</h1>
-        <p>Svøm, cykl og løb sammen med andre. Begynder eller erfaren, ung eller voksen: der er en træning til dig, og du kan prøve gratis i 14 dage.</p>
-        <div className="hero-actions">
-          <Link href="/bliv-medlem" className="button">Kom i gang</Link>
-          <Link href="/kalender" className="button ghost">Se træningerne</Link>
+    <div className="landing">
+      <section className="lp-hero">
+        <img src="/billeder/faellesskab-strand.jpg" alt="" className="lp-hero-img" />
+        <div className="lp-hero-inner wrap">
+          <p className="eyebrow">Nyborg Triathlon Klub</p>
+          <h1>Svøm, cykl og løb sammen med os på Østfyn</h1>
+          <p className="lead">
+            Uanset om du skal i mål på din første sprint eller jagter en ny rekord, så træner du bedre sammen med andre.
+          </p>
+          <div className="hero-actions">
+            <Link href="/bliv-medlem" className="button big">Prøv gratis i 14 dage</Link>
+            <a href="#priser" className="button ghost big">Se priser</a>
+          </div>
+          <ul className="lp-proof">
+            <li><b>ca. 100</b> medlemmer</li>
+            <li><b>3</b> hold: Bredde, Elite og Børn</li>
+            <li><b>Hver uge</b> fælles svøm, cykel og løb</li>
+          </ul>
         </div>
-        <svg className="wave" viewBox="0 0 1200 70" preserveAspectRatio="none" aria-hidden="true">
-          <path d="M0 40 C 200 80 400 0 600 30 S 1000 70 1200 25 V70 H0 Z" fill="currentColor" />
-        </svg>
       </section>
 
-      <section className="features" aria-label="Det får du som medlem">
-        <Feature icon={<span className="disc disc-SWIM disc-icon"><SwimIcon /></span>} title="Fælles træning" text="Svømning med træner, cykling og løb hver uge, delt i Elite, Bredde og Børn." />
-        <Feature icon={<span className="disc disc-RUN disc-icon"><UsersIcon /></span>} title="Træn sammen" text="Se hvem der kommer, og find nogen at løbe eller cykle med." />
-        <Feature icon={<span className="disc disc-BIKE disc-icon"><ActivityIcon /></span>} title="Dit ur er med" text="Forbind Strava, så Garmin, Wahoo, Coros og andre ure tæller med i din statistik." />
-        <Feature icon={<span className="disc disc-STRENGTH disc-icon"><CalendarIcon /></span>} title="Altid i lommen" text="Kalender på telefonen, tilmelding med ét tryk og påmindelser i din egen kalender." />
-      </section>
-
-      {next.length > 0 && (
-        <>
-          <div className="section-head">
-            <h2>Næste træninger</h2>
-            <Link href="/kalender">Hele kalenderen →</Link>
-          </div>
-          <div className="card">
-            {next.map((t) => (
-              <div key={t.id} className={`item disc disc-${t.discipline}`}>
-                <span className="disc-icon">{t.discipline === "SWIM" ? <SwimIcon /> : t.discipline === "BIKE" ? <BikeIcon /> : <RunIcon />}</span>
-                <div className="body">
-                  <div className="title">{t.title}</div>
-                  <div className="meta">{formatDay(t.startsAt)} kl. {formatTime(t.startsAt)} · {t.location}</div>
-                </div>
+      <section id="traening" className="lp-section">
+        <h2>Find dit hold</h2>
+        <p className="lp-sub">Alle træner med folk på samme niveau. Du kan altid skifte hold senere.</p>
+        <div className="lp-teams">
+          {TEAMS.map((t) => (
+            <article key={t.group} className="lp-team">
+              <img src={t.img} alt={t.alt} loading="lazy" />
+              <div className="lp-team-body">
                 <span className="pill">{GROUP_LABEL[t.group]}</span>
-                <span className="sr-only">{DISCIPLINE_LABEL[t.discipline]}</span>
+                <h3>{t.title}</h3>
+                <p>{t.text}</p>
               </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {week.length > 0 && (
+        <section className="lp-section">
+          <h2>Den næste uge i klubben</h2>
+          <p className="lp-sub">Sådan ser en helt almindelig uge ud. Som medlem tilmelder du dig med ét tryk.</p>
+          <ul className="lp-week">
+            {week.slice(0, 8).map((t) => (
+              <li key={t.id} className={`disc disc-${t.discipline}`}>
+                <DisciplineIcon discipline={t.discipline} />
+                <span className="lp-when"><b>{weekdayShort(t.startsAt)}</b> {formatTime(t.startsAt)}</span>
+                <span className="lp-what">{t.title}<small>{t.location}</small></span>
+                <span className="pill">{GROUP_LABEL[t.group]}</span>
+              </li>
             ))}
-          </div>
-        </>
+          </ul>
+        </section>
       )}
 
-      <div className="section-head">
-        <h2>Nyt fra klubben</h2>
-        <Link href="/nyheder">Alle nyheder →</Link>
-      </div>
-      <div className="grid">
-        {posts.map((p) => <PostCard key={p.id} post={p} />)}
-      </div>
-    </>
-  );
-}
+      <section className="lp-section lp-split">
+        <img src="/billeder/storebaelt.jpg" alt="Klubbens svømmere i våddragt i Storebælt" loading="lazy" />
+        <div>
+          <h2>Mere end træning</h2>
+          <ul className="lp-checks">
+            <li>Open water i Storebælt, lørdagsløb på Volden og fælles cykelture</li>
+            <li>Klubbens egne stævner: NyborgTri Cup og Nyborg MiniTri</li>
+            <li>Find nogen at træne med, også uden for de faste tider</li>
+            <li>Se dine testresultater for 5 og 10 km, FTP og svøm, og følg din udvikling</li>
+          </ul>
+        </div>
+      </section>
 
-function Feature({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
-  return (
-    <div className="feature card">
-      {icon}
-      <div>
-        <h3>{title}</h3>
-        <p>{text}</p>
-      </div>
+      <section id="priser" className="lp-section">
+        <h2>Priser</h2>
+        <p className="lp-sub">Ét kontingent om året. Ingen binding ud over det, og de første 14 dage er gratis.</p>
+        <div className="lp-prices">
+          {types.map((t) => (
+            <div key={t.id} className={`lp-price card${t.code === "ADULT" ? " featured" : ""}`}>
+              <h3>{t.name}</h3>
+              <p className="amount">{kr(t.priceOre)}<small> / år</small></p>
+              {t.description && <p className="muted">{t.description}</p>}
+              <Link href="/bliv-medlem" className={`button${t.code === "ADULT" ? "" : " secondary"}`}>
+                {t.code === "PASSIVE" ? "Støt klubben" : "Kom i gang"}
+              </Link>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="lp-section">
+        <h2>Godt at vide</h2>
+        <div className="lp-faq">
+          {FAQ.map(([q, a]) => (
+            <details key={q}>
+              <summary>{q}</summary>
+              <p>{a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
+      <section className="lp-cta">
+        <img src="/billeder/open-water.jpg" alt="" />
+        <div>
+          <h2>Klar til første træning?</h2>
+          <p>Opret en profil på et minut, og prøv klubben gratis i 14 dage{adult ? `. Derefter ${kr(adult.priceOre)} om året` : ""}.</p>
+          <Link href="/bliv-medlem" className="button big">Prøv gratis i 14 dage</Link>
+        </div>
+      </section>
     </div>
   );
 }

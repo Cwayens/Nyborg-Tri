@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { requireUser } from "@/auth";
 import { prisma } from "@/lib/db";
 import { renderBody } from "@/lib/content";
 import { dato } from "@/lib/format";
 
-export const revalidate = 300;
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -18,7 +18,9 @@ export async function generateMetadata({ params }: Props) {
 }
 
 export default async function NewsPost({ params }: Props) {
-  const post = await getPost((await params).slug);
+  const { slug } = await params;
+  await requireUser(`/nyheder/${slug}`);
+  const post = await getPost(slug);
   if (!post) notFound();
   return (
     <article>
