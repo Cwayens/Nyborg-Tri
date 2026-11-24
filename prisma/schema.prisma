@@ -534,3 +534,29 @@ model AthleteProfile {
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   sponsors Sponsor[]
 }
+
+// Kontaktpersoner på /om/kontakt (redigeres af admin)
+model ContactPerson {
+  id        String  @id @default(cuid())
+  role      String // fx "Formand"
+  name      String
+  phone     String?
+  email     String?
+  photo     String? @db.Text // data-URL
+  sortOrder Int     @default(0)
+}
+
+// Henvendelser fra kontaktformularen
+model ContactMessage {
+  id        String    @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  topic     String?
+  message   String    @db.Text
+  createdAt DateTime  @default(now())
+  handledAt DateTime?
+
+  @@index([createdAt])
+  @@index([email, createdAt])
+}

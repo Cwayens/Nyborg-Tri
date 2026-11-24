@@ -117,10 +117,9 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
             <h2 style={{ fontSize: "1.1rem" }}>Din træning</h2>
             <Link href="/statistik">Statistik</Link>
           </div>
-          <div className="stats" style={{ gridTemplateColumns: "1fr 1fr" }}>
-            <div><div className="value" style={{ fontSize: "1.5rem", fontWeight: 800 }}>{formatHours(week.sec)}</div><div className="muted">denne uge</div></div>
-            <div><div className="value" style={{ fontSize: "1.5rem", fontWeight: 800 }}>{week.count}</div><div className="muted">træninger</div></div>
-          </div>
+          <p className="tb-summary">
+            <b>{formatHours(week.sec)}</b> <span className="muted">denne uge · {week.count} {week.count === 1 ? "træning" : "træninger"}</span>
+          </p>
           <WeekChart weeks={weeks} />
           {user.wearableConnections.length === 0 && (
             <p style={{ marginBottom: 0 }}><Link href="/forbindelser">Forbind dit ur</Link> så tæller dine træninger automatisk.</p>

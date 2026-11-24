@@ -11,8 +11,8 @@ import { PrismaClient } from "@prisma/client";
 import { toPage, toPost, type WpItem } from "../src/lib/wp-import";
 
 const SITE = process.env.WP_URL ?? "https://www.nyborgtri.dk";
-// Sider der erstattes af funktioner i det nye system, eller ikke skal med
-const SKIP_PAGES = new Set(["bliv-medlem", "test", "fortryd-tilmelding", "tilmeld-nyhedbrev", "kalender"]);
+// Sider der erstattes af funktioner i det nye system (fx /om og /om/kontakt), eller ikke skal med
+const SKIP_PAGES = new Set(["bliv-medlem", "test", "fortryd-tilmelding", "tilmeld-nyhedbrev", "kalender", "om", "om/kontakt"]);
 
 const prisma = new PrismaClient();
 

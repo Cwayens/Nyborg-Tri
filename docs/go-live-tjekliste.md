@@ -41,6 +41,9 @@ Sæt `[x]`, når et punkt er klaret.
 - [ ] Gennemgå alle importerede sider (fx Kalender, Bliv medlem og gamle Cup-sider) og ret/slet forældet indhold.
 - [ ] Opdater "Bliv medlem"-teksten, så den ikke længere henviser til Klubmodul.
 - [ ] Tjek at gamle links (fx fra Facebook og Google) stadig virker.
+- [ ] **Om klubben** (`/om`) og **Kontakt** (`/om/kontakt`) er nu faste sider og erstatter de importerede WordPress-sider. Læs historien og tidslinjen igennem, og ret træningsstederne i `src/lib/club.ts`, hvis de ikke passer.
+- [ ] Ret kontaktpersonerne under Administration → Kontakt (formand og næstformand er hentet fra den gamle side). Tilføj gerne billeder.
+- [ ] Sæt `CONTACT_EMAIL`, hvis kontaktformularen skal sendes til en anden mail end nyborgtri@gmail.com. Henvendelser kan også læses under Administration → Kontakt.
 
 ## Domæne
 
@@ -49,6 +52,8 @@ Sæt `[x]`, når et punkt er klaret.
 - [ ] Behold WordPress på et underdomæne i en overgangsperiode, til alt er flyttet.
 
 ## GDPR og privatliv
+
+- [ ] **Kontaktformularen** gemmer navn, mail, telefon og besked. Nævn det i privatlivspolitikken, og slet gamle henvendelser jævnligt (fx efter et år).
 
 - [ ] **Billeder på forsiden** (`public/billeder/`) er hentet fra den gamle side. Bekræft, at de viste personer er ok med at være på forsiden, eller udskift dem med nye billeder.
 - [ ] **Gruppechat**: aftal regler for god tone, og hvem blandt trænerne der holder øje med børnegruppens kanaler. Overvej om forældre skal kunne læse med i børnenes chat.

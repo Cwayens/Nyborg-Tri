@@ -73,6 +73,7 @@ Træneren vælger præcis én gruppe for hver træning (Elite, Bredde eller Bør
 - **Atleter** (`/atleter`): offentlige profiler af Elite-atleter til sponsorer. Admin opretter, fremhæver og knytter sponsorer til under Administration → Atleter; atleten giver samtykke og retter tekst/billede under `/profil/atlet`. Fremhævede atleter vises på forsiden.
 - **Program på uret**: når man er tilmeldt en træning med program, kan man hente det som .fit (Garmin, Wahoo, Coros, Hammerhead) eller .zwo (Zwift) med egne watt og tempi (`src/lib/fit.ts`, `/api/program/<id>`). Vejledning på `/program-paa-uret`.
 - **Træning** (`/traening`): offentlig månedskalender uden deltagernavne og programmer, med "Prøv gratis". Medlemmer sendes til `/kalender`.
+- **Om klubben og Kontakt** (`/om`, `/om/kontakt`): historie med tidslinje og billeder, kontaktpersoner (redigeres under Administration → Kontakt), kontaktformular (gemmes i databasen og sendes til `CONTACT_EMAIL`, ellers klubbens mail) og træningssteder (`src/lib/club.ts`).
 - **Sponsorer**: bjælken på forsiden redigeres under Administration → Sponsorer (navn, link, logo, rækkefølge, vis/skjul).
 - **Chat** (`/chat`): kanalerne Løb, Cykling, Svøm og Social. Elite og Bredde deler chat, Børn har deres egen. Kun børn kan skrive i børnenes chat; trænere og admin kan læse med og slette beskeder.
 

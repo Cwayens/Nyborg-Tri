@@ -6,15 +6,19 @@ import type { WeekData } from "@/components/WeekChart";
 export async function personalWeeks(userId: string, n = 8): Promise<WeekData[]> {
   const start = startOfWeek(new Date());
   start.setDate(start.getDate() - 7 * (n - 1));
-  const acts = await prisma.activity.findMany({ where: { userId, startAt: { gte: start } }, select: { sport: true, movingSec: true, startAt: true } });
+  const acts = await prisma.activity.findMany({ where: { userId, startAt: { gte: start } }, select: { sport: true, movingSec: true, distanceM: true, startAt: true } });
   const weeks: WeekData[] = Array.from({ length: n }, (_, i) => {
     const d = new Date(start);
     d.setDate(d.getDate() + 7 * i);
-    return { label: i === n - 1 ? "Nu" : `${d.getDate()}/${d.getMonth() + 1}`, bySport: {} };
+    return { label: i === n - 1 ? "Nu" : `${d.getDate()}/${d.getMonth() + 1}`, from: d, bySport: {}, meters: {}, count: {} };
   });
   for (const a of acts) {
     const i = Math.floor((startOfWeek(a.startAt).getTime() - start.getTime()) / (7 * 24 * 3600 * 1000));
-    if (i >= 0 && i < n) weeks[i].bySport[a.sport] = (weeks[i].bySport[a.sport] ?? 0) + a.movingSec;
+    if (i < 0 || i >= n) continue;
+    const w = weeks[i];
+    w.bySport[a.sport] = (w.bySport[a.sport] ?? 0) + a.movingSec;
+    w.meters[a.sport] = (w.meters[a.sport] ?? 0) + a.distanceM;
+    w.count[a.sport] = (w.count[a.sport] ?? 0) + 1;
   }
   return weeks;
 }

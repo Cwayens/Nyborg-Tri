@@ -71,6 +71,16 @@ async function main() {
     await prisma.sponsor.updateMany({ where: { name, description: null }, data: { description, discount, details } });
   }
 
+  // Kontaktpersoner fra den gamle kontaktside (kun hvis admin ikke har oprettet nogen)
+  if ((await prisma.contactPerson.count()) === 0) {
+    await prisma.contactPerson.createMany({
+      data: [
+        { role: "Formand", name: "Morten Hansen", phone: "22446633", sortOrder: 0 },
+        { role: "Næstformand", name: "Kenneth Thorsgaard", phone: "29915402", sortOrder: 1 },
+      ],
+    });
+  }
+
   console.log("Seed færdig");
 }
 

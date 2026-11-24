@@ -9,6 +9,7 @@ export function AdminNav() {
       <Link href="/admin/indhold">Indhold</Link>
       <Link href="/admin/sponsorer">Sponsorer</Link>
       <Link href="/admin/atleter">Atleter</Link>
+      <Link href="/admin/kontakt">Kontakt</Link>
       <a href="/admin/medlemmer.csv">Hent medlemsliste (CSV)</a>
     </p>
   );
