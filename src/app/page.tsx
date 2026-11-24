@@ -66,8 +66,7 @@ export default async function Home() {
   return (
     <div className="landing">
       <section className="lp-hero">
-        <img src="/billeder/faellesskab-strand.jpg" alt="" className="lp-hero-img" />
-        <div className="lp-hero-inner wrap">
+        <div className="lp-hero-inner">
           <p className="eyebrow">Nyborg Triathlon Klub</p>
           <h1>Svøm, cykl og løb sammen med os på Østfyn</h1>
           <p className="lead">
@@ -84,6 +83,7 @@ export default async function Home() {
             <li><b>Hver uge</b> fælles svøm, cykel og løb</li>
           </ul>
         </div>
+        <img src="/billeder/faellesskab-strand.jpg" alt="Klubbens medlemmer i våddragt klar til open water" className="lp-hero-img" />
       </section>
 
       <SponsorBar />

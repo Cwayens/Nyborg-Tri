@@ -187,6 +187,11 @@ h2 { font-size: 1.3rem; margin: 32px 0 12px; }
 .post-card h3 a { color: var(--text); text-decoration: none; }
 .post-card h3 a:hover { color: var(--sea); }
 .content { background: var(--card); border-radius: var(--radius); padding: 28px 32px; border: 1px solid var(--line); overflow-wrap: anywhere; box-shadow: var(--shadow); }
+.content img { max-width: 100%; height: auto; display: block; margin: 12px 0; border-radius: 8px; }
+.content > :first-child { margin-top: 0; }
+.content > :last-child { margin-bottom: 0; }
+.content h2, .content h3 { margin-top: 1.6em; }
+.content iframe { max-width: 100%; }
 .content table { border-collapse: collapse; width: 100%; display: block; overflow-x: auto; }
 .content td, .content th { border: 1px solid var(--line); padding: 6px 8px; vertical-align: top; }
 .prose { max-width: 75ch; }
@@ -276,10 +281,11 @@ label.check { display: flex; gap: 8px; align-items: center; font-weight: 400; }
 
 /* ---------- Forside (til nye medlemmer) ---------- */
 .landing { margin-top: -28px; }
-.lp-hero { position: relative; margin-inline: calc(50% - 50vw); min-height: min(640px, 86vh); display: flex; align-items: flex-end; color: #fff; overflow: hidden; background: var(--navy); }
-.lp-hero-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 12%; }
-.lp-hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgb(43 50 60 / 0.1) 0%, rgb(43 50 60 / 0.55) 45%, rgb(43 50 60 / 0.94) 100%); }
-.lp-hero-inner { position: relative; z-index: 1; width: 100%; padding-top: 120px; padding-bottom: 48px; }
+/* Hero: tekst på klubbens mørke farve til venstre, billedet i naturlig størrelse til højre (skarpt og ubeskåret) */
+.lp-hero { position: relative; margin-inline: calc(50% - 50vw); padding-inline: max(16px, calc(50vw - 560px)); color: #fff; background: linear-gradient(135deg, #1f2730 0%, var(--navy) 55%, #1d3b2c 100%); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 40px; align-items: center; padding-block: 56px 60px; overflow: hidden; }
+.lp-hero::before { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 5px; background: linear-gradient(90deg, var(--club-light), var(--club-green), var(--club-dark)); }
+.lp-hero-img { width: 100%; max-width: 1100px; aspect-ratio: 11 / 5; object-fit: cover; border-radius: 18px; box-shadow: 0 20px 50px rgb(0 0 0 / 0.35); }
+.lp-hero-inner { position: relative; z-index: 1; min-width: 0; }
 .lp-hero .eyebrow { font-weight: 750; letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.85rem; color: var(--club-light); margin: 0 0 10px; }
 .lp-hero h1 { font-size: clamp(2.2rem, 6vw, 3.8rem); line-height: 1.04; max-width: 15ch; margin: 0 0 16px; text-shadow: 0 2px 20px rgb(0 0 0 / 0.25); }
 .lp-hero .lead { font-size: clamp(1.05rem, 2.2vw, 1.25rem); max-width: 46ch; color: #e8f1f7; margin: 0 0 26px; }
@@ -347,12 +353,11 @@ label.check { display: flex; gap: 8px; align-items: center; font-weight: 400; }
   .lp-teams, .lp-prices { grid-template-columns: 1fr; }
   .lp-week { grid-template-columns: 1fr; }
   .lp-split { grid-template-columns: 1fr; gap: 20px; }
+  .lp-hero { grid-template-columns: 1fr; gap: 22px; padding-block: 20px 36px; }
+  .lp-hero-img { order: -1; border-radius: 14px; }
 }
 @media (max-width: 640px) {
-  .landing { margin-top: -20px; }
-  .lp-hero { min-height: 78vh; }
-  .lp-hero-img { object-position: 22% 20%; }
-  .lp-hero-inner { padding-bottom: 32px; }
+  .landing { margin-top: -28px; }
   .lp-hero .hero-actions .button { width: 100%; }
   .lp-section { margin-top: 52px; }
   .lp-week li { grid-template-columns: auto 1fr auto; }
@@ -589,3 +594,21 @@ label.check { display: flex; gap: 8px; align-items: center; font-weight: 400; }
 .ath-sponsors legend { font-weight: 700; padding: 0 6px; }
 .workout-export { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; font-size: 0.9rem; }
 .workout-export > span { font-weight: 600; }
+.lb-all { max-width: 760px; }
+.lb-ag { font-size: 0.72rem; padding: 1px 7px; text-decoration: none; margin-right: 4px; }
+.sp-fields .sp-wide { grid-column: 1 / -1; }
+
+/* Sponsorside */
+.sponsor-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+.sponsor-card { display: flex; flex-direction: column; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+.sponsor-logo { background: #fff; height: 130px; display: grid; place-items: center; padding: 18px 24px; border-bottom: 1px solid var(--line); }
+.sponsor-logo a, .sponsor-logo img { display: block; max-width: 100%; max-height: 90px; }
+.sponsor-logo img { width: auto; height: auto; max-height: 90px; object-fit: contain; }
+.sponsor-body { display: grid; gap: 8px; padding: 16px 18px 18px; align-content: start; flex: 1; }
+.sponsor-body h2 { margin: 0; font-size: 1.1rem; }
+.sponsor-body p { margin: 0; }
+.sponsor-discount { justify-self: start; }
+.sponsor-details summary { cursor: pointer; color: var(--link); font-size: 0.92rem; }
+.sponsor-details p { white-space: pre-line; margin-top: 6px; font-size: 0.92rem; }
+.sponsor-login { font-size: 0.9rem; }
+.sponsor-link { font-size: 0.92rem; margin-top: auto; }

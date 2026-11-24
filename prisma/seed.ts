@@ -57,6 +57,20 @@ async function main() {
     }
   }
 
+  // Tekster fra den gamle sponsorside. Udfyldes kun, hvis admin ikke selv har skrevet noget.
+  const info: [string, string, string | null, string | null][] = [
+    ["Erik Jørgensen's Eftf.", "Kran- og containerservice i Nyborg siden 1966.", null, "Tlf. 65 31 25 52"],
+    ["Intersport Nyborg", "Sportsbutik i Nyborg med løb, cykel og svøm.", "10 % rabat på alle varer", "Korsgade 4, 5800 Nyborg\nTlf. 26 12 15 98 · nyborg@intersport.dk\nRabatten gives kontant i butikken. Vis at du er medlem."],
+    ["TilNyborg.dk", "Alt om at bo, handle og opleve i Nyborg.", null, null],
+    ["Fri BikeShop", "Cykelforretning med salg og værksted.", null, "Vestergade 37, 5800 Nyborg\nTlf. 65 31 78 22"],
+    ["TYR", "Svømme- og triatlonudstyr. Køb i TYRs webshop.", "Klubrabat i webshoppen", "Handl på tyrdanmark.dk. Rabatkoden får du hos bestyrelsen."],
+    ["Løbexperten", "Løbebutik i Odense med professionel vejledning.", "20 % rabat (undtagen ure)", "Skibhusvej 52c, 5000 Odense C\nNævn dit medlemskab af NyborgTri ved betaling.\nÅbent man–fre 10–17.30, lør 10–13."],
+    ["FIT 4 RUN", "Løbe- og triatlontøj kun til kvinder, med stort udvalg.", "20 % rabat", "Skibhusvej 82, 5000 Odense C"],
+  ];
+  for (const [name, description, discount, details] of info) {
+    await prisma.sponsor.updateMany({ where: { name, description: null }, data: { description, discount, details } });
+  }
+
   console.log("Seed færdig");
 }
 

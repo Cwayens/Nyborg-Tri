@@ -28,6 +28,12 @@ async function readLogo(v: FormDataEntryValue | null): Promise<string | null> {
   return r.ok ? r.dataUrl : null;
 }
 
+const extra = (f: FormData) => ({
+  description: String(f.get("description") ?? "").trim().slice(0, 200) || null,
+  discount: String(f.get("discount") ?? "").trim().slice(0, 80) || null,
+  details: String(f.get("details") ?? "").trim().slice(0, 1000) || null,
+});
+
 function done() {
   revalidatePath("/");
   revalidatePath("/admin/sponsorer");
@@ -41,7 +47,7 @@ export async function addSponsor(formData: FormData) {
   const logo = await readLogo(formData.get("logo"));
   if (!logo) fail("Vælg et logo");
   const last = await prisma.sponsor.aggregate({ _max: { sortOrder: true } });
-  await prisma.sponsor.create({ data: { name, url: cleanUrl(formData.get("url")), logo: logo!, sortOrder: (last._max.sortOrder ?? 0) + 1 } });
+  await prisma.sponsor.create({ data: { name, url: cleanUrl(formData.get("url")), logo: logo!, ...extra(formData), sortOrder: (last._max.sortOrder ?? 0) + 1 } });
   done();
 }
 
@@ -53,7 +59,7 @@ export async function updateSponsor(formData: FormData) {
   const logo = await readLogo(formData.get("logo"));
   await prisma.sponsor.update({
     where: { id },
-    data: { name, url: cleanUrl(formData.get("url")), active: formData.get("active") === "on", ...(logo ? { logo } : {}) },
+    data: { name, url: cleanUrl(formData.get("url")), ...extra(formData), active: formData.get("active") === "on", ...(logo ? { logo } : {}) },
   });
   done();
 }

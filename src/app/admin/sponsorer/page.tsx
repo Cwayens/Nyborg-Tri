@@ -25,6 +25,9 @@ export default async function AdminSponsors({ searchParams }: { searchParams: Pr
               <input type="hidden" name="id" value={s.id} />
               <label>Navn<input name="name" defaultValue={s.name} required maxLength={100} /></label>
               <label>Hjemmeside<input name="url" defaultValue={s.url ?? ""} placeholder="www.eksempel.dk" /></label>
+              <label>Kort beskrivelse<input name="description" defaultValue={s.description ?? ""} maxLength={200} /></label>
+              <label>Medlemsfordel<input name="discount" defaultValue={s.discount ?? ""} maxLength={80} placeholder="fx 10 % rabat" /></label>
+              <label className="sp-wide">Detaljer kun for medlemmer (adresse, rabatkode)<textarea name="details" rows={2} defaultValue={s.details ?? ""} maxLength={1000} /></label>
               <label>Nyt logo (valgfrit)<input type="file" name="logo" accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif" /></label>
               <label className="check"><input type="checkbox" name="active" defaultChecked={s.active} /> Vis på forsiden</label>
               <button className="button small" type="submit">Gem</button>
@@ -47,6 +50,11 @@ export default async function AdminSponsors({ searchParams }: { searchParams: Pr
           <label>Navn<input name="name" required maxLength={100} /></label>
           <label>Hjemmeside (valgfri)<input name="url" placeholder="www.eksempel.dk" /></label>
         </div>
+        <div className="row">
+          <label>Kort beskrivelse<input name="description" maxLength={200} /></label>
+          <label>Medlemsfordel<input name="discount" maxLength={80} placeholder="fx 10 % rabat" /></label>
+        </div>
+        <label>Detaljer kun for medlemmer (adresse, rabatkode)<textarea name="details" rows={2} maxLength={1000} /></label>
         <label>Logo<input type="file" name="logo" required accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif" /></label>
         <p className="muted" style={{ margin: 0 }}>Brug gerne et logo med hvid eller gennemsigtig baggrund, højst 300 KB.</p>
         <button className="button" type="submit" style={{ justifySelf: "start" }}>Tilføj</button>

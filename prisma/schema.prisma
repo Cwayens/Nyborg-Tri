@@ -47,9 +47,9 @@ model User {
   // Forælder/værge for medlemmer under 18. Får betalingslink, kvitteringer og påmindelser.
   guardianName  String?
   guardianEmail String?
-  address   String?
-  zip       String?
-  city      String?
+  address       String?
+  zip           String?
+  city          String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -438,8 +438,8 @@ model Effort {
   watts      Int?
   createdAt  DateTime      @default(now())
 
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activity Activity         @relation(fields: [activityId], references: [id], onDelete: Cascade)
   result   BenchmarkResult?
 
   @@unique([activityId, test])
@@ -497,35 +497,38 @@ model ChatMessage {
 
 /// Sponsorer i bjælken på forsiden. Admin redigerer under Administration > Sponsorer.
 model Sponsor {
-  id        String   @id @default(cuid())
-  name      String
-  url       String?
-  logo      String   @db.Text // sti i /public eller data-URL for uploadet logo
-  sortOrder Int      @default(0)
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  name        String
+  url         String?
+  logo        String   @db.Text // sti i /public eller data-URL for uploadet logo
+  description String? // kort tekst om sponsoren (offentlig)
+  discount    String? // medlemsfordel, fx "10 % rabat i butikken" (offentlig)
+  details     String?  @db.Text // adresse, rabatkode o.l. (kun for medlemmer)
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   athletes AthleteProfile[]
 }
 
 /// Offentlig profil på /atleter. Admin opretter og fremhæver; atleten skal give samtykke, før den vises.
 model AthleteProfile {
-  id         String    @id @default(cuid())
-  userId     String    @unique
-  slug       String    @unique
-  headline   String? // fx "Ironman-atlet · AG 30-34"
-  bio        String?   @db.Text
-  goals      String?   @db.Text // mål for sæsonen, én pr. linje
-  results    String?   @db.Text // resultater, én pr. linje
-  photo      String?   @db.Text // data-URL
-  instagram  String?
-  published  Boolean   @default(false) // admin: vis på siden
-  featured   Boolean   @default(false) // admin: fremhæv på forsiden
-  sortOrder  Int       @default(0)
-  consentAt  DateTime? // atletens samtykke; null = ikke givet / trukket tilbage
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  id        String    @id @default(cuid())
+  userId    String    @unique
+  slug      String    @unique
+  headline  String? // fx "Ironman-atlet · AG 30-34"
+  bio       String?   @db.Text
+  goals     String?   @db.Text // mål for sæsonen, én pr. linje
+  results   String?   @db.Text // resultater, én pr. linje
+  photo     String?   @db.Text // data-URL
+  instagram String?
+  published Boolean   @default(false) // admin: vis på siden
+  featured  Boolean   @default(false) // admin: fremhæv på forsiden
+  sortOrder Int       @default(0)
+  consentAt DateTime? // atletens samtykke; null = ikke givet / trukket tilbage
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   sponsors Sponsor[]

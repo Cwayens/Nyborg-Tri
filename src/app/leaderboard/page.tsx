@@ -131,7 +131,7 @@ export default async function Leaderboard({ searchParams }: Props) {
             : `Hurtigste ${def.short} i år.`}
       </p>
 
-      {shown.length === 0 ? (
+      {ranked.length === 0 || shown.length === 0 ? (
         <div className="card empty">
           <p style={{ margin: 0 }}>
             {view === "fremgang"
@@ -139,6 +139,19 @@ export default async function Leaderboard({ searchParams }: Props) {
               : `Ingen ${GENDER_LABEL[gender].toLowerCase()} har en ${def.short} på leaderboardet endnu.`}
           </p>
         </div>
+      ) : !ag ? (
+        // "Alle": én samlet rangliste fra første til sidste, med aldersgruppen ved hvert navn
+        <section className="card lb-group lb-all">
+          <header>
+            <h2>{GENDER_LABEL[gender]}, alle aldersgrupper</h2>
+            <span className="muted">{ranked.length} {ranked.length === 1 ? "atlet" : "atleter"}</span>
+          </header>
+          <ol className="lb-list">
+            {ranked.map((r, i) => (
+              <Row key={r.athlete.id} r={r} place={i + 1} me={r.athlete.id === me.id} view={view} ag={`${GENDER_PREFIX[gender]}${r.ag}`} agHref={q({ ag: r.ag })} />
+            ))}
+          </ol>
+        </section>
       ) : (
         <div className="lb-groups">
           {shown.map(({ g, list }) => (
@@ -161,7 +174,7 @@ export default async function Leaderboard({ searchParams }: Props) {
   );
 }
 
-function Row({ r, place, me, view }: { r: Ranked; place: number; me: boolean; view: string }) {
+function Row({ r, place, me, view, ag, agHref }: { r: Ranked; place: number; me: boolean; view: string; ag?: string; agHref?: string }) {
   const name = r.athlete.name ?? "Uden navn";
   return (
     <li className={me ? "me" : undefined}>
@@ -169,7 +182,10 @@ function Row({ r, place, me, view }: { r: Ranked; place: number; me: boolean; vi
       <span className="avatar">{initials(name)}</span>
       <span className="lb-name">
         <b>{name}{me && <small> (dig)</small>}</b>
-        <small className="muted">{shortDate(r.best.date)}</small>
+        <small className="muted">
+          {ag && agHref && <><Link href={agHref} className="pill lb-ag">{ag}</Link> </>}
+          {shortDate(r.best.date)}
+        </small>
       </span>
       {view === "fremgang" ? (
         <span className="lb-result">
