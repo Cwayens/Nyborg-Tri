@@ -12,6 +12,8 @@ import { formatDay, formatTime } from "@/lib/time";
 import { DisciplineIcon, initials } from "@/components/Icons";
 import { WeekChart } from "@/components/WeekChart";
 import { TESTS, formatResult, score } from "@/lib/benchmarks";
+import { WorkoutView } from "@/components/WorkoutView";
+import { isWorkout, referencesFrom } from "@/lib/workout";
 import { toggleSignup } from "../kalender/actions";
 
 export const metadata = { title: "Overblik" };
@@ -46,6 +48,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     prisma.benchmarkResult.findMany({ where: { userId: user.id }, select: { test: true, seconds: true, watts: true } }),
     prisma.post.findMany({ where: { published: true }, orderBy: { publishedAt: "desc" }, take: 3, select: { slug: true, title: true, publishedAt: true } }),
   ]);
+  const refs = referencesFrom(benchmarks);
   const bestByTest = new Map<string, (typeof benchmarks)[number]>();
   for (const b of benchmarks) {
     const cur = bestByTest.get(b.test);
@@ -155,6 +158,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                   <h3 style={t.cancelledAt ? { textDecoration: "line-through" } : undefined}>{t.title}</h3>
                   {t.cancelledAt && <span className="pill warn">Aflyst{t.cancelReason ? `: ${t.cancelReason}` : ""}</span>}
                   <p className="muted">{formatDay(t.startsAt)} kl. {formatTime(t.startsAt)}–{formatTime(t.endsAt)} · {t.location}</p>
+                  {isWorkout(t.workout) && <WorkoutView workout={t.workout} discipline={t.discipline} refs={refs} />}
                   <Attendees names={t.signups.map((s) => s.user.name)} />
                 </div>
                 {eligible && !t.cancelledAt && (

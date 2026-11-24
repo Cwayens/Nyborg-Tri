@@ -6,6 +6,7 @@
 import { PrismaClient, type AthleteGroup, type Discipline } from "@prisma/client";
 import { DEMO_USERS, demoEmail } from "../src/lib/demo";
 import { addWeeksLocal, parseLocal } from "../src/lib/time";
+import { parseText } from "../src/lib/workout";
 
 const prisma = new PrismaClient();
 const DAY = 24 * 3600 * 1000;
@@ -15,6 +16,15 @@ function localDate(offsetDays: number): string {
 }
 
 // Faste ugentlige træninger (ugedag: 1=man … 7=søn)
+// Programmer som trænerne har lagt ind (samme format som ved import fra TrainingPeaks)
+const PROGRAMS: Record<string, string> = {
+  "Morgensvøm – intervaller": "400m 70% opvarmning\n8x(100m 105%, 20s pause)\n4x(200m 95%, 30s pause)\n200m 60% nedkøling",
+  "Intervalløb på banen": "15min 70-80% opvarmning\n6x(1000m 104%, 90s pause)\n10min 65% nedkøling",
+  "Elite-cykling i tempo": "20min 55-75% opvarmning\n3x(15min 90-95%, 5min 55%)\n15min 50% nedkøling",
+  "Langtur på racercykel": "150min 60-70%",
+  "Svømning med træner": "300m 70% opvarmning\n10x(50m 100%, 15s pause)\n6x(100m 90%, 20s pause)\n200m 60% nedkøling",
+};
+
 const WEEKLY: { day: number; start: string; end: string; title: string; d: Discipline; group: AthleteGroup; location: string }[] = [
   { day: 1, start: "19:00", end: "20:30", title: "Svømning – teknik", d: "SWIM", group: "BREDDE", location: "Vippebassin bane 1-4" },
   { day: 1, start: "18:00", end: "19:00", title: "Løb med NGIF", d: "RUN", group: "BREDDE", location: "Nyborg Idræts- og Fritidscenter" },
@@ -88,7 +98,10 @@ async function main() {
       const startsAt = parseLocal(`${date}T${w.start}`);
       if (startsAt < new Date()) continue;
       const t = await prisma.trainingSession.create({
-        data: { title: w.title, discipline: w.d, group: w.group, location: w.location, startsAt, endsAt: parseLocal(`${date}T${w.end}`), createdById: coach },
+        data: {
+          title: w.title, discipline: w.d, group: w.group, location: w.location, startsAt, endsAt: parseLocal(`${date}T${w.end}`), createdById: coach,
+          ...(PROGRAMS[w.title] ? { workout: parseText(PROGRAMS[w.title]) as object } : {}),
+        },
       });
       created.push({ id: t.id, group: w.group, startsAt });
     }

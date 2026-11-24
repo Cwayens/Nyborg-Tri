@@ -1,6 +1,7 @@
 import type { TrainingSession } from "@prisma/client";
 import { DISCIPLINE_LABEL, GROUP_LABEL, GROUPS } from "@/lib/roles";
 import { toLocalInput } from "@/lib/time";
+import { isWorkout, toText } from "@/lib/workout";
 
 type Props = { action: (formData: FormData) => Promise<void>; training?: TrainingSession; allowRepeat?: boolean };
 
@@ -29,6 +30,23 @@ export function TrainingForm({ action, training, allowRepeat }: Props) {
             <input type="radio" name="group" value={g} defaultChecked={training?.group === g} required /> {GROUP_LABEL[g]}
           </label>
         ))}
+      </fieldset>
+      <fieldset className="program-field">
+        <legend>Træningsprogram (valgfrit)</legend>
+        <p className="muted">
+          Hent en træning fra TrainingPeaks: åbn den, vælg <b>Export</b> og gem som <b>.zwo</b> (cykel og løb) eller <b>.mrc</b>. Intensiteten
+          er i procent af FTP (cykel), tærskelfart (løb) eller 100 m-fart (svøm), så hver atlet ser sine egne watt og tempoer.
+        </p>
+        <label>Importér fil<input type="file" name="programFile" accept=".zwo,.mrc,.erg,.json,.txt" /></label>
+        <label>
+          …eller skriv programmet
+          <textarea
+            name="program"
+            defaultValue={isWorkout(training?.workout) ? toText(training.workout) : ""}
+            placeholder={"10min 60%\n5x(4min 105%, 3min 55%)\n8x100m 110% 20s pause\n10min 50%"}
+            style={{ minHeight: 110, fontFamily: "ui-monospace, monospace" }}
+          />
+        </label>
       </fieldset>
       <label>Beskrivelse (valgfri)<textarea name="description" defaultValue={training?.description ?? ""} style={{ minHeight: 120 }} /></label>
       {allowRepeat && (

@@ -71,6 +71,10 @@ Træneren vælger præcis én gruppe for hver træning (Elite, Bredde eller Bør
 - **Mine tests** (`/benchmarks`): 5 km, 10 km, FTP (20 min), 100 m og 1500 m svøm med historik og udvikling. Ture fra Strava eller manuelt på præcis testdistancen foreslås som resultat. Trænere ser gruppens bedste resultater under Trænerværktøj → Testresultater.
 - **Chat** (`/chat`): én kanal pr. gruppe for løb, cykling og svøm. Atleter skriver i egen gruppe, trænere og admin i alle og kan slette beskeder.
 
+## Træningsprogrammer (TrainingPeaks)
+
+Træneren kan lægge et struktureret program på en træning: importér en .zwo- eller .mrc-fil eksporteret fra TrainingPeaks, en TrainingPeaks-struktur (.json) eller skriv det i kortformat, fx `5x(4min 105%, 3min 55%)`. Intensiteten er i procent af FTP (cykel), tærskelfart (løb) og 100 m-fart (svøm). Hver atlet ser sine egne watt og tempoer, beregnet ud fra Mine tests. API-koblingen er forberedt i `src/lib/trainingpeaks.ts` og kræver partneradgang.
+
 ## Tilmelding til træninger
 
 - Alle kan oprette en atletbruger (log ind med mail – profilen oprettes automatisk).

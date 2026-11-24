@@ -6,6 +6,8 @@ import { prisma } from "@/lib/db";
 import { DISCIPLINE_LABEL, GROUP_LABEL, GROUPS, canJoinGroup, trainingVisibleFor } from "@/lib/roles";
 import { dayKey, formatDay, formatTime } from "@/lib/time";
 import { toggleSignup } from "./actions";
+import { WorkoutView } from "@/components/WorkoutView";
+import { isWorkout, referencesFrom } from "@/lib/workout";
 
 export const metadata = { title: "Kalender" };
 
@@ -40,6 +42,9 @@ export default async function Calendar({ searchParams }: Props) {
 
   const userId = session?.user.id ?? null;
   const eligible = userId ? await canSignUp(userId) : false;
+  const refs = userId
+    ? referencesFrom(await prisma.benchmarkResult.findMany({ where: { userId }, select: { test: true, seconds: true, watts: true } }))
+    : null;
 
   const link = (g: string) => `/kalender?gruppe=${g}&uger=${weeks}`;
   return (
@@ -94,6 +99,7 @@ export default async function Calendar({ searchParams }: Props) {
                   {GROUP_LABEL[s.group]}
                 </p>
                 {s.description && <p style={{ whiteSpace: "pre-line" }}>{s.description}</p>}
+                {isWorkout(s.workout) && <WorkoutView workout={s.workout} discipline={s.discipline} refs={refs} />}
                 <Attendees names={userId ? s.signups.map((x) => x.user.name ?? "Unavngivet") : null} count={s.signups.length} />
               </div>
               {userId && !s.cancelledAt && s.startsAt > new Date() && (s.signups.some((x) => x.user.id === userId) || (eligible && canJoinGroup(session!.user, s.group))) && (

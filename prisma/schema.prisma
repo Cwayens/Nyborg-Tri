@@ -241,6 +241,7 @@ model TrainingSession {
   cancelledAt  DateTime? // aflyst af træner – vises i kalenderen i stedet for at forsvinde
   cancelReason String?
   seriesId     String? // fælles id for ugentligt gentagne træninger
+  workout      Json? // struktureret program (fx fra TrainingPeaks), se src/lib/workout.ts
   createdById  String
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt

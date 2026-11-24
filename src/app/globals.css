@@ -410,3 +410,22 @@ label.check { display: flex; gap: 8px; align-items: center; font-weight: 400; }
   .logo-text small { font-size: 0.56rem; }
 }
 @media (max-width: 360px) { .logo-text { display: none; } }
+
+/* Træningsprogram */
+.program-field .muted { margin: 0 0 8px; font-size: 0.92rem; }
+.workout { margin: 8px 0; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--bg); }
+.workout summary { cursor: pointer; padding: 8px 12px; font-weight: 650; display: flex; gap: 8px; align-items: center; }
+.workout ol, .workout ul { list-style: none; margin: 0; padding: 0; }
+.workout > ol { padding: 0 12px 4px; }
+.workout > ol > li { display: flex; gap: 8px; align-items: stretch; padding: 4px 0; border-top: 1px solid var(--line); }
+.workout > ol > li > ul { flex: 1; }
+.workout .rep-count { font-weight: 800; color: var(--accent); min-width: 2.6em; align-self: center; }
+.workout .rep > ul { border-left: 3px solid var(--c, var(--accent)); padding-left: 8px; }
+.workout .step { display: grid; grid-template-columns: 92px 70px 1fr auto; gap: 8px; padding: 3px 0; font-size: 0.92rem; align-items: center; font-variant-numeric: tabular-nums; }
+.workout .step-kind { color: var(--muted); }
+.workout .step-active .step-kind { color: var(--text); font-weight: 650; }
+.workout .step-target { white-space: nowrap; }
+.workout-note { font-size: 0.85rem; padding: 0 12px 10px; margin: 0; }
+@media (max-width: 640px) { .workout .step { grid-template-columns: 64px 1fr auto; } .workout .step-kind { display: none; } }
+.program-field textarea { width: 100%; }
+.tabbar a span { white-space: nowrap; font-size: 0.68rem; }

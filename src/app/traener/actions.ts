@@ -6,7 +6,9 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireTrainer } from "@/auth";
 import { prisma } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 import { addWeeksLocal, parseLocal } from "@/lib/time";
+import { parseText, parseWorkoutFile, type Workout } from "@/lib/workout";
 
 const schema = z.object({
   title: z.string().trim().min(2, "Skriv en titel"),
@@ -21,11 +23,24 @@ const schema = z.object({
 });
 
 function parse(formData: FormData) {
-  const r = schema.safeParse(Object.fromEntries(formData));
+  const r = schema.safeParse(Object.fromEntries([...formData.entries()].filter(([, v]) => typeof v === "string")));
   if (!r.success) throw new Error(r.error.issues[0].message);
   if (r.data.end <= r.data.start) throw new Error("Sluttid skal være efter starttid");
   return r.data;
 }
+
+/** Program fra fil (har forrang) eller tekstfelt. undefined = intet program. */
+async function readProgram(formData: FormData): Promise<Workout | undefined> {
+  const file = formData.get("programFile");
+  if (file instanceof File && file.size > 0) {
+    if (file.size > 512 * 1024) throw new Error("Filen er for stor (maks 0,5 MB)");
+    return parseWorkoutFile(file.name, await file.text());
+  }
+  const text = String(formData.get("program") ?? "").trim();
+  return text ? parseText(text) : undefined;
+}
+
+const workoutValue = (w: Workout | undefined) => (w ? (w as unknown as Prisma.InputJsonValue) : Prisma.DbNull);
 
 function fail(path: string, e: unknown): never {
   redirect(`${path}${path.includes("?") ? "&" : "?"}fejl=${encodeURIComponent(e instanceof Error ? e.message : String(e))}`);
@@ -33,9 +48,10 @@ function fail(path: string, e: unknown): never {
 
 export async function createTraining(formData: FormData) {
   const user = await requireTrainer();
-  let d;
+  let d, workout;
   try {
     d = parse(formData);
+    workout = await readProgram(formData);
   } catch (e) {
     fail("/traener/ny", e);
   }
@@ -50,6 +66,7 @@ export async function createTraining(formData: FormData) {
       startsAt: parseLocal(addWeeksLocal(`${d.date}T${d.start}`, i)),
       endsAt: parseLocal(addWeeksLocal(`${d.date}T${d.end}`, i)),
       seriesId,
+      workout: workoutValue(workout),
       createdById: user.id,
     })),
   });
@@ -59,9 +76,10 @@ export async function createTraining(formData: FormData) {
 
 export async function updateTraining(id: string, formData: FormData) {
   await requireTrainer();
-  let d;
+  let d, workout;
   try {
     d = parse(formData);
+    workout = await readProgram(formData);
   } catch (e) {
     fail(`/traener/${id}`, e);
   }
@@ -70,6 +88,7 @@ export async function updateTraining(id: string, formData: FormData) {
     data: {
       title: d.title, discipline: d.discipline, location: d.location, description: d.description || null, group: d.group,
       startsAt: parseLocal(`${d.date}T${d.start}`), endsAt: parseLocal(`${d.date}T${d.end}`),
+      workout: workoutValue(workout),
     },
   });
   revalidatePath("/kalender");
