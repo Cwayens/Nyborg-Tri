@@ -63,7 +63,7 @@ Sæt `[x]`, når et punkt er klaret.
 ## Integrationer
 
 - [ ] **TrainingPeaks API**: søg partneradgang hos TrainingPeaks (API-ansøgning til klubber/coach-platforme). Når den er godkendt, sættes `TRAININGPEAKS_CLIENT_ID` og `TRAININGPEAKS_CLIENT_SECRET`, og koblingen i `src/lib/trainingpeaks.ts` gøres færdig. Indtil da importerer trænere programmer som .zwo/.mrc-filer.
-- [ ] Bekræft med trænerne, hvordan tærskelfart på løb skal beregnes. I dag er den et estimat: 10 km-fart + 3 % eller 5 km-fart + 7 %.
+- [x] Tærskelfart på løb: estimatet (10 km-fart + 3 % eller 5 km-fart + 7 %) er godkendt af Carsten for nu. Kan ændres i `referencesFrom` i `src/lib/workout.ts`.
 
 - [ ] Hent 5 km- og 10 km-tider automatisk fra Stravas "best efforts" (i dag foreslås kun ture på præcis testdistancen).
 
