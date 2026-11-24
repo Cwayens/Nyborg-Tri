@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/auth";
 import { prisma } from "@/lib/db";
@@ -49,7 +49,7 @@ export default async function MyAthleteProfile({ searchParams }: { searchParams:
   const user = await requireUser("/profil/atlet");
   const sp = await searchParams;
   const p = await prisma.athleteProfile.findUnique({ where: { userId: user.id }, include: { user: { select: { name: true } } } });
-  if (!p) notFound();
+  if (!p) redirect("/profil");
   const visible = !!p.consentAt && p.published;
 
   return (

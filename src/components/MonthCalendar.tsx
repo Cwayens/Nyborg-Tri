@@ -118,15 +118,15 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
           <Link href={url(next)} className="button ghost small" aria-label="Næste måned">›</Link>
           {!todayKey.startsWith(monthKey) && <Link href={url(todayKey.slice(0, 7), todayKey)} className="month-today">I dag</Link>}
         </header>
-        <div className="month-grid" role="grid">
-          {WEEKDAYS.map((d) => <div key={d} className="month-wd" role="columnheader">{d}</div>)}
+        <div className="month-grid">
+          {WEEKDAYS.map((d) => <div key={d} className="month-wd" aria-hidden="true">{d}</div>)}
           {cells.map((key, i) => {
             if (!key) return <div key={`x${i}`} className="month-cell empty" />;
             const list = days.get(key) ?? [];
             const mine = userId ? list.some((s) => s.signups.some((x) => x.user.id === userId)) : false;
             const cls = ["month-cell", key === todayKey && "today", key === selected && "selected", key < todayKey && "past", mine && "mine"].filter(Boolean).join(" ");
             return (
-              <Link key={key} href={url(monthKey, key)} className={cls} role="gridcell" aria-current={key === selected ? "date" : undefined} scroll={false}
+              <Link key={key} href={url(monthKey, key)} className={cls} aria-current={key === selected ? "date" : undefined} scroll={false}
                 aria-label={`${Number(key.slice(8))}. ${MONTHS[m - 1]}: ${list.length ? `${list.length} træning${list.length > 1 ? "er" : ""}` : "ingen træninger"}`}>
                 <span className="month-num">{Number(key.slice(8))}</span>
                 <span className="month-items">

@@ -48,8 +48,8 @@ export default async function AdminAthletes({ searchParams }: { searchParams: Pr
               <summary>
                 <AthletePhoto a={p} className="ath-admin-img" />
                 <span><b>{p.user.name}</b><small className="muted">{status}{p.featured ? " · fremhævet på forsiden" : ""}</small></span>
-                {status === "Synlig" && <Link href={`/atleter/${p.slug}`}>Se profil</Link>}
               </summary>
+              {status === "Synlig" && <p style={{ margin: "8px 0 0" }}><Link href={`/atleter/${p.slug}`}>Se profil</Link></p>}
               <form action={saveProfile} className="stack" style={{ marginTop: 12 }}>
                 <input type="hidden" name="id" value={p.id} />
                 <p className="muted" style={{ margin: 0 }}>

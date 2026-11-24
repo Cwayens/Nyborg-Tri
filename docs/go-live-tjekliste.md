@@ -47,11 +47,17 @@ Sæt `[x]`, når et punkt er klaret.
 
 ## Domæne
 
+- [x] Sikkerhedsheadere er sat (ingen visning i fremmede iframes, nosniff, HSTS, referrer- og permissions-politik). `robots.txt` holder admin, login, betalingslinks og medlemssider ude af Google.
+- [ ] Overvej en Content-Security-Policy, når billeder er flyttet til egen lagring.
+
 - [ ] Peg **nyborgtri.dk** og www.nyborgtri.dk på Vercel (DNS hos den nuværende udbyder).
 - [ ] Opdater `AUTH_URL` til `https://www.nyborgtri.dk` og Stripe-webhook til det nye domæne.
 - [ ] Behold WordPress på et underdomæne i en overgangsperiode, til alt er flyttet.
 
 ## GDPR og privatliv
+
+- [ ] **Privatlivspolitikken** (`/privatlivspolitik`, importeret fra WordPress) skal opdateres. Den nævner ikke de nye data: ur-/Strava-data, vægt, værgens mail, kontaktformularen, chat og atletprofiler.
+- [ ] Medlemmer kan endnu ikke selv slette deres konto. Indtil det er bygget, skal sletning ske via admin på anmodning.
 
 - [ ] **Kontaktformularen** gemmer navn, mail, telefon og besked. Nævn det i privatlivspolitikken, og slet gamle henvendelser jævnligt (fx efter et år).
 

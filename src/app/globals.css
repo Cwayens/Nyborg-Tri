@@ -23,7 +23,7 @@
   --text: #13202e;
   --muted: #5d6b7a;
   --line: #e1e7ee;
-  --ok: #1d8a52;
+  --ok: #157043;
   --ok-bg: #e5f6ec;
   --warn: #b54708;
   --warn-bg: #fff3e6;
@@ -60,6 +60,7 @@
     --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px rgb(0 0 0 / 0.25);
     color-scheme: dark;
   }
+  .disc-label { color: color-mix(in srgb, var(--c) 70%, #fff) !important; }
 }
 
 * { box-sizing: border-box; }
@@ -140,7 +141,7 @@ h2 { font-size: 1.3rem; margin: 32px 0 12px; }
 .disc-RUN { --c: var(--run); }
 .disc-STRENGTH { --c: var(--strength); }
 .disc-icon { display: inline-grid; place-items: center; width: 38px; height: 38px; border-radius: 11px; background: color-mix(in srgb, var(--c) 15%, transparent); color: var(--c); flex: none; }
-.disc-label { color: var(--c); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 750; }
+.disc-label { color: color-mix(in srgb, var(--c) 62%, #000); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 750; }
 
 /* Hero */
 .hero { position: relative; overflow: hidden; background: linear-gradient(135deg, var(--navy), var(--sea) 70%, var(--teal)); color: #fff; border-radius: 22px; padding: 48px 40px 88px; margin-bottom: 36px; }
@@ -753,3 +754,9 @@ label.check { display: flex; gap: 8px; align-items: center; font-weight: 400; }
   .tb-total { grid-template-columns: var(--cols); }
   .tb-note { grid-column: 1 / -1; }
 }
+
+/* 404 og fejlside */
+.notfound { text-align: center; padding: 48px 24px; max-width: 640px; margin: 24px auto; }
+.notfound h1 { margin-bottom: 8px; }
+/* Atlet uden billede: lavere felt, så kortet ikke bliver en stor grøn flade */
+.athlete-card .athlete-noimg { aspect-ratio: 3 / 2; font-size: 2.2rem; }
