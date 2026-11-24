@@ -699,7 +699,7 @@ label.check { display: flex; gap: 8px; align-items: center; font-weight: 400; }
 .contact-info { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 0; }
 .contact-info dt { color: var(--muted); }
 .contact-info dd { margin: 0; overflow-wrap: anywhere; }
-.contact-places { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.contact-places { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
 .contact-place { display: flex; gap: 12px; align-items: center; text-decoration: none; color: inherit; height: 100%; box-sizing: border-box; }
 .contact-place:hover { box-shadow: var(--shadow-lg); }
 .contact-place > span:nth-child(2) { display: grid; flex: 1; }
@@ -795,3 +795,36 @@ label.check { display: flex; gap: 8px; align-items: center; font-weight: 400; }
 .mail-form .small { font-size: 0.85rem; }
 form.stack.mail-form { max-width: 760px; }
 @media (max-width: 560px) { .mail-form .row2 { grid-template-columns: 1fr; } }
+
+/* --- Ruter og kort --- */
+.routes-page { display: grid; gap: 24px; }
+.routes-page h1 { margin-bottom: 6px; }
+.routes-page .lead { color: var(--muted); font-size: 1.05rem; max-width: 65ch; margin: 0; }
+.routes-page h2 { margin: 0 0 12px; }
+.rm { display: grid; grid-template-columns: 1fr 320px; gap: 16px; align-items: start; }
+.rm-map-wrap { position: relative; }
+.rm-map { height: 560px; border-radius: var(--radius); border: 1px solid var(--line); overflow: hidden; z-index: 0; background: #e8eef4; }
+.rm-home { position: absolute; top: 10px; right: 10px; z-index: 500; box-shadow: var(--shadow); }
+.rm-side { display: grid; gap: 10px; max-height: 560px; overflow: auto; }
+.rm-filter { display: flex; flex-wrap: wrap; }
+.rm-filter button { cursor: pointer; }
+.rm-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.rm-list li { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm); }
+.rm-list li.on { border-color: var(--accent); box-shadow: var(--shadow); }
+.rm-list button { all: unset; box-sizing: border-box; cursor: pointer; display: flex; gap: 10px; align-items: center; width: 100%; padding: 10px 12px; }
+.rm-list button:focus-visible { outline: 3px solid var(--focus); border-radius: var(--radius-sm); }
+.rm-list i { flex: none; width: 6px; align-self: stretch; border-radius: 3px; }
+.rm-list span { display: grid; }
+.rm-detail { padding: 0 12px 12px 28px; font-size: 0.92rem; }
+.rm-detail p { margin: 0 0 6px; }
+.rm-pin { display: block; width: 18px; height: 18px; border-radius: 50%; background: var(--sea); border: 3px solid #fff; box-shadow: 0 1px 4px rgb(0 0 0 / 0.4); box-sizing: border-box; }
+.rm-pin.home { width: 34px; height: 34px; background: var(--accent); color: #fff; font: 800 12px/28px system-ui, sans-serif; text-align: center; }
+.contact-place.home { border-color: var(--accent); }
+.leaflet-container { font: inherit; }
+@media (max-width: 860px) {
+  .rm { grid-template-columns: 1fr; }
+  .rm-map { height: 380px; }
+  .rm-side { max-height: none; }
+}
+.seg button { padding: 6px 14px; border: 0; background: none; color: var(--text); font: inherit; font-weight: 600; font-size: 0.9rem; }
+.seg button.active { background: var(--navy); color: #fff; }

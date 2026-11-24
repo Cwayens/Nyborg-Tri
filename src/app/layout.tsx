@@ -32,7 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <br />CVR 34371571 · <a href="mailto:nyborgtri@gmail.com">nyborgtri@gmail.com</a>
             </div>
             <div>
-              <Link href="/om">Om klubben</Link> · <Link href="/sponsorer">Sponsorer</Link> ·{" "}
+              <Link href="/om">Om klubben</Link> · <Link href="/ruter">Ruter</Link> · <Link href="/sponsorer">Sponsorer</Link> ·{" "}
               <a href="https://www.facebook.com/NyborgTri">Facebook</a> · <Link href="/om/kontakt">Kontakt</Link> ·{" "}
               <Link href="/privatlivspolitik">Privatlivspolitik</Link>
             </div>

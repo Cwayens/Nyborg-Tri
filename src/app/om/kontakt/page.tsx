@@ -108,10 +108,10 @@ export default async function Contact({ searchParams }: Props) {
       </div>
 
       <section>
-        <h2>Her træner vi</h2>
+        <div className="section-head" style={{ margin: "0 0 14px" }}><h2 style={{ margin: 0 }}>Her træner vi</h2><Link href="/ruter">Se kort og ruter</Link></div>
         <ul className="contact-places">
           {PLACES.map((p) => (
-            <li key={p.name}>
+            <li key={p.id}>
               <a className="card contact-place" href={mapsUrl(p.query)} target="_blank" rel="noopener noreferrer">
                 <span className="contact-icon"><PinIcon size={20} /></span>
                 <span><b>{p.name}</b><small className="muted">{p.what}</small><span className="contact-map">Vis på kort ↗</span></span>

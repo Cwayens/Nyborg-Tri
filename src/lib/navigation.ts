@@ -16,6 +16,7 @@ export const MEMBER_INFO: { title: string; links: NavItem[] }[] = [
       { label: "Træningstider", href: "/traeningstider" },
       { label: "Indoor bike", href: "/indoor-bike" },
       { label: "Lånecykler", href: "/laanecykler" },
+      { label: "Ruter og kort", href: "/ruter" },
     ],
   },
   {

@@ -65,7 +65,7 @@ export default function Privacy() {
       <h2 id="cookies">Cookies</h2>
       <p>
         Vi bruger kun én nødvendig cookie, som holder dig logget ind. Vi bruger ingen statistik- eller reklamecookies, og derfor beder vi dig
-        heller ikke om samtykke til cookies.
+        heller ikke om samtykke til cookies. Kortet på siden med ruter hentes fra OpenStreetMap, som derfor ser din IP-adresse, når du åbner kortet.
       </p>
 
       <h2 id="boern">Børn og unge</h2>
