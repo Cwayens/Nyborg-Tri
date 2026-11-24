@@ -9,7 +9,12 @@ import { KIND_LABEL, isWorkout, personalTarget, referencesFrom } from "@/lib/wor
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session?.user) return new Response("Log ind for at hente programmet", { status: 401 });
-  const t = await prisma.trainingSession.findUnique({ where: { id: (await params).id } });
+  const id = (await params).id;
+  const url = new URL(req.url);
+  // Klubtræning eller en "Træn sammen"-tur, som et medlem har slået op
+  const t = url.searchParams.get("kilde") === "tur"
+    ? await prisma.groupWorkout.findUnique({ where: { id } })
+    : await prisma.trainingSession.findUnique({ where: { id } });
   if (!t || !isWorkout(t.workout)) return new Response("Træningen har intet program", { status: 404 });
 
   const refs = referencesFrom(
@@ -18,7 +23,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const day = t.startsAt.toLocaleDateString("da-DK", { day: "numeric", month: "numeric", timeZone: "Europe/Copenhagen" });
   const name = `${t.title.slice(0, 24)} ${day}`;
   const file = `${slugify(t.title)}-${t.startsAt.toISOString().slice(0, 10)}`;
-  const format = new URL(req.url).searchParams.get("format");
+  const format = url.searchParams.get("format");
 
   if (format === "zwo") {
     if (t.discipline === "SWIM") return new Response("Svømning kan ikke hentes som .zwo", { status: 400 });

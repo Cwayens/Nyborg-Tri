@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { DISCIPLINE_LABEL } from "@/lib/roles";
 import { WorkoutCard } from "@/components/WorkoutCard";
 import { createWorkout } from "./actions";
+import { referencesFor } from "@/lib/program-upload";
 
 export const metadata = { title: "Træn sammen" };
 
@@ -20,6 +21,7 @@ export default async function TrainTogether({ searchParams }: Props) {
     orderBy: { startsAt: "asc" },
     take: 50,
   });
+  const refs = await referencesFor(user.id);
   const today = new Date().toISOString().slice(0, 10);
 
   return (
@@ -39,7 +41,7 @@ export default async function TrainTogether({ searchParams }: Props) {
       {ny && eligible && (
         <section className="card" style={{ marginBottom: 24 }}>
           <h2 style={{ marginTop: 0 }}>Ny tur</h2>
-          <form action={createWorkout} className="stack" style={{ maxWidth: "100%" }}>
+          <form action={createWorkout} className="stack" encType="multipart/form-data" style={{ maxWidth: "100%" }}>
             <div className="row">
               <label>Sport
                 <select name="discipline" defaultValue="RUN">
@@ -49,13 +51,23 @@ export default async function TrainTogether({ searchParams }: Props) {
               <label>Dato<input type="date" name="date" min={today} defaultValue={today} required /></label>
               <label>Tid<input type="time" name="time" defaultValue="17:30" required /></label>
             </div>
-            <label>Hvad skal I?<input name="title" placeholder="fx Rolig langtur 15 km" required /></label>
+            <label>Hvad skal I?<input name="title" placeholder="fx Rolig langtur 15 km (eller tag navnet fra programmet)" /></label>
             <div className="row">
               <label>Mødested<input name="location" placeholder="fx P-pladsen ved hallen" required /></label>
               <label>Varighed (min)<input type="number" name="durationMin" defaultValue={60} min={10} max={600} required /></label>
               <label>Max deltagere<input type="number" name="maxPeople" min={2} max={100} placeholder="Ingen grænse" /></label>
             </div>
             <label>Tempo/niveau (valgfrit)<input name="level" placeholder="fx 5:30-6:00 /km eller 28-30 km/t" /></label>
+            <fieldset className="program-field">
+              <legend>Program fra TrainingPeaks (valgfrit)</legend>
+              <p className="muted">
+                Åbn træningen i TrainingPeaks, vælg <b>Export</b> og gem som <b>.fit</b>, <b>.zwo</b> eller <b>.mrc</b>. Programmet vises i procent
+                af FTP eller tærskelfart, så alle der hopper med, ser deres egne watt og tempoer og kan hente det til uret.
+              </p>
+              <label>Importér fil<input type="file" name="programFile" accept=".fit,.zwo,.mrc,.erg,.json,.txt" /></label>
+              <label>…eller skriv det<textarea name="program" placeholder={"10min 60%\n5x(4min 105%, 3min 55%)\n10min 50%"} style={{ minHeight: 80, fontFamily: "ui-monospace, monospace" }} /></label>
+              <label className="check"><input type="checkbox" name="durationAuto" value="1" defaultChecked /><span>Brug programmets længde som varighed</span></label>
+            </fieldset>
             <label>Besked (valgfri)<textarea name="description" style={{ minHeight: 80, fontFamily: "inherit" }} placeholder="fx Vi tager en kaffe bagefter" /></label>
             <div style={{ display: "flex", gap: 10 }}>
               <button className="button" type="submit">Slå op</button>
@@ -74,7 +86,7 @@ export default async function TrainTogether({ searchParams }: Props) {
       {workouts.length === 0 ? (
         <div className="card empty">Ingen ture slået op endnu. Vær den første!</div>
       ) : (
-        workouts.map((w) => <WorkoutCard key={w.id} w={w} userId={user.id} canJoin={eligible} />)
+        workouts.map((w) => <WorkoutCard key={w.id} w={w} userId={user.id} canJoin={eligible} refs={refs} />)
       )}
     </>
   );

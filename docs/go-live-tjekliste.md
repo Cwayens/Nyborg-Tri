@@ -88,7 +88,7 @@ Sæt `[x]`, når et punkt er klaret.
 
 ## Integrationer
 
-- [ ] **TrainingPeaks API**: søg partneradgang hos TrainingPeaks (API-ansøgning til klubber/coach-platforme). Når den er godkendt, sættes `TRAININGPEAKS_CLIENT_ID` og `TRAININGPEAKS_CLIENT_SECRET`, og koblingen i `src/lib/trainingpeaks.ts` gøres færdig. Indtil da importerer trænere programmer som .zwo/.mrc-filer.
+- [ ] **TrainingPeaks API**: søg partneradgang hos TrainingPeaks (API-ansøgning til klubber/coach-platforme). Når den er godkendt, sættes `TRAININGPEAKS_CLIENT_ID` og `TRAININGPEAKS_CLIENT_SECRET`, og koblingen i `src/lib/trainingpeaks.ts` gøres færdig. Med API'et kan medlemmer hente deres planlagte TrainingPeaks-træninger direkte og dele dem under Træn sammen med ét klik. Indtil da eksporterer trænere og medlemmer træningen som .fit, .zwo eller .mrc og uploader filen (virker nu).
 - [x] Tærskelfart på løb: estimatet (10 km-fart + 3 % eller 5 km-fart + 7 %) er godkendt af Carsten for nu. Kan ændres i `referencesFrom` i `src/lib/workout.ts`.
 
 - [x] Mine tests og leaderboard bruger kun data fra ure. Bedste 5 km, 10 km, halvmaraton, 40 km, 20 min watt, 100 m og 1500 m udtrækkes automatisk fra hver tur (også midt i længere ture).

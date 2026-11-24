@@ -6,9 +6,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireTrainer } from "@/auth";
 import { prisma } from "@/lib/db";
-import { Prisma } from "@prisma/client";
 import { addWeeksLocal, parseLocal } from "@/lib/time";
-import { parseText, parseWorkoutFile, type Workout } from "@/lib/workout";
+import { readProgram, workoutValue } from "@/lib/program-upload";
 
 const schema = z.object({
   title: z.string().trim().min(2, "Skriv en titel"),
@@ -29,19 +28,6 @@ function parse(formData: FormData) {
   return r.data;
 }
 
-/** Program fra fil (har forrang) eller tekstfelt. undefined = intet program. */
-async function readProgram(formData: FormData): Promise<Workout | undefined> {
-  const file = formData.get("programFile");
-  if (file instanceof File && file.size > 0) {
-    if (file.size > 512 * 1024) throw new Error("Filen er for stor (maks 0,5 MB)");
-    return parseWorkoutFile(file.name, await file.text());
-  }
-  const text = String(formData.get("program") ?? "").trim();
-  return text ? parseText(text) : undefined;
-}
-
-const workoutValue = (w: Workout | undefined) => (w ? (w as unknown as Prisma.InputJsonValue) : Prisma.DbNull);
-
 function fail(path: string, e: unknown): never {
   redirect(`${path}${path.includes("?") ? "&" : "?"}fejl=${encodeURIComponent(e instanceof Error ? e.message : String(e))}`);
 }
@@ -51,7 +37,7 @@ export async function createTraining(formData: FormData) {
   let d, workout;
   try {
     d = parse(formData);
-    workout = await readProgram(formData);
+    workout = await readProgram(formData, user.id);
   } catch (e) {
     fail("/traener/ny", e);
   }
@@ -75,11 +61,11 @@ export async function createTraining(formData: FormData) {
 }
 
 export async function updateTraining(id: string, formData: FormData) {
-  await requireTrainer();
+  const user = await requireTrainer();
   let d, workout;
   try {
     d = parse(formData);
-    workout = await readProgram(formData);
+    workout = await readProgram(formData, user.id);
   } catch (e) {
     fail(`/traener/${id}`, e);
   }

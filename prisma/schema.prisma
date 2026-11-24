@@ -392,6 +392,7 @@ model GroupWorkout {
   durationMin Int        @default(60)
   level       String? // fx "rolig 6:00/km" eller "28-30 km/t"
   maxPeople   Int?
+  workout     Json? // program, fx importeret fra TrainingPeaks (src/lib/workout.ts)
   createdAt   DateTime   @default(now())
 
   host         User                      @relation(fields: [hostId], references: [id], onDelete: Cascade)

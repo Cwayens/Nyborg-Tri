@@ -9,7 +9,7 @@ import { formatDuration } from "./benchmarks";
 export type StepKind = "warmup" | "active" | "recovery" | "rest" | "cooldown";
 export type Step = { kind: StepKind; durationSec?: number; distanceM?: number; low: number; high: number; label?: string };
 export type Block = { repeat: number; steps: Step[] };
-export type Workout = { blocks: Block[]; source: "zwo" | "mrc" | "erg" | "tp" | "text"; name?: string; description?: string; sport?: Discipline };
+export type Workout = { blocks: Block[]; source: "zwo" | "mrc" | "erg" | "tp" | "text" | "fit"; name?: string; description?: string; sport?: Discipline };
 
 export type References = { ftp?: number | null; thresholdPace?: number | null; swim100?: number | null };
 
@@ -22,7 +22,6 @@ export function parseWorkoutFile(name: string, content: string): Workout {
   if (ext === "zwo" || text.startsWith("<")) return parseZwo(text);
   if (ext === "json" || text.startsWith("{") || text.startsWith("[")) return parseTpStructure(JSON.parse(text));
   if (ext === "mrc" || ext === "erg" || /\[COURSE DATA\]/i.test(text)) return parseMrc(text);
-  if (ext === "fit") throw new Error("FIT-filer kan ikke læses endnu. Eksportér som .zwo eller .mrc fra TrainingPeaks.");
   return parseText(text);
 }
 

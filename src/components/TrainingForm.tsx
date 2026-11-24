@@ -34,10 +34,10 @@ export function TrainingForm({ action, training, allowRepeat }: Props) {
       <fieldset className="program-field">
         <legend>Træningsprogram (valgfrit)</legend>
         <p className="muted">
-          Hent en træning fra TrainingPeaks: åbn den, vælg <b>Export</b> og gem som <b>.zwo</b> (cykel og løb) eller <b>.mrc</b>. Intensiteten
+          Hent en træning fra TrainingPeaks: åbn den, vælg <b>Export</b> og gem som <b>.fit</b>, <b>.zwo</b> eller <b>.mrc</b>. Intensiteten
           er i procent af FTP (cykel), tærskelfart (løb) eller 100 m-fart (svøm), så hver atlet ser sine egne watt og tempoer.
         </p>
-        <label>Importér fil<input type="file" name="programFile" accept=".zwo,.mrc,.erg,.json,.txt" /></label>
+        <label>Importér fil<input type="file" name="programFile" accept=".fit,.zwo,.mrc,.erg,.json,.txt" /></label>
         <label>
           …eller skriv programmet
           <textarea
