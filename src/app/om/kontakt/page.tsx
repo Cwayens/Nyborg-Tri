@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { CLUB, PLACES, TOPICS, formatPhone, mapsUrl, telHref } from "@/lib/club";
 import { MailIcon, PhoneIcon, PinIcon, initials } from "@/components/Icons";
 import { sendContact } from "./actions";
+import { isOn } from "@/lib/features";
 
 export const metadata = { title: "Kontakt", description: "Skriv eller ring til Nyborg Triathlon Klub." };
 
@@ -108,7 +109,7 @@ export default async function Contact({ searchParams }: Props) {
       </div>
 
       <section>
-        <div className="section-head" style={{ margin: "0 0 14px" }}><h2 style={{ margin: 0 }}>Her træner vi</h2><Link href="/ruter">Se kort og ruter</Link></div>
+        <div className="section-head" style={{ margin: "0 0 14px" }}><h2 style={{ margin: 0 }}>Her træner vi</h2>{(await isOn("ruter")) && <Link href="/ruter">Se kort og ruter</Link>}</div>
         <ul className="contact-places">
           {PLACES.map((p) => (
             <li key={p.id}>

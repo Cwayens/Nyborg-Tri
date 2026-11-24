@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { userTypeLabel } from "@/lib/roles";
 import { isEmail, needsGuardian } from "@/lib/guardian";
 import { deleteMyAccount } from "./actions";
+import { featuresOff } from "@/lib/features";
 
 export const metadata = { title: "Min profil" };
 
@@ -37,7 +38,8 @@ async function saveProfile(formData: FormData) {
       ...(formData.has("weightKg") ? { weightKg: kg === null ? null : Math.round(kg * 10) / 10 } : {}),
       ...(formData.has("guardianEmail") ? { guardianName: guardianName || null, guardianEmail: guardianEmail || null } : {}),
       // Leaderboard kræver køn og fødselsdato; samtykket vises ikke i velkomstformularen
-      ...(welcome ? {} : { leaderboard: formData.get("leaderboard") === "on" && !!gender && !!birthDate, newsMail: formData.get("newsMail") === "on" }),
+      ...(welcome ? {} : { newsMail: formData.get("newsMail") === "on" }),
+      ...(formData.has("lbShown") ? { leaderboard: formData.get("leaderboard") === "on" && !!gender && !!birthDate } : {}),
     },
   });
   revalidatePath("/", "layout");
@@ -48,6 +50,7 @@ export default async function Profile({ searchParams }: { searchParams: Promise<
   const sessionUser = await requireUser("/profil");
   const { fejl, gemt, velkommen } = await searchParams;
   const user = await prisma.user.findUniqueOrThrow({ where: { id: sessionUser.id }, include: { athleteProfile: { select: { id: true } } } });
+  const off = await featuresOff();
   return (
     <>
       <h1>{velkommen ? "Velkommen til NyborgTri!" : "Min profil"}</h1>
@@ -77,8 +80,9 @@ export default async function Profile({ searchParams }: { searchParams: Promise<
             <label>E-mail<input type="email" name="guardianEmail" defaultValue={user.guardianEmail ?? ""} /></label>
           </fieldset>
         )}
-        {!velkommen && (
+        {!velkommen && !off.has("leaderboard") && (
           <label className="check">
+            <input type="hidden" name="lbShown" value="1" />
             <input type="checkbox" name="leaderboard" defaultChecked={user.leaderboard} />
             <span>Vis mine bedste præstationer fra uret på klubbens <Link href="/leaderboard">leaderboard</Link> (kræver fødselsdato og klasse)</span>
           </label>
@@ -97,7 +101,7 @@ export default async function Profile({ searchParams }: { searchParams: Promise<
       </form>
       {!velkommen && (
         <p style={{ marginTop: 20 }}>
-          {user.athleteProfile && <><Link href="/profil/atlet">Min atletprofil</Link> · </>}
+          {user.athleteProfile && !off.has("atleter") && <><Link href="/profil/atlet">Min atletprofil</Link> · </>}
           <Link href="/forbindelser">Ure, deling og kalender</Link> · <Link href="/bliv-medlem">Medlemskab og kvitteringer</Link>
         </p>
       )}

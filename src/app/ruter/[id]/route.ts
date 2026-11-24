@@ -1,7 +1,9 @@
+import { isOn } from "@/lib/features";
 import { ROUTES, routeToGpx } from "@/lib/routes";
 
 // /ruter/<id>.gpx – ruten som GPX-fil til uret, Komoot, Strava m.fl.
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  if (!(await isOn("ruter"))) return new Response("Ikke fundet", { status: 404 });
   const id = (await params).id.replace(/\.gpx$/, "");
   const r = ROUTES.find((x) => x.id === id);
   if (!r) return new Response("Ruten findes ikke", { status: 404 });

@@ -4,6 +4,7 @@ import { Header } from "@/components/Header";
 import { MenuCloser } from "@/components/MenuCloser";
 import { demoEnabled } from "@/lib/demo";
 import "./globals.css";
+import { hiddenHrefs } from "@/lib/features";
 
 export const metadata: Metadata = {
   title: { default: "Nyborg Triathlon Klub", template: "%s · Nyborg Triathlon Klub" },
@@ -14,7 +15,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { themeColor: "#454e5c", width: "device-width", initialScale: 1 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const hidden = await hiddenHrefs();
   return (
     <html lang="da">
       <body>
@@ -32,7 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <br />CVR 34371571 · <a href="mailto:nyborgtri@gmail.com">nyborgtri@gmail.com</a>
             </div>
             <div>
-              <Link href="/om">Om klubben</Link> · <Link href="/ruter">Ruter</Link> · <Link href="/sponsorer">Sponsorer</Link> ·{" "}
+              <Link href="/om">Om klubben</Link> · {!hidden.includes("/ruter") && <><Link href="/ruter">Ruter</Link> · </>}{!hidden.includes("/sponsorer") && <><Link href="/sponsorer">Sponsorer</Link> · </>}
               <a href="https://www.facebook.com/NyborgTri">Facebook</a> · <Link href="/om/kontakt">Kontakt</Link> ·{" "}
               <Link href="/privatlivspolitik">Privatlivspolitik</Link>
             </div>

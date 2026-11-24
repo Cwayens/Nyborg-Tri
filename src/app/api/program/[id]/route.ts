@@ -1,3 +1,4 @@
+import { isOn } from "@/lib/features";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { FROM_WEARABLE } from "@/lib/benchmarks";
@@ -8,6 +9,7 @@ import { PLAN_SESSIONS } from "@/data/begynder";
 
 // Træningsprogram som fil til uret (.fit) eller Zwift (.zwo), med medlemmets egne watt og tempi.
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  if (!(await isOn("urfiler"))) return new Response("Ikke fundet", { status: 404 });
   const session = await auth();
   if (!session?.user) return new Response("Log ind for at hente programmet", { status: 401 });
   const id = (await params).id;

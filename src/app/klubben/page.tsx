@@ -3,7 +3,7 @@ import { requireUser } from "@/auth";
 import { prisma } from "@/lib/db";
 import { PostCard } from "@/components/PostCard";
 import { MEMBER_INFO } from "@/lib/navigation";
-import { featuresOff } from "@/lib/features";
+import { featuresOff, hiddenHrefs } from "@/lib/features";
 
 export const metadata = { title: "Klubinfo og nyheder" };
 
@@ -20,7 +20,9 @@ export default async function ClubInfo() {
     { f: "udfordringer", label: "Klubudfordringer", href: "/udfordringer" },
     { f: "staevner", label: "Stævner og samkørsel", href: "/staevner" },
   ].filter((l) => !off.has(l.f as never));
-  const groups = grow.length ? [{ title: "Bliv bedre", links: grow }, ...MEMBER_INFO] : MEMBER_INFO;
+  const hidden = await hiddenHrefs();
+  const info = MEMBER_INFO.map((g) => ({ ...g, links: g.links.filter((l) => !hidden.includes(l.href)) }));
+  const groups = grow.length ? [{ title: "Bliv bedre", links: grow }, ...info] : info;
 
   return (
     <>

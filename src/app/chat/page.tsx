@@ -7,12 +7,14 @@ import { formatDay, formatTime } from "@/lib/time";
 import { ChatIcon, DisciplineIcon, initials } from "@/components/Icons";
 import { AutoRefresh } from "./AutoRefresh";
 import { deleteMessage, postMessage } from "./actions";
+import { requireFeature } from "@/lib/features";
 
 export const metadata = { title: "Chat" };
 
 type Props = { searchParams: Promise<{ rum?: string; kanal?: string }> };
 
 export default async function Chat({ searchParams }: Props) {
+  await requireFeature("chat");
   const user = await requireUser("/chat");
   const sp = await searchParams;
   const rooms = roomsFor(user);

@@ -3,13 +3,15 @@ import { HOME, PLACES, mapsUrl } from "@/lib/club";
 import { ROUTES } from "@/lib/routes";
 import { RouteMap } from "@/components/RouteMap";
 import { PinIcon } from "@/components/Icons";
+import { requireFeature } from "@/lib/features";
 
 export const metadata = {
   title: "Ruter og træningssteder",
   description: "Kort over Nyborg Triathlon Klubs træningssteder og ruter: løb på volden, MTB-ruten, cykelture og NyborgTri 4-18-4. Hent ruterne som GPX.",
 };
 
-export default function RoutesPage() {
+export default async function RoutesPage() {
+  await requireFeature("ruter");
   return (
     <div className="routes-page">
       <header>

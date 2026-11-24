@@ -3,12 +3,14 @@ import { requireTrainer } from "@/auth";
 import { prisma } from "@/lib/db";
 import { DISCIPLINE_LABEL, GROUP_LABEL } from "@/lib/roles";
 import { formatDay, formatTime } from "@/lib/time";
+import { featuresOff } from "@/lib/features";
 
 export const metadata = { title: "Træner" };
 
 export default async function TrainerHome({ searchParams }: { searchParams: Promise<{ gemt?: string; slettet?: string }> }) {
   const user = await requireTrainer();
   const { gemt, slettet } = await searchParams;
+  const off = await featuresOff();
   const sessions = await prisma.trainingSession.findMany({
     where: { startsAt: { gte: new Date() } },
     include: { createdBy: { select: { id: true, name: true } }, _count: { select: { signups: true } } },
@@ -23,8 +25,8 @@ export default async function TrainerHome({ searchParams }: { searchParams: Prom
       <p style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
         <Link className="button" href="/traener/ny">Opret træning</Link>
         <Link className="button secondary" href="/kalender?gruppe=alle">Se kalenderen</Link>
-        <Link className="button ghost" href="/traener/tests">Testresultater</Link>
-        <Link className="button ghost" href="/admin/mail">Mail til holdet</Link>
+        {!off.has("tests") && <Link className="button ghost" href="/traener/tests">Testresultater</Link>}
+        {!off.has("mail") && <Link className="button ghost" href="/admin/mail">Mail til holdet</Link>}
       </p>
       <div className="table-scroll">
         <table className="list">

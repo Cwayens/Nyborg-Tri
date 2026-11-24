@@ -3,6 +3,7 @@ import { AdminNav } from "@/components/AdminNav";
 import { prisma } from "@/lib/db";
 import { AUDIENCES, recipients } from "@/lib/bulkmail";
 import { sendGroupMail } from "./actions";
+import { requireFeature } from "@/lib/features";
 
 export const metadata = { title: "Mail til medlemmer" };
 export const maxDuration = 60;
@@ -10,6 +11,7 @@ export const maxDuration = 60;
 type Props = { searchParams: Promise<{ fejl?: string; test?: string; sendt?: string; fejlede?: string }> };
 
 export default async function MailPage({ searchParams }: Props) {
+  await requireFeature("mail");
   const user = await requireTrainer();
   const sp = await searchParams;
   const allowed = AUDIENCES.filter((a) => user.role === "ADMIN" || a.trainerAllowed);

@@ -5,12 +5,15 @@ import { hasRole } from "@/lib/roles";
 import { membershipExpired } from "@/lib/access";
 import { dato } from "@/lib/format";
 import { AppNav } from "./AppNav";
+import { hiddenHrefs } from "@/lib/features";
 import { Logo, MenuIcon, initials } from "./Icons";
 
 export async function Header() {
   const session = await auth();
   const user = session?.user;
   const expired = user ? await membershipExpired(user.id) : null;
+  const hidden = await hiddenHrefs();
+  const nav = navigation.filter((i) => !hidden.includes(i.href));
 
   async function logout() {
     "use server";
@@ -27,7 +30,7 @@ export async function Header() {
 
           {user ? (
             <>
-              <AppNav variant="top" />
+              <AppNav variant="top" hidden={hidden} />
               <details className="usermenu">
                 <summary aria-label="Min profil og menu">
                   <span className="avatar big">{initials(user.name ?? user.email)}</span>
@@ -38,7 +41,7 @@ export async function Header() {
                     <span className="muted">{user.email}</span>
                   </div>
                   <Link href="/profil">Min profil</Link>
-                  <Link href="/benchmarks">Mine tests</Link>
+                  {!hidden.includes("/benchmarks") && <Link href="/benchmarks">Mine tests</Link>}
                   <Link href="/aktiviteter">Mine aktiviteter</Link>
                   <Link href="/forbindelser">Ure, apps og kalender</Link>
                   <Link href="/bliv-medlem">Medlemskab og betaling</Link>
@@ -56,7 +59,7 @@ export async function Header() {
             <>
               <nav aria-label="Hovedmenu" className="publicnav">
                 <ul className="menu">
-                  {navigation.map((item) => (
+                  {nav.map((item) => (
                     <li key={item.href}><Link href={item.href}>{item.label}</Link></li>
                   ))}
                 </ul>
@@ -68,7 +71,7 @@ export async function Header() {
               <details className="burger">
                 <summary aria-label="Åbn menu"><MenuIcon /></summary>
                 <div className="burger-panel">
-                  {navigation.map((item) => <Link key={item.href} href={item.href}>{item.label}</Link>)}
+                  {nav.map((item) => <Link key={item.href} href={item.href}>{item.label}</Link>)}
                   <Link href="/bliv-medlem">Bliv medlem</Link>
                   <Link href="/login">Log ind</Link>
                 </div>
@@ -85,7 +88,7 @@ export async function Header() {
           </div>
         </div>
       )}
-      {user && <AppNav variant="bottom" />}
+      {user && <AppNav variant="bottom" hidden={hidden} />}
     </>
   );
 }

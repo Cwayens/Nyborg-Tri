@@ -8,6 +8,7 @@ import { kr } from "@/lib/format";
 import { SponsorBar } from "@/components/SponsorBar";
 import { AthleteCard } from "@/components/AthleteCard";
 import { VISIBLE_ATHLETE } from "@/lib/athletes";
+import { isOn } from "@/lib/features";
 
 // Forsiden er til nye medlemmer: hvad får jeg, passer det til mig, hvad koster det, og hvordan starter jeg.
 // Logoet fører altid hertil; medlemmer, der er logget ind, får en knap til deres overblik i stedet for "Prøv gratis".
@@ -135,7 +136,7 @@ export default async function Home() {
         </div>
       </section>
 
-      {featured.length > 0 && (
+      {featured.length > 0 && (await isOn("atleter")) && (
         <section className="lp-section">
           <div className="section-head" style={{ margin: 0 }}>
             <h2>Mød vores atleter</h2>

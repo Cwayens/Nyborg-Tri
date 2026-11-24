@@ -5,11 +5,13 @@ import { prisma } from "@/lib/db";
 import { FROM_WEARABLE, TESTS, formatResult, score } from "@/lib/benchmarks";
 import { GROUPS, GROUP_LABEL } from "@/lib/roles";
 import { dato } from "@/lib/format";
+import { requireFeature } from "@/lib/features";
 
 export const metadata = { title: "Testresultater" };
 
 // Trænerens overblik over gruppens bedste testresultater, fx til at lave baner og tempohold
 export default async function TrainerTests({ searchParams }: { searchParams: Promise<{ gruppe?: string }> }) {
+  await requireFeature("tests");
   await requireTrainer();
   const sp = await searchParams;
   const group: AthleteGroup = GROUPS.includes(sp.gruppe as AthleteGroup) ? (sp.gruppe as AthleteGroup) : "BREDDE";

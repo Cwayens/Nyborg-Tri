@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { VISIBLE_ATHLETE } from "@/lib/athletes";
 import { AthleteCard } from "@/components/AthleteCard";
+import { requireFeature } from "@/lib/features";
 
 export const metadata = {
   title: "Atleter",
@@ -11,6 +12,7 @@ export const metadata = {
 const CONTACT = "nyborgtri@gmail.com";
 
 export default async function Athletes() {
+  await requireFeature("atleter");
   const athletes = await prisma.athleteProfile.findMany({
     where: VISIBLE_ATHLETE,
     orderBy: [{ featured: "desc" }, { sortOrder: "asc" }],

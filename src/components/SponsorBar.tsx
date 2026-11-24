@@ -1,7 +1,9 @@
 import { prisma } from "@/lib/db";
+import { isOn } from "@/lib/features";
 
 // Bjælke med sponsorlogoer, der glider på tværs. Listen vises to gange efter hinanden, så den kører uden hul.
 export async function SponsorBar() {
+  if (!(await isOn("sponsorer"))) return null;
   const sponsors = await prisma.sponsor.findMany({ where: { active: true }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }] });
   if (sponsors.length === 0) return null;
   // Få sponsorer: gentag, så båndet altid er bredere end skærmen

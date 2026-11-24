@@ -9,7 +9,7 @@ import { dato } from "@/lib/format";
 import { formatWkg, wattsPerKg } from "@/lib/efforts";
 import { deleteBenchmark, saveEffort } from "./actions";
 import { ProgressChart } from "@/components/ProgressChart";
-import { isOn } from "@/lib/features";
+import { isOn, requireFeature } from "@/lib/features";
 import { formatDay, formatTime } from "@/lib/time";
 
 export const metadata = { title: "Mine tests" };
@@ -17,6 +17,7 @@ export const metadata = { title: "Mine tests" };
 type Props = { searchParams: Promise<{ fejl?: string; gemt?: string }> };
 
 export default async function Benchmarks({ searchParams }: Props) {
+  await requireFeature("tests");
   const user = await requireUser("/benchmarks");
   const sp = await searchParams;
   const tests = TESTS.map((t) => t.test);

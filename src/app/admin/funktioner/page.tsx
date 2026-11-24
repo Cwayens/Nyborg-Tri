@@ -2,7 +2,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/auth";
 import { AdminNav } from "@/components/AdminNav";
-import { FEATURES, FEATURE_KEYS, featuresOff, setFeaturesOff } from "@/lib/features";
+import { FEATURES, FEATURE_GROUPS, FEATURE_KEYS, featuresOff, setFeaturesOff } from "@/lib/features";
 
 export const metadata = { title: "Admin – funktioner" };
 
@@ -26,12 +26,17 @@ export default async function Features({ searchParams }: { searchParams: Promise
       <p className="muted">
         Slå funktioner fra, hvis de bliver for meget. Links og bokse forsvinder, men data gemmes, så de kan slås til igen.
       </p>
-      <form action={save} className="card stack features-form">
-        {FEATURE_KEYS.map((k) => (
-          <label key={k} className="check">
-            <input type="checkbox" name={k} defaultChecked={!off.has(k)} />
-            <span><b>{FEATURES[k].label}</b><br /><span className="muted">{FEATURES[k].text}</span></span>
-          </label>
+      <form action={save} className="stack features-form">
+        {FEATURE_GROUPS.map((g) => (
+          <fieldset key={g} className="card stack">
+            <legend className="h3">{g}</legend>
+            {FEATURE_KEYS.filter((k) => FEATURES[k].group === g).map((k) => (
+              <label key={k} className="check">
+                <input type="checkbox" name={k} defaultChecked={!off.has(k)} />
+                <span><b>{FEATURES[k].label}</b><br /><span className="muted">{FEATURES[k].text}</span></span>
+              </label>
+            ))}
+          </fieldset>
         ))}
         <button className="button" type="submit" style={{ justifySelf: "start" }}>Gem</button>
       </form>

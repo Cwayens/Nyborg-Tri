@@ -14,11 +14,11 @@ export const APP_ITEMS = [
   { href: "/statistik", label: "Statistik", Icon: ChartIcon },
 ];
 
-export function AppNav({ variant }: { variant: "top" | "bottom" }) {
+export function AppNav({ variant, hidden = [] }: { variant: "top" | "bottom"; hidden?: string[] }) {
   const path = usePathname();
   return (
     <nav className={variant === "top" ? "appnav-top" : "tabbar"} aria-label={variant === "top" ? "Medlemsmenu" : "Medlemsmenu (mobil)"}>
-      {APP_ITEMS.map(({ href, label, Icon }) => (
+      {APP_ITEMS.filter((i) => !hidden.includes(i.href)).map(({ href, label, Icon }) => (
         <Link key={href} href={href} aria-current={path.startsWith(href) ? "page" : undefined}>
           <Icon size={variant === "top" ? 18 : 22} />
           <span>{label}</span>

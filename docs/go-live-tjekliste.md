@@ -88,7 +88,7 @@ Sæt `[x]`, når et punkt er klaret.
 
 ## Bredden (nye funktioner)
 
-Alle otte kan slås fra og til under **Administration → Funktioner**. Data gemmes, når en funktion er slået fra.
+Alle otte, og 10 af de øvrige funktioner (Træn sammen, programmer til uret, Mine tests, statistik, leaderboard, chat, atleter, sponsorer, ruter og mail), kan slås fra og til under **Administration → Funktioner**. Data gemmes, når en funktion er slået fra.
 
 - [ ] Gennemgå de otte funktioner med trænerne, og slå dem fra, I ikke vil bruge fra start: tempogrupper, find en makker, begynderforløb, mentorordning, ugens tip, testdage, klubudfordringer, stævner og samkørsel.
 - [ ] **Begynderforløbet** (`src/data/begynder.ts`) er et udkast. Lad en træner læse de 10 uger og stævnetjeklisten igennem.

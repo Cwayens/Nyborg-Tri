@@ -907,3 +907,5 @@ form.stack.mail-form { max-width: 760px; }
 .grow-links a { display: grid; gap: 4px; text-decoration: none; color: inherit; align-content: start; }
 .grow-links a:hover strong, .grow-tip:hover strong { color: var(--link); }
 .grow-tip .pill { justify-self: start; }
+.features-form fieldset { border: 0; margin: 0; }
+.features-form legend { float: left; width: 100%; margin: 0 0 4px; }

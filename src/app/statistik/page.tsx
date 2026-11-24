@@ -6,12 +6,14 @@ import { formatHours, startOfWeek } from "@/lib/activities";
 import { DISCIPLINE_LABEL, GROUP_LABEL, GROUPS } from "@/lib/roles";
 import { clubLeaderboard, personalTotals, personalWeeks } from "@/lib/stats";
 import { WeekChart } from "@/components/WeekChart";
+import { requireFeature } from "@/lib/features";
 
 export const metadata = { title: "Statistik" };
 
 type Props = { searchParams: Promise<{ gruppe?: string; periode?: string }> };
 
 export default async function Stats({ searchParams }: Props) {
+  await requireFeature("statistik");
   const sessionUser = await requireUser("/statistik");
   const sp = await searchParams;
   const user = await prisma.user.findUniqueOrThrow({ where: { id: sessionUser.id } });

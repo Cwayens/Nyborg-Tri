@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Discipline } from "@prisma/client";
 import { KIND_LABEL, personalTarget, referenceLabel, stepAmount, stepIntensity, totalDuration, type References, type Workout } from "@/lib/workout";
 import { formatDuration } from "@/lib/benchmarks";
+import { isOn } from "@/lib/features";
 
 const MISSING: Partial<Record<Discipline, string>> = {
   BIKE: "FTP-test",
@@ -10,8 +11,9 @@ const MISSING: Partial<Record<Discipline, string>> = {
 };
 
 // Programmet trin for trin med atletens personlige watt eller tempo
-export function WorkoutView({ workout, discipline, refs, downloadId, kind }: { workout: Workout; discipline: Discipline; refs: References | null; downloadId?: string; kind?: "tur" | "forloeb" }) {
+export async function WorkoutView({ workout, discipline, refs, downloadId, kind }: { workout: Workout; discipline: Discipline; refs: References | null; downloadId?: string; kind?: "tur" | "forloeb" }) {
   const total = totalDuration(workout);
+  const files = await isOn("urfiler");
   const anyTarget = workout.blocks.some((b) => b.steps.some((s) => personalTarget(discipline, s, refs ?? {})));
   return (
     <details className="workout">
@@ -46,7 +48,7 @@ export function WorkoutView({ workout, discipline, refs, downloadId, kind }: { w
         )}
         {!refs && <>Log ind for at se dine egne tal.</>}
       </p>
-      {downloadId && (
+      {downloadId && files && (
         <div className="workout-export">
           <span>Læg på uret:</span>
           <a href={`/api/program/${downloadId}?format=fit${kind ? `&kilde=${kind}` : ""}`} className="button small secondary" download>Hent til ur (.fit)</a>

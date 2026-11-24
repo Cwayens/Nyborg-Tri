@@ -16,6 +16,7 @@ import { WorkoutView } from "@/components/WorkoutView";
 import { isWorkout, referencesFrom } from "@/lib/workout";
 import { toggleSignup } from "../kalender/actions";
 import { GrowSection } from "@/components/GrowSection";
+import { featuresOff } from "@/lib/features";
 
 export const metadata = { title: "Overblik" };
 
@@ -61,6 +62,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     ...myWorkouts.map((w) => ({ id: w.id, at: w.startsAt, title: w.title, where: w.location, d: w.discipline, kind: "Træn sammen", href: "/traen-sammen" })),
   ].sort((a, b) => a.at.getTime() - b.at.getTime()).slice(0, 5);
   const firstName = user.name?.split(" ")[0];
+  const off = await featuresOff();
 
   return (
     <>
@@ -116,7 +118,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         <section className="card">
           <div className="section-head" style={{ margin: "0 0 4px" }}>
             <h2 style={{ fontSize: "1.1rem" }}>Din træning</h2>
-            <Link href="/statistik">Statistik</Link>
+            {!off.has("statistik") && <Link href="/statistik">Statistik</Link>}
           </div>
           <p className="tb-summary">
             <b>{formatHours(week.sec)}</b> <span className="muted">denne uge · {week.count} {week.count === 1 ? "træning" : "træninger"}</span>
@@ -128,6 +130,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         </section>
       </div>
 
+      {!off.has("tests") && (
       <section className="card" style={{ marginTop: 18 }}>
         <div className="section-head" style={{ margin: "0 0 10px" }}>
           <h2 style={{ fontSize: "1.1rem" }}>Mine tests</h2>
@@ -145,6 +148,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
           })}
         </div>
       </section>
+      )}
 
       {user.athleteGroup && (
         <>
@@ -179,6 +183,8 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
 
       <GrowSection userId={user.id} joinedAt={user.createdAt} />
 
+      {!off.has("traensammen") && (
+        <>
       <div className="section-head">
         <h2>Træn sammen</h2>
         <Link href="/traen-sammen?ny=1">+ Slå en tur op</Link>
@@ -198,6 +204,8 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
             </Link>
           ))}
         </div>
+      )}
+        </>
       )}
 
       {news.length > 0 && (

@@ -6,13 +6,14 @@ import { DISCIPLINE_LABEL } from "@/lib/roles";
 import { WorkoutCard } from "@/components/WorkoutCard";
 import { createWorkout } from "./actions";
 import { referencesFor } from "@/lib/program-upload";
-import { isOn } from "@/lib/features";
+import { isOn, requireFeature } from "@/lib/features";
 
 export const metadata = { title: "Træn sammen" };
 
 type Props = { searchParams: Promise<{ ny?: string; fejl?: string; oprettet?: string; sport?: string }> };
 
 export default async function TrainTogether({ searchParams }: Props) {
+  await requireFeature("traensammen");
   const user = await requireUser("/traen-sammen");
   const { ny, fejl, oprettet, sport } = await searchParams;
   const eligible = await canSignUp(user.id);

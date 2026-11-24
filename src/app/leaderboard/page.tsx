@@ -6,6 +6,7 @@ import { LEADERBOARD, TEST_BY_KEY, formatDetail, formatDuration, formatResult, f
 import { AGE_GROUPS, GENDER_LABEL, GENDER_PREFIX, ageGroup, formatWkg, wattsPerKg, leaderboardProviders, rankBest, rankImprovement, type AgeGroup, type Ranked } from "@/lib/efforts";
 import { DisciplineIcon, initials } from "@/components/Icons";
 import { joinLeaderboard, leaveLeaderboard, setWeight } from "./actions";
+import { requireFeature } from "@/lib/features";
 
 export const metadata = { title: "Leaderboard" };
 
@@ -14,6 +15,7 @@ type Props = { searchParams: Promise<{ vis?: string; test?: string; koen?: strin
 const TOP_PER_GROUP = 5;
 
 export default async function Leaderboard({ searchParams }: Props) {
+  await requireFeature("leaderboard");
   const sessionUser = await requireUser("/leaderboard");
   const sp = await searchParams;
   const me = await prisma.user.findUniqueOrThrow({
