@@ -12,9 +12,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Rettigheder: ATHLETE < TRAINER < ADMIN
 enum Role {
-  MEMBER
+  ATHLETE
+  TRAINER
   ADMIN
+}
+
+// Atletgruppe – bestemmer hvilke træninger man ser i kalenderen
+enum AthleteGroup {
+  ELITE
+  BREDDE
+  BOERN
 }
 
 // ---------- Brugere (Auth.js-modeller + medlemsoplysninger) ----------
@@ -25,7 +34,8 @@ model User {
   email         String    @unique
   emailVerified DateTime?
   image         String?
-  role          Role      @default(MEMBER)
+  role          Role      @default(ATHLETE)
+  athleteGroup  AthleteGroup?
 
   phone     String?
   birthDate DateTime?
@@ -40,6 +50,7 @@ model User {
   sessions    Session[]
   memberships Membership[]
   payments    Payment[]
+  trainings   TrainingSession[]
 }
 
 model Account {
@@ -179,4 +190,34 @@ model Post {
   updatedAt     DateTime      @updatedAt
 
   @@index([publishedAt])
+}
+
+// ---------- Træningskalender ----------
+
+enum Discipline {
+  SWIM
+  BIKE
+  RUN
+  STRENGTH
+  OTHER
+}
+
+model TrainingSession {
+  id          String         @id @default(cuid())
+  title       String
+  description String?        @db.Text
+  discipline  Discipline
+  location    String
+  startsAt    DateTime
+  endsAt      DateTime
+  groups      AthleteGroup[] // tom = for alle grupper
+  seriesId    String? // fælles id for ugentligt gentagne træninger
+  createdById String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  createdBy User @relation(fields: [createdById], references: [id])
+
+  @@index([startsAt])
+  @@index([seriesId])
 }

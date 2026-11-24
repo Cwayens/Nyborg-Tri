@@ -1,6 +1,7 @@
 import { prisma } from "./db";
 import { nextPeriod, latestMembershipEnd } from "./membership";
 import { syncPayment } from "./accounting";
+import { defaultGroupFor } from "./roles";
 
 /**
  * Registrerer en gennemført betaling: markerer den som betalt og opretter medlemskabet.
@@ -20,6 +21,14 @@ export async function completePayment(args: { paymentId: string; typeId: string;
       where: { id: payment.id },
       data: { status: "PAID", paidAt: now, membershipId: membership.id, stripePaymentIntentId: args.paymentIntentId },
     });
+    // Nye medlemmer får en atletgruppe ud fra medlemstypen, hvis admin ikke har sat en
+    const [user, type] = await Promise.all([
+      tx.user.findUniqueOrThrow({ where: { id: payment.userId } }),
+      tx.membershipType.findUniqueOrThrow({ where: { id: args.typeId } }),
+    ]);
+    if (!user.athleteGroup && type.code !== "PASSIVE") {
+      await tx.user.update({ where: { id: user.id }, data: { athleteGroup: defaultGroupFor(type.code) } });
+    }
     return true;
   });
 

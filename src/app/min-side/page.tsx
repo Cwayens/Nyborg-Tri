@@ -3,6 +3,7 @@ import { requireUser, signOut } from "@/auth";
 import { prisma } from "@/lib/db";
 import { dato, kr } from "@/lib/format";
 import { currentMembership } from "@/lib/membership";
+import { userTypeLabel } from "@/lib/roles";
 
 export const metadata = { title: "Min side" };
 
@@ -24,6 +25,9 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
     <>
       {betaling === "ok" && <p className="notice">Tak for din betaling! Dit medlemskab er registreret (det kan tage et øjeblik, før det vises).</p>}
       <h1>Hej {user.name ?? user.email}</h1>
+      <p className="muted">
+        Brugertype: {userTypeLabel(user.role, user.athleteGroup)} · <Link href="/kalender">Se dine træninger i kalenderen</Link>
+      </p>
 
       <section className="card">
         <h2 style={{ marginTop: 0 }}>Medlemskab</h2>

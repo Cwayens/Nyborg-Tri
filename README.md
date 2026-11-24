@@ -52,6 +52,18 @@ Medlemskabet oprettes først, når Stripe bekræfter betalingen. Fornyelse før 
 - Uanset system kan kassereren hente betalinger som JSON: `GET /api/v1/payments?since=2026-01-01` med `Authorization: Bearer <ACCOUNTING_API_TOKEN>`.
 - Fejlede bogføringer kan sendes igen fra **Admin → Betalinger**.
 
+## Brugertyper
+
+| Type | Kan |
+|---|---|
+| Admin | Alt: medlemmer, betalinger, indhold, brugertyper, træninger |
+| Træner | Oprette, rette og slette træninger i klubbens kalender (`/traener`) |
+| Atlet – Elite / Bredde / Børn | Se kalenderen filtreret til egen gruppe, betale kontingent, se Min side |
+
+Rolle og atletgruppe sættes af en admin under **Admin → Medlemmer**. En træner kan også have en atletgruppe.
+Nye betalende medlemmer får automatisk gruppen Bredde (eller Børn ved ungdomskontingent), indtil en admin ændrer den.
+Træninger kan målrettes én eller flere grupper (ingen valgt = alle) og gentages ugentligt.
+
 ## Administration
 
 Log ind med en mail der har rollen ADMIN (sættes af seed via `ADMIN_EMAIL`, eller direkte i databasen):

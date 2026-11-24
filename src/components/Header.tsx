@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth } from "@/auth";
 import { navigation } from "@/lib/navigation";
+import { hasRole } from "@/lib/roles";
 
 export async function Header() {
   const session = await auth();
@@ -35,6 +36,7 @@ export async function Header() {
         <div className="account">
           {session?.user ? (
             <>
+              {hasRole(session.user.role, "TRAINER") && <Link href="/traener">Træner</Link>}
               {session.user.role === "ADMIN" && <Link href="/admin">Admin</Link>}
               <Link href="/min-side" className="button small">Min side</Link>
             </>

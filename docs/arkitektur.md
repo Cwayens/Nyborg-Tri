@@ -42,9 +42,14 @@ scripts/import-wordpress.ts  engangsimport af indhold
 3. Stripe kalder webhook → betaling markeres PAID, `Membership` oprettes (1 år), idempotent.
 4. Betalingen sendes til økonomisystemet. Fejl her stopper ikke medlemskabet; de kan sendes igen fra admin.
 
+## Brugertyper (tilføjet 24. nov. 2026)
+
+`User.role` (ATHLETE < TRAINER < ADMIN) styrer rettigheder, og `User.athleteGroup` (ELITE, BREDDE, BOERN) styrer hvilke træninger man ser.
+`TrainingSession` med `groups` (tom = alle) og `seriesId` for ugentlige serier. Kalenderen findes på `/kalender` (samme adresse som den gamle).
+
 ## Fase 2 – træningstilmelding (plan)
 
-Nye modeller: `TrainingSession` (tid, sted, disciplin, træner, max deltagere, gentagelse) og `TrainingSignup` (medlem, session, status).
+`TrainingSession` findes allerede. Mangler: `TrainingSignup` (medlem, session, status) og evt. max deltagere.
 Ugekalender hvor medlemmer melder til/fra og ser hvem der kommer. Erstatter WordPress-kalenderen.
 
 ## Fase 3 – TrainingPeaks (plan)

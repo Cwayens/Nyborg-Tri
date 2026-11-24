@@ -7,6 +7,7 @@ export const navigation: NavItem[] = [
   {
     label: "Træning",
     children: [
+      { label: "Kalender", href: "/kalender" },
       { label: "Træningstider", href: "/traeningstider" },
       { label: "Indoor bike", href: "/indoor-bike" },
       { label: "Lånecykler", href: "/laanecykler" },
