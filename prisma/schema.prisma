@@ -9,7 +9,10 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url       = env("DATABASE_URL")
+  // Migrationer kører uden connection pooling (Neon sætter DATABASE_URL_UNPOOLED).
+  // scripts/build.sh falder tilbage til DATABASE_URL, hvis den mangler.
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 // Rettigheder: ATHLETE < TRAINER < ADMIN
