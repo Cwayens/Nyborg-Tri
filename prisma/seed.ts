@@ -14,14 +14,14 @@ async function main() {
     await prisma.membershipType.upsert({ where: { code: t.code }, update: t, create: t });
   }
 
-  const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase();
-  if (adminEmail) {
-    await prisma.user.upsert({
-      where: { email: adminEmail },
-      update: { role: "ADMIN" },
-      create: { email: adminEmail, role: "ADMIN" },
-    });
-    console.log(`Administrator: ${adminEmail}`);
+  // ADMIN_EMAIL (eller ADMIN_EMAILS) kan indeholde flere adresser adskilt af komma
+  const adminEmails = (process.env.ADMIN_EMAILS ?? process.env.ADMIN_EMAIL ?? "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  for (const email of adminEmails) {
+    await prisma.user.upsert({ where: { email }, update: { role: "ADMIN" }, create: { email, role: "ADMIN" } });
+    console.log(`Administrator: ${email}`);
   }
 
   // Ny "Bliv medlem"-tekst – den gamle henviste til Klubmodul
