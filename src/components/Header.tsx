@@ -20,7 +20,6 @@ export async function Header() {
         <div className="wrap header-row">
           <Link href={user ? "/min-side" : "/"} className="logo" aria-label="Nyborg Triathlon Klub">
             <Logo />
-            <b>Nyborg<span>Tri</span></b>
           </Link>
 
           {user ? (

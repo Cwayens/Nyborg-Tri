@@ -1,11 +1,16 @@
-/* Nyborg Tri – designsystem. Farver som tokens, så tema og mørk tilstand styres ét sted. */
+/* Nyborg Tri – designsystem. Farver som tokens, så tema og mørk tilstand styres ét sted.
+   Klubbens farver fra logoet: lysegrøn #b5d77e, grøn #8fbb3f, mørkegrøn #008f47 og skifergrå #454e5c. */
 :root {
-  --navy: #0b2540;
-  --sea: #0e6e8c;
-  --sea-dark: #0a4f66;
-  --teal: #13a5a5;
-  --accent: #ff7a1a;
-  --accent-dark: #e0620a;
+  --club-light: #b5d77e;
+  --club-green: #8fbb3f;
+  --club-dark: #008f47;
+  --navy: #2b323c;      /* mørk skifer: hero, footer og mørke flader */
+  --sea: #454e5c;       /* skifergrå: sekundære knapper */
+  --sea-dark: #363e4a;
+  --teal: #8fbb3f;
+  --accent: #00803f;    /* klubgrøn til knapper (kontrast 5:1 mod hvid) */
+  --accent-dark: #006b35;
+  --link: #00733a;
 
   --swim: #1e88e5;
   --bike: #f39c12;
@@ -43,7 +48,10 @@
     --text: #e8eef4;
     --muted: #9aabbd;
     --line: #22364a;
-    --sea: #4cb3d4;
+    --sea: #5b6575;
+    --link: #b5d77e;
+    --accent: #2f9e57;
+    --accent-dark: #3bb267;
     --ok: #4ccb87;
     --ok-bg: #133524;
     --warn: #ffab5e;
@@ -57,7 +65,7 @@
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
 body { margin: 0; line-height: 1.6; background: var(--bg); color: var(--text); }
-a { color: var(--sea); text-underline-offset: 2px; }
+a { color: var(--link); text-underline-offset: 2px; }
 img { max-width: 100%; height: auto; }
 h1, h2, h3 { line-height: 1.2; letter-spacing: -0.01em; }
 h1 { font-size: clamp(1.7rem, 4vw, 2.3rem); margin: 0 0 16px; }
@@ -73,9 +81,11 @@ h2 { font-size: 1.3rem; margin: 32px 0 12px; }
 /* ---------- Header ---------- */
 .site-header { position: sticky; top: 0; z-index: 50; background: var(--header-bg); backdrop-filter: saturate(1.4) blur(10px); border-bottom: 1px solid var(--line); }
 .header-row { display: flex; align-items: center; gap: 20px; min-height: 64px; }
-.logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.2rem; color: var(--text); text-decoration: none; white-space: nowrap; }
-.logo span { color: var(--accent); }
-.logo svg { flex: none; }
+.logo { display: flex; align-items: center; gap: 10px; color: var(--text); text-decoration: none; white-space: nowrap; }
+.logo img { height: 34px; width: auto; flex: none; }
+.logo-text { display: flex; flex-direction: column; line-height: 1; font-style: italic; }
+.logo-text b { font-weight: 900; font-size: 1.28rem; letter-spacing: -0.01em; }
+.logo-text small { font-weight: 700; font-size: 0.66rem; letter-spacing: 0.02em; margin-top: 2px; }
 .menu { list-style: none; display: flex; gap: 2px; margin: 0; padding: 0; align-items: center; }
 .menu > li > a, .menu summary { display: block; padding: 8px 12px; border-radius: 8px; color: var(--text); text-decoration: none; cursor: pointer; font-weight: 500; }
 .menu > li > a:hover, .menu summary:hover { background: var(--bg); }
@@ -268,9 +278,9 @@ label.check { display: flex; gap: 8px; align-items: center; font-weight: 400; }
 .landing { margin-top: -28px; }
 .lp-hero { position: relative; margin-inline: calc(50% - 50vw); min-height: min(640px, 86vh); display: flex; align-items: flex-end; color: #fff; overflow: hidden; background: var(--navy); }
 .lp-hero-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 12%; }
-.lp-hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgb(11 37 64 / 0.15) 0%, rgb(11 37 64 / 0.55) 45%, rgb(11 37 64 / 0.92) 100%); }
+.lp-hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgb(43 50 60 / 0.1) 0%, rgb(43 50 60 / 0.55) 45%, rgb(43 50 60 / 0.94) 100%); }
 .lp-hero-inner { position: relative; z-index: 1; width: 100%; padding-top: 120px; padding-bottom: 48px; }
-.lp-hero .eyebrow { font-weight: 750; letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.85rem; color: #ffd2ad; margin: 0 0 10px; }
+.lp-hero .eyebrow { font-weight: 750; letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.85rem; color: var(--club-light); margin: 0 0 10px; }
 .lp-hero h1 { font-size: clamp(2.2rem, 6vw, 3.8rem); line-height: 1.04; max-width: 15ch; margin: 0 0 16px; text-shadow: 0 2px 20px rgb(0 0 0 / 0.25); }
 .lp-hero .lead { font-size: clamp(1.05rem, 2.2vw, 1.25rem); max-width: 46ch; color: #e8f1f7; margin: 0 0 26px; }
 .button.big { padding: 15px 28px; font-size: 1.08rem; }
@@ -392,3 +402,11 @@ label.check { display: flex; gap: 8px; align-items: center; font-weight: 400; }
 .chat-form { display: flex; gap: 10px; align-items: flex-end; margin-top: 12px; }
 .chat-form textarea { flex: 1; resize: vertical; min-height: 48px; font: inherit; }
 @media (max-width: 640px) { .chat-log { max-height: 55vh; } .chat-channels a { padding: 8px; gap: 6px; justify-content: center; } .chat-channels a small { display: none; } .chat-channels .disc-icon { display: none; } .chat-bubble { max-width: 85%; } }
+.account .button { white-space: nowrap; }
+@media (max-width: 640px) {
+  .logo { gap: 6px; }
+  .logo img { height: 24px; }
+  .logo-text b { font-size: 1.02rem; }
+  .logo-text small { font-size: 0.56rem; }
+}
+@media (max-width: 360px) { .logo-text { display: none; } }

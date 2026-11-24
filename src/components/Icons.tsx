@@ -52,15 +52,13 @@ export function DisciplineIcon({ discipline, size = 20 }: { discipline: Discipli
   );
 }
 
-export function Logo({ size = 34 }: { size?: number }) {
-  // Tre bølger/streger for svøm, cykel, løb
+// Klubbens logo: de tre trekanter (svøm, cykel, løb) og navnet
+export function Logo() {
   return (
-    <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden="true">
-      <rect width="40" height="40" rx="11" fill="#0b2540" />
-      <path d="M8 15c3-3 6-3 9 0s6 3 9 0 4-2 6-1" stroke="#13a5a5" strokeWidth="3.2" fill="none" strokeLinecap="round" />
-      <path d="M8 22c3-3 6-3 9 0s6 3 9 0 4-2 6-1" stroke="#ff7a1a" strokeWidth="3.2" fill="none" strokeLinecap="round" />
-      <path d="M8 29c3-3 6-3 9 0s6 3 9 0 4-2 6-1" stroke="#ffffff" strokeWidth="3.2" fill="none" strokeLinecap="round" />
-    </svg>
+    <>
+      <img src="/logo-mark.webp" alt="" width={120} height={34} />
+      <span className="logo-text"><b>Nyborg</b><small>Triathlon Klub</small></span>
+    </>
   );
 }
 

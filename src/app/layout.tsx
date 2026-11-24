@@ -8,10 +8,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: { default: "Nyborg Triathlon Klub", template: "%s · Nyborg Triathlon Klub" },
   description: "Din triatlonklub på Østfyn. Svømning, cykling og løb for alle niveauer.",
+  icons: { icon: "/icon-192.png", apple: "/apple-icon.png" },
   appleWebApp: { capable: true, title: "NyborgTri", statusBarStyle: "black-translucent" },
 };
 
-export const viewport: Viewport = { themeColor: "#0b2540", width: "device-width", initialScale: 1 };
+export const viewport: Viewport = { themeColor: "#454e5c", width: "device-width", initialScale: 1 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

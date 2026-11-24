@@ -8,9 +8,12 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Træning, kalender og fællesskab i Nyborg Triathlon Klub",
     start_url: "/min-side",
     display: "standalone",
-    background_color: "#0b2540",
-    theme_color: "#0b2540",
+    background_color: "#ffffff",
+    theme_color: "#454e5c",
     lang: "da",
-    icons: [{ src: "/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" }],
+    icons: [
+      { src: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { src: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
   };
 }
