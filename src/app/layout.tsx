@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { Header } from "@/components/Header";
 import "./globals.css";
@@ -6,14 +6,18 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: { default: "Nyborg Triathlon Klub", template: "%s · Nyborg Triathlon Klub" },
   description: "Din triatlonklub på Østfyn. Svømning, cykling og løb for alle niveauer.",
+  appleWebApp: { capable: true, title: "NyborgTri", statusBarStyle: "black-translucent" },
 };
+
+export const viewport: Viewport = { themeColor: "#0b2540", width: "device-width", initialScale: 1 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="da">
       <body>
+        <a href="#indhold" className="skip">Spring til indhold</a>
         <Header />
-        <main className="wrap main">{children}</main>
+        <main id="indhold" className="wrap main">{children}</main>
         <footer className="site-footer">
           <div className="wrap footer-row">
             <div>

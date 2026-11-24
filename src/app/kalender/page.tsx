@@ -43,7 +43,10 @@ export default async function Calendar({ searchParams }: Props) {
   const link = (g: string) => `/kalender?gruppe=${g}&uger=${weeks}`;
   return (
     <>
-      <h1>Kalender</h1>
+      <div className="section-head" style={{ marginTop: 0 }}>
+        <h1 style={{ margin: 0 }}>Kalender</h1>
+        {userId && <Link href="/forbindelser" className="muted">Få kalenderen på telefonen →</Link>}
+      </div>
       <p className="filters">
         <span className="muted">Vis:</span>
         <Link href={link("alle")} className={group === null ? "active" : undefined}>Alle</Link>
@@ -75,12 +78,12 @@ export default async function Calendar({ searchParams }: Props) {
         <section key={key} className="day">
           <h2>{formatDay(list[0].startsAt)}</h2>
           {list.map((s) => (
-            <article key={s.id} className="card training">
+            <article key={s.id} className={`card training disc disc-${s.discipline}`}>
               <div className="training-time">
                 {formatTime(s.startsAt)}–{formatTime(s.endsAt)}
               </div>
               <div>
-                <span className="tag">{DISCIPLINE_LABEL[s.discipline]}</span>
+                <span className="disc-label">{DISCIPLINE_LABEL[s.discipline]}</span>
                 <h3>{s.title}</h3>
                 <p className="muted">
                   {s.location}

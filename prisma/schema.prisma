@@ -46,16 +46,23 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  accounts       Account[]
-  sessions       Session[]
-  memberships    Membership[]
-  payments       Payment[]
-  trainings      TrainingSession[]
-  signups        TrainingSignup[]
-  trialRequest   TrialRequest?     @relation("TrialRequester")
-  trialDecisions TrialRequest[]    @relation("TrialDecider")
-  codesCreated   AccessCode[]      @relation("CodeCreator")
-  codeUsed       AccessCode?       @relation("CodeUser")
+  accounts                 Account[]
+  sessions                 Session[]
+  memberships              Membership[]
+  payments                 Payment[]
+  trainings                TrainingSession[]
+  signups                  TrainingSignup[]
+  trialRequest             TrialRequest?             @relation("TrialRequester")
+  trialDecisions           TrialRequest[]            @relation("TrialDecider")
+  codesCreated             AccessCode[]              @relation("CodeCreator")
+  codeUsed                 AccessCode?               @relation("CodeUser")
+  wearableConnections      WearableConnection[]
+  activities               Activity[]
+  groupWorkouts            GroupWorkout[]
+  groupWorkoutParticipants GroupWorkoutParticipant[]
+
+  shareActivities Boolean @default(false) // samtykke: vis mine aktiviteter i klubstatistikken
+  calendarToken   String? @unique // hemmeligt link til kalender-abonnement
 }
 
 model Account {
@@ -218,9 +225,9 @@ enum Discipline {
 }
 
 model TrainingSession {
-  id          String         @id @default(cuid())
+  id          String       @id @default(cuid())
   title       String
-  description String?        @db.Text
+  description String?      @db.Text
   discipline  Discipline
   location    String
   startsAt    DateTime
@@ -228,8 +235,8 @@ model TrainingSession {
   group       AthleteGroup // hver træning er for præcis én gruppe
   seriesId    String? // fælles id for ugentligt gentagne træninger
   createdById String
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   createdBy User             @relation(fields: [createdById], references: [id])
   signups   TrainingSignup[]
@@ -289,4 +296,92 @@ model AccessCode {
   type      MembershipType @relation(fields: [typeId], references: [id])
   createdBy User           @relation("CodeCreator", fields: [createdById], references: [id])
   usedBy    User?          @relation("CodeUser", fields: [usedById], references: [id])
+}
+
+// ---------- Wearables og aktiviteter ----------
+
+enum Provider {
+  STRAVA
+  GARMIN
+  POLAR
+  SUUNTO
+  COROS
+  WAHOO
+  TRAININGPEAKS
+  MANUAL
+}
+
+model WearableConnection {
+  id                String    @id @default(cuid())
+  userId            String
+  provider          Provider
+  externalAthleteId String
+  accessToken       String    @db.Text
+  refreshToken      String?   @db.Text
+  expiresAt         DateTime?
+  scope             String?
+  connectedAt       DateTime  @default(now())
+  lastSyncAt        DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider])
+  @@unique([provider, externalAthleteId])
+}
+
+model Activity {
+  id         String     @id @default(cuid())
+  userId     String
+  provider   Provider
+  externalId String?
+  sport      Discipline
+  name       String
+  startAt    DateTime
+  movingSec  Int
+  distanceM  Int        @default(0)
+  elevationM Int        @default(0)
+  avgHr      Int?
+  note       String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, externalId])
+  @@index([userId, startAt])
+  @@index([startAt])
+}
+
+// ---------- Træn sammen ----------
+
+// Medlemmer slår selv en træningstur op, som andre kan hoppe med på
+model GroupWorkout {
+  id          String     @id @default(cuid())
+  hostId      String
+  discipline  Discipline
+  title       String
+  description String?    @db.Text
+  location    String
+  startsAt    DateTime
+  durationMin Int        @default(60)
+  level       String? // fx "rolig 6:00/km" eller "28-30 km/t"
+  maxPeople   Int?
+  createdAt   DateTime   @default(now())
+
+  host         User                      @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  participants GroupWorkoutParticipant[]
+
+  @@index([startsAt])
+}
+
+model GroupWorkoutParticipant {
+  id        String   @id @default(cuid())
+  workoutId String
+  userId    String
+  createdAt DateTime @default(now())
+
+  workout GroupWorkout @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workoutId, userId])
 }

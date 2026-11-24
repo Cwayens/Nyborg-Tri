@@ -1,50 +1,101 @@
 import Link from "next/link";
-import { auth } from "@/auth";
+import { auth, signOut } from "@/auth";
 import { navigation } from "@/lib/navigation";
 import { hasRole } from "@/lib/roles";
+import { AppNav } from "./AppNav";
+import { Logo, MenuIcon, initials } from "./Icons";
 
 export async function Header() {
   const session = await auth();
+  const user = session?.user;
+
+  async function logout() {
+    "use server";
+    await signOut({ redirectTo: "/" });
+  }
+
   return (
-    <header className="site-header">
-      <div className="wrap header-row">
-        <Link href="/" className="logo">
-          Nyborg<span>Tri</span>
-        </Link>
-        <nav aria-label="Hovedmenu">
-          <ul className="menu">
-            {navigation.map((item) => (
-              <li key={item.label}>
-                {item.href ? (
-                  <Link href={item.href}>{item.label}</Link>
-                ) : (
-                  <details>
-                    <summary>{item.label}</summary>
-                    <ul>
-                      {item.children?.map((c) => (
-                        <li key={c.href}>
-                          <Link href={c.href!}>{c.label}</Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </details>
-                )}
-              </li>
-            ))}
-          </ul>
-        </nav>
-        <div className="account">
-          {session?.user ? (
+    <>
+      <header className="site-header">
+        <div className="wrap header-row">
+          <Link href={user ? "/min-side" : "/"} className="logo" aria-label="Nyborg Triathlon Klub">
+            <Logo />
+            <b>Nyborg<span>Tri</span></b>
+          </Link>
+
+          {user ? (
             <>
-              {hasRole(session.user.role, "TRAINER") && <Link href="/traener">Træner</Link>}
-              {session.user.role === "ADMIN" && <Link href="/admin">Admin</Link>}
-              <Link href="/min-side" className="button small">Min side</Link>
+              <AppNav variant="top" />
+              <details className="usermenu">
+                <summary aria-label="Min profil og menu">
+                  <span className="avatar big">{initials(user.name ?? user.email)}</span>
+                </summary>
+                <div className="dropdown">
+                  <div className="dropdown-head">
+                    <strong>{user.name ?? "Min profil"}</strong>
+                    <span className="muted">{user.email}</span>
+                  </div>
+                  <Link href="/aktiviteter">Mine aktiviteter</Link>
+                  <Link href="/forbindelser">Ure, apps og kalender</Link>
+                  <Link href="/bliv-medlem">Medlemskab og betaling</Link>
+                  {hasRole(user.role, "TRAINER") && <Link href="/traener">Trænerværktøj</Link>}
+                  {user.role === "ADMIN" && <Link href="/admin">Administration</Link>}
+                  <div className="dropdown-sep" />
+                  <Link href="/nyheder">Nyheder</Link>
+                  <Link href="/om">Om klubben</Link>
+                  <form action={logout}>
+                    <button type="submit" className="linklike">Log ud</button>
+                  </form>
+                </div>
+              </details>
             </>
           ) : (
-            <Link href="/login" className="button small">Log ind</Link>
+            <>
+              <nav aria-label="Hovedmenu" className="publicnav">
+                <ul className="menu">
+                  {navigation.map((item) => (
+                    <li key={item.label}>
+                      {item.href ? (
+                        <Link href={item.href}>{item.label}</Link>
+                      ) : (
+                        <details>
+                          <summary>{item.label}</summary>
+                          <ul>
+                            {item.children?.map((c) => (
+                              <li key={c.href}><Link href={c.href!}>{c.label}</Link></li>
+                            ))}
+                          </ul>
+                        </details>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+              <div className="account">
+                <Link href="/login" className="hide-sm">Log ind</Link>
+                <Link href="/bliv-medlem" className="button small">Bliv medlem</Link>
+              </div>
+              <details className="burger">
+                <summary aria-label="Åbn menu"><MenuIcon /></summary>
+                <div className="burger-panel">
+                  {navigation.map((item) =>
+                    item.href ? (
+                      <Link key={item.label} href={item.href}>{item.label}</Link>
+                    ) : (
+                      <div key={item.label}>
+                        <div className="group-label">{item.label}</div>
+                        {item.children?.map((c) => <Link key={c.href} href={c.href!}>{c.label}</Link>)}
+                      </div>
+                    ),
+                  )}
+                  <Link href="/login">Log ind</Link>
+                </div>
+              </details>
+            </>
           )}
         </div>
-      </div>
-    </header>
+      </header>
+      {user && <AppNav variant="bottom" />}
+    </>
   );
 }

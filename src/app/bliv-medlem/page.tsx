@@ -19,6 +19,7 @@ export default async function JoinPage({ searchParams }: { searchParams: Promise
   const user = session?.user ? await prisma.user.findUnique({ where: { id: session.user.id } }) : null;
   const current = user ? await currentMembership(user.id) : null;
   const trial = user ? await prisma.trialRequest.findUnique({ where: { userId: user.id } }) : null;
+  const payments = user ? await prisma.payment.findMany({ where: { userId: user.id, status: { in: ["PAID", "REFUNDED"] } }, orderBy: { paidAt: "desc" } }) : [];
   const usedCode = user ? await prisma.accessCode.findUnique({ where: { usedById: user.id } }) : null;
 
   return (
@@ -110,6 +111,22 @@ export default async function JoinPage({ searchParams }: { searchParams: Promise
             )}
           </section>
         </div>
+      )}
+    
+      {payments.length > 0 && (
+        <>
+          <h2>Kvitteringer</h2>
+          <div className="table-scroll">
+            <table className="list">
+              <thead><tr><th>Dato</th><th>Beskrivelse</th><th>Beløb</th><th>Status</th></tr></thead>
+              <tbody>
+                {payments.map((p) => (
+                  <tr key={p.id}><td>{p.paidAt && dato(p.paidAt)}</td><td>{p.description}</td><td>{kr(p.amountOre)}</td><td>{p.status === "PAID" ? "Betalt" : "Refunderet"}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </>
   );
