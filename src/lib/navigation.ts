@@ -2,7 +2,8 @@
 export type NavItem = { label: string; href: string };
 
 export const navigation: NavItem[] = [
-  { label: "Træning", href: "/#traening" },
+  { label: "Træning", href: "/traening" },
+  { label: "Atleter", href: "/atleter" },
   { label: "Priser", href: "/#priser" },
   { label: "Om klubben", href: "/om" },
 ];

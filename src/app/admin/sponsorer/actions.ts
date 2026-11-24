@@ -4,9 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/auth";
 import { prisma } from "@/lib/db";
+import { readImage } from "@/lib/upload";
 
-const TYPES = ["image/png", "image/jpeg", "image/webp", "image/svg+xml", "image/gif"];
-const MAX_BYTES = 300 * 1024;
 
 const fail = (m: string) => redirect("/admin/sponsorer?fejl=" + encodeURIComponent(m));
 
@@ -24,10 +23,9 @@ function cleanUrl(v: FormDataEntryValue | null): string | null {
 
 /** Logoet gemmes direkte i databasen som data-URL, så der ikke skal sættes fillager op. */
 async function readLogo(v: FormDataEntryValue | null): Promise<string | null> {
-  if (!(v instanceof File) || v.size === 0) return null;
-  if (!TYPES.includes(v.type)) fail("Logoet skal være PNG, JPG, WebP, GIF eller SVG");
-  if (v.size > MAX_BYTES) fail("Logoet må højst fylde 300 KB. Gør det mindre, fx 400 pixel bredt");
-  return `data:${v.type};base64,${Buffer.from(await v.arrayBuffer()).toString("base64")}`;
+  const r = await readImage(v, 300, true);
+  if (!r.ok) fail(r.error);
+  return r.ok ? r.dataUrl : null;
 }
 
 function done() {

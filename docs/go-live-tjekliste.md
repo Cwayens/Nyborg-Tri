@@ -62,6 +62,8 @@ Sæt `[x]`, når et punkt er klaret.
 - [x] Medlemmer under 18 skal angive forælder/værge ved indmeldelse. Betalingslinket sendes til værgen (`/betal/<hemmeligt link>`), og Stripe sender kvitteringen til værgens e-mail.
 - [ ] Når der kommer påmindelser om fornyelse, skal de sendes til `billingEmail()` i `src/lib/guardian.ts` (værgen for børn).
 - [ ] Nævn i privatlivspolitikken, at vi gemmer navn og e-mail på forælder/værge for medlemmer under 18.
+- [ ] **Atleter-siden** viser kun atleter, der selv har givet samtykke under Min profil → Min atletprofil. Billeder og tekster er offentlige. Vis aldrig data fra Strava eller ure på profilen.
+- [ ] Opret de rigtige atletprofiler under Administration → Atleter, og få atleterne til at give samtykke og uploade et billede.
 - [ ] Rutine for sletning af data, når et medlem melder sig ud.
 
 ## Integrationer

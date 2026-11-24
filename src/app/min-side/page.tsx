@@ -80,6 +80,10 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         )}
       </div>
 
+      {(await prisma.athleteProfile.count({ where: { userId: user.id, consentAt: null } })) > 0 && (
+        <p className="notice">Klubben vil gerne vise dig på Atleter-siden. <Link href="/profil/atlet">Se din profil og giv samtykke</Link>.</p>
+      )}
+
       {!eligible && !(await membershipExpired(user.id)) && (
         <section className="card" style={{ borderLeft: "4px solid var(--accent)", marginBottom: 18 }}>
           <strong>Kom i gang</strong>

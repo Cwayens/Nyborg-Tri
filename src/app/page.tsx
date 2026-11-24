@@ -6,6 +6,8 @@ import { GROUP_LABEL } from "@/lib/roles";
 import { formatTime, weekdayShort } from "@/lib/time";
 import { kr } from "@/lib/format";
 import { SponsorBar } from "@/components/SponsorBar";
+import { AthleteCard } from "@/components/AthleteCard";
+import { VISIBLE_ATHLETE } from "@/lib/athletes";
 
 // Forsiden er til nye medlemmer: hvad får jeg, passer det til mig, hvad koster det, og hvordan starter jeg.
 // Logoet fører altid hertil; medlemmer, der er logget ind, får en knap til deres overblik i stedet for "Prøv gratis".
@@ -45,12 +47,18 @@ export default async function Home() {
   const member = !!(await auth())?.user;
 
   const now = new Date();
-  const [types, week] = await Promise.all([
+  const [types, week, featured] = await Promise.all([
     prisma.membershipType.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
     prisma.trainingSession.findMany({
       where: { startsAt: { gte: now, lt: new Date(now.getTime() + 7 * 864e5) }, cancelledAt: null },
       orderBy: { startsAt: "asc" },
       select: { id: true, title: true, discipline: true, startsAt: true, group: true, location: true },
+    }),
+    prisma.athleteProfile.findMany({
+      where: { ...VISIBLE_ATHLETE, featured: true },
+      orderBy: { sortOrder: "asc" },
+      take: 4,
+      include: { user: { select: { name: true } } },
     }),
   ]);
   const adult = types.find((t) => t.code === "ADULT");
@@ -100,7 +108,7 @@ export default async function Home() {
       {week.length > 0 && (
         <section className="lp-section">
           <h2>Den næste uge i klubben</h2>
-          <p className="lp-sub">Sådan ser en helt almindelig uge ud. Som medlem tilmelder du dig med ét tryk.</p>
+          <p className="lp-sub">Sådan ser en helt almindelig uge ud. Som medlem tilmelder du dig med ét tryk. <Link href="/traening">Se hele kalenderen</Link></p>
           <ul className="lp-week">
             {week.slice(0, 8).map((t) => (
               <li key={t.id} className={`disc disc-${t.discipline}`}>
@@ -126,6 +134,19 @@ export default async function Home() {
           </ul>
         </div>
       </section>
+
+      {featured.length > 0 && (
+        <section className="lp-section">
+          <div className="section-head" style={{ margin: 0 }}>
+            <h2>Mød vores atleter</h2>
+            <Link href="/atleter">Alle atleter →</Link>
+          </div>
+          <p className="lp-sub">Klubbens elite kæmper om placeringer til DM og Ironman. Følg dem gennem sæsonen.</p>
+          <div className="athlete-grid">
+            {featured.map((a) => <AthleteCard key={a.id} a={a} />)}
+          </div>
+        </section>
+      )}
 
       <section id="priser" className="lp-section">
         <h2>Priser</h2>

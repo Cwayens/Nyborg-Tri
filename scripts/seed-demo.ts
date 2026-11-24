@@ -261,6 +261,28 @@ async function main() {
     await effortsFor(m.id, m.g, m.f, m.seed, tests, false);
   }
 
+  // Atletprofiler (Atleter-siden). Emil har givet samtykke, Anne mangler at gøre det.
+  const allDemo = [...ids2, ...mates.map((m) => m.id)];
+  await prisma.athleteProfile.deleteMany({ where: { userId: { in: allDemo } } });
+  const sp = await prisma.sponsor.findMany({ orderBy: { sortOrder: "asc" }, select: { id: true } });
+  const PROFILES: [string, string, string, string, string][] = [
+    [users.elite.id, "emil-elite", "Ironman-atlet · M25-29", "Emil startede med sprint i 2019 og har siden jagtet hele distancen. Han træner 15 timer om ugen ved siden af studiet og elsker open water i Storebælt.\n\nMålet er en slot til VM.", "Ironman Kalmar: under 9:30\nKvalificere sig til Ironman VM\nDM i olympisk distance: top 5"],
+    [users.admin.id, "anne-admin", "Langdistance · K45-49", "Anne er klubbens formand og løber selv langdistance.", "Ironman 70.3 Elsinore"],
+    [mates[0].id, "mads-holm", "Olympisk distance · M25-29", "Mads kom fra svømning og er klubbens hurtigste i vandet.", "DM olympisk distance: podie\n1500 m under 18:30"],
+    [mates[12].id, "sofie-lund", "Sprint og olympisk · K25-29", "Sofie vandt NyborgTri Cup i 2025 og satser nu på DM.", "DM sprint: top 3\n10 km under 38 min"],
+  ];
+  for (const [i, [userId, slug, headline, bio, goals]] of PROFILES.entries()) {
+    await prisma.athleteProfile.create({
+      data: {
+        userId, slug, headline, bio, goals, sortOrder: i, published: true, featured: i !== 1,
+        results: i === 0 ? "Ironman Copenhagen 2026: 9:41, 6. plads AG\nChallenge Herning 2025: 4:12\nNyborgTri Cup 2025: 1. plads" : i === 3 ? "NyborgTri Cup 2025: 1. plads\nDM sprint 2026: 5. plads" : null,
+        consentAt: userId === users.admin.id ? null : new Date(),
+        instagram: i === 0 ? "@emil.tri" : null,
+        sponsors: i === 0 && sp.length > 4 ? { connect: [{ id: sp[3].id }, { id: sp[4].id }] } : undefined,
+      },
+    });
+  }
+
   // Gruppechat
   await prisma.chatMessage.deleteMany({ where: { userId: { in: ids2 } } });
   const CHAT: [string, "VOKSNE" | "BOERN", "RUN" | "BIKE" | "SWIM" | "SOCIAL", string, number][] = [

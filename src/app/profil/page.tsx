@@ -42,7 +42,7 @@ async function saveProfile(formData: FormData) {
 export default async function Profile({ searchParams }: { searchParams: Promise<{ fejl?: string; gemt?: string; velkommen?: string }> }) {
   const sessionUser = await requireUser("/profil");
   const { fejl, gemt, velkommen } = await searchParams;
-  const user = await prisma.user.findUniqueOrThrow({ where: { id: sessionUser.id } });
+  const user = await prisma.user.findUniqueOrThrow({ where: { id: sessionUser.id }, include: { athleteProfile: { select: { id: true } } } });
   return (
     <>
       <h1>{velkommen ? "Velkommen til NyborgTri!" : "Min profil"}</h1>
@@ -85,6 +85,7 @@ export default async function Profile({ searchParams }: { searchParams: Promise<
       </form>
       {!velkommen && (
         <p style={{ marginTop: 20 }}>
+          {user.athleteProfile && <><Link href="/profil/atlet">Min atletprofil</Link> · </>}
           <Link href="/forbindelser">Ure, deling og kalender</Link> · <Link href="/bliv-medlem">Medlemskab og kvitteringer</Link>
         </p>
       )}
