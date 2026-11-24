@@ -89,14 +89,13 @@ async function main() {
     await prisma.accessCode.create({ data: { code, typeId: types.ADULT.id, days: 365, note: "Demo: kan bruges", createdById: admin } });
   }
 
-  // Træninger 3 uger frem
+  // Træninger fra 4 uger tilbage til 6 uger frem, så månedskalenderen er fyldt
   const created: { id: string; group: AthleteGroup; startsAt: Date }[] = [];
-  for (let offset = 0; offset < 21; offset++) {
+  for (let offset = -28; offset < 42; offset++) {
     const date = localDate(offset);
     const weekday = ((new Date(date + "T12:00:00Z").getUTCDay() + 6) % 7) + 1;
     for (const w of WEEKLY.filter((x) => x.day === weekday)) {
       const startsAt = parseLocal(`${date}T${w.start}`);
-      if (startsAt < new Date()) continue;
       const t = await prisma.trainingSession.create({
         data: {
           title: w.title, discipline: w.d, group: w.group, location: w.location, startsAt, endsAt: parseLocal(`${date}T${w.end}`), createdById: coach,
@@ -112,7 +111,10 @@ async function main() {
 
   // Tilmeldinger
   const members = DEMO_USERS.filter((d) => d.membership);
-  for (const t of created.slice(0, 14)) {
+  const now0 = Date.now();
+  const future = created.filter((t) => t.startsAt.getTime() > now0);
+  const past = created.filter((t) => t.startsAt.getTime() <= now0);
+  for (const t of [...past.slice(-10), ...future.slice(0, 14)]) {
     if (t.id === toCancel?.id) continue;
     for (const d of members.filter((m) => m.group === t.group && m.key !== "admin")) {
       if ((t.startsAt.getDate() + d.key.length) % 3 === 0) continue;

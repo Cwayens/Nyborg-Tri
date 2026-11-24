@@ -429,3 +429,39 @@ label.check { display: flex; gap: 8px; align-items: center; font-weight: 400; }
 @media (max-width: 640px) { .workout .step { grid-template-columns: 64px 1fr auto; } .workout .step-kind { display: none; } }
 .program-field textarea { width: 100%; }
 .tabbar a span { white-space: nowrap; font-size: 0.68rem; }
+
+/* Månedskalender */
+.month { padding: 14px; }
+.month-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.month-head h2 { margin: 0; font-size: 1.2rem; min-width: 9em; text-align: center; }
+.month-head .button { width: 36px; height: 36px; padding: 0; font-size: 1.3rem; }
+.month-today { margin-left: auto; font-weight: 600; }
+.month-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.month-wd { font-size: 0.78rem; font-weight: 700; color: var(--muted); text-align: center; padding: 4px 0; text-transform: uppercase; letter-spacing: 0.04em; }
+.month-cell { min-height: 104px; border: 1px solid var(--line); border-radius: 10px; padding: 6px; display: flex; flex-direction: column; gap: 4px; text-decoration: none; color: var(--text); background: var(--card); overflow: hidden; transition: border-color 0.12s; }
+.month-cell.empty { background: transparent; border-color: transparent; }
+.month-cell:hover { border-color: var(--club-green); }
+.month-cell.past { background: var(--bg); }
+.month-cell.past .month-items { opacity: 0.65; }
+.month-num { font-weight: 700; font-size: 0.9rem; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; }
+.month-cell.today .month-num { background: var(--accent); color: #fff; }
+.month-cell.selected { border: 2px solid var(--accent); padding: 5px; box-shadow: var(--shadow); }
+.month-cell.mine .month-num::after { content: ""; }
+.month-items { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.month-item { display: flex; align-items: center; gap: 5px; font-size: 0.74rem; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.month-item i { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
+.month-item.cancelled { text-decoration: line-through; color: var(--muted); }
+.month-more { font-size: 0.72rem; color: var(--muted); }
+.month-dots { display: none; gap: 3px; justify-content: center; flex-wrap: wrap; }
+.month-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
+.month-dots i.cancelled { opacity: 0.35; }
+.month-cell.mine { box-shadow: inset 0 -3px 0 var(--club-green); }
+@media (max-width: 900px) {
+  .month-cell { min-height: 58px; align-items: center; padding: 4px 2px; }
+  .month-cell.selected { padding: 3px 1px; }
+  .month-items { display: none; }
+  .month-dots { display: flex; }
+  .month { padding: 10px 8px; }
+  .month-grid { gap: 3px; }
+  .month-wd { font-size: 0.68rem; }
+}
