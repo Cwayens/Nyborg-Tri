@@ -43,6 +43,7 @@ model User {
   phone     String?
   birthDate DateTime?
   gender    Gender?
+  weightKg  Float? // til FTP i watt pr. kg; vises aldrig for andre
 
   // Forælder/værge for medlemmer under 18. Får betalingslink, kvitteringer og påmindelser.
   guardianName  String?

@@ -1,5 +1,5 @@
 import type { BenchmarkTest, Discipline, Gender, Provider } from "@prisma/client";
-import { LEADERBOARD, TEST_BY_KEY, score } from "./benchmarks";
+import { LEADERBOARD, TEST_BY_KEY, ftpFromTwenty, score } from "./benchmarks";
 
 // Bedste præstationer udtrukket fra ur-data: hurtigste 5 km i et længere løb, bedste 20 min watt på en tur osv.
 
@@ -120,7 +120,22 @@ export const GENDER_PREFIX: Record<Gender, string> = { MALE: "M", FEMALE: "K" };
 
 // --- Ranglister ---
 
-export type Athlete = { id: string; name: string | null; gender: Gender; birthDate: Date };
+export type Athlete = { id: string; name: string | null; gender: Gender; birthDate: Date; weightKg?: number | null };
+
+/** FTP i watt pr. kg (FTP = 95 % af bedste 20 min). */
+export function wattsPerKg(watts20: number, kg: number): number {
+  return ftpFromTwenty(watts20) / kg;
+}
+
+export function formatWkg(v: number): string {
+  return `${v.toLocaleString("da-DK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} W/kg`;
+}
+
+/** Rangering: FTP sammenlignes i W/kg, alt andet som det er. */
+function rankScore(r: Ranked): number {
+  if (r.best.watts && r.athlete.weightKg) return wattsPerKg(r.best.watts, r.athlete.weightKg);
+  return score(r.best);
+}
 export type EffortRow = EffortValue & { userId: string; date: Date };
 
 export type Ranked = { athlete: Athlete; ag: AgeGroup; best: EffortRow; previous?: EffortRow; improvement?: number };
@@ -140,17 +155,19 @@ export function improvementPct(prev: EffortValue, cur: EffortValue): number {
   return ((prev.seconds! - cur.seconds!) / prev.seconds!) * 100;
 }
 
-/** Årets bedste pr. atlet, sorteret. */
+/** Årets bedste pr. atlet, sorteret. FTP rangeres i W/kg, så kun atleter med vægt kommer med der. */
 export function rankBest(athletes: Athlete[], rows: EffortRow[], year: number): Ranked[] {
+  if (rows.some((r) => TEST_BY_KEY[r.test].kind === "watts")) athletes = athletes.filter((a) => a.weightKg);
   const best = bestPerUser(rows.filter((r) => r.date.getFullYear() === year));
   return rank(athletes, year, (a) => {
     const b = best.get(a.id);
     return b && { best: b };
-  }).sort((x, y) => score(y.best) - score(x.best));
+  }).sort((x, y) => rankScore(y) - rankScore(x));
 }
 
 /** Mest fremgang: årets bedste mod sidste års bedste. */
 export function rankImprovement(athletes: Athlete[], rows: EffortRow[], year: number): Ranked[] {
+  if (rows.some((r) => TEST_BY_KEY[r.test].kind === "watts")) athletes = athletes.filter((a) => a.weightKg);
   const now = bestPerUser(rows.filter((r) => r.date.getFullYear() === year));
   const before = bestPerUser(rows.filter((r) => r.date.getFullYear() === year - 1));
   return rank(athletes, year, (a) => {

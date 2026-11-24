@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ageGroup, leaderboardProviders, bestForDistance, bestPower, extractEfforts, improvementPct, rankBest, rankImprovement, worthChecking } from "./efforts";
+import { ageGroup, formatWkg, leaderboardProviders, bestForDistance, bestPower, extractEfforts, improvementPct, rankBest, rankImprovement, worthChecking } from "./efforts";
 
 // 8 km løb: 3 km i 5:00/km, så 5 km i 4:00/km
 function run8k() {
@@ -69,4 +69,14 @@ test("Strava vises kun på leaderboardet med tilladelse", () => {
   assert.equal(leaderboardProviders({}).includes("STRAVA"), false);
   assert.equal(leaderboardProviders({ STRAVA_LEADERBOARD: "1" }).includes("STRAVA"), true);
   assert.equal(leaderboardProviders({}).includes("MANUAL" as never), false);
+});
+
+test("FTP rangeres i W/kg, og kun atleter med vægt er med", () => {
+  const heavy = { id: "h", name: "H", gender: "MALE" as const, birthDate: new Date("1990-01-01"), weightKg: 90 };
+  const light = { id: "l", name: "L", gender: "MALE" as const, birthDate: new Date("1990-01-01"), weightKg: 65 };
+  const none = { id: "n", name: "N", gender: "MALE" as const, birthDate: new Date("1990-01-01"), weightKg: null };
+  const row = (userId: string, watts: number) => ({ userId, test: "BIKE_FTP20" as const, seconds: null, watts, date: new Date("2026-05-01") });
+  const r = rankBest([heavy, light, none], [row("h", 330), row("l", 280), row("n", 400)], 2026);
+  assert.deepEqual(r.map((x) => x.athlete.id), ["l", "h"]); // 4,09 W/kg slår 3,48 W/kg
+  assert.equal(formatWkg(4.0923), "4,09 W/kg");
 });

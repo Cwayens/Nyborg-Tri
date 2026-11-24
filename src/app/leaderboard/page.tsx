@@ -3,9 +3,9 @@ import type { BenchmarkTest, Gender } from "@prisma/client";
 import { requireUser } from "@/auth";
 import { prisma } from "@/lib/db";
 import { LEADERBOARD, TEST_BY_KEY, formatDetail, formatDuration, formatResult, ftpFromTwenty, isLeaderboardTest } from "@/lib/benchmarks";
-import { AGE_GROUPS, GENDER_LABEL, GENDER_PREFIX, ageGroup, leaderboardProviders, rankBest, rankImprovement, type AgeGroup, type Ranked } from "@/lib/efforts";
+import { AGE_GROUPS, GENDER_LABEL, GENDER_PREFIX, ageGroup, formatWkg, wattsPerKg, leaderboardProviders, rankBest, rankImprovement, type AgeGroup, type Ranked } from "@/lib/efforts";
 import { DisciplineIcon, initials } from "@/components/Icons";
-import { joinLeaderboard, leaveLeaderboard } from "./actions";
+import { joinLeaderboard, leaveLeaderboard, setWeight } from "./actions";
 
 export const metadata = { title: "Leaderboard" };
 
@@ -18,7 +18,7 @@ export default async function Leaderboard({ searchParams }: Props) {
   const sp = await searchParams;
   const me = await prisma.user.findUniqueOrThrow({
     where: { id: sessionUser.id },
-    select: { id: true, gender: true, birthDate: true, leaderboard: true, _count: { select: { wearableConnections: true } } },
+    select: { id: true, gender: true, birthDate: true, leaderboard: true, weightKg: true, _count: { select: { wearableConnections: true } } },
   });
 
   const year = new Date().getFullYear();
@@ -30,7 +30,7 @@ export default async function Leaderboard({ searchParams }: Props) {
 
   const users = await prisma.user.findMany({
     where: { leaderboard: true, gender, birthDate: { not: null } },
-    select: { id: true, name: true, gender: true, birthDate: true },
+    select: { id: true, name: true, gender: true, birthDate: true, weightKg: true },
   });
   const athletes = users.map((u) => ({ ...u, gender: u.gender!, birthDate: u.birthDate! }));
   const rows = await prisma.effort.findMany({
@@ -123,11 +123,22 @@ export default async function Leaderboard({ searchParams }: Props) {
         </nav>
       </div>
 
+      {def.kind === "watts" && me.leaderboard && !me.weightKg && (
+        <form action={setWeight} className="card lb-join lb-weight">
+          <div>
+            <h2 className="h3" style={{ margin: 0 }}>Skriv din vægt for at komme med på FTP-listen</h2>
+            <p className="muted" style={{ margin: "4px 0 0" }}>FTP sammenlignes i watt pr. kg. Andre ser kun dine W/kg, aldrig din vægt.</p>
+          </div>
+          <input type="hidden" name="back" value={q({})} />
+          <label>Vægt (kg)<input name="weight" inputMode="decimal" required placeholder="fx 72,5" style={{ width: 120 }} /></label>
+          <button className="button" type="submit">Gem</button>
+        </form>
+      )}
       <p className="muted lb-explain">
         {view === "fremgang"
           ? `Fremgang i ${def.label.toLowerCase()}: årets bedste sammenlignet med bedste i ${year - 1}.`
           : def.kind === "watts"
-            ? "FTP er 95 % af den bedste gennemsnitlige watt over 20 minutter."
+            ? "FTP i watt pr. kg kropsvægt. FTP er 95 % af den bedste gennemsnitlige watt over 20 minutter. Kun atleter, der har skrevet deres vægt, er med."
             : `Hurtigste ${def.short} i år.`}
       </p>
 
@@ -190,12 +201,21 @@ function Row({ r, place, me, view, ag, agHref }: { r: Ranked; place: number; me:
       {view === "fremgang" ? (
         <span className="lb-result">
           <b>+{r.improvement!.toLocaleString("da-DK", { maximumFractionDigits: 1 })} %</b>
-          <small className="muted">{short(r.previous!)} → {short(r.best)}</small>
+          <small className="muted">{short(r.previous!, r.athlete.weightKg)} → {short(r.best, r.athlete.weightKg)}</small>
         </span>
       ) : (
         <span className="lb-result">
-          <b>{formatResult(r.best)}</b>
-          <small className="muted">{formatDetail(r.best)}</small>
+          {r.best.watts && r.athlete.weightKg ? (
+            <>
+              <b>{formatWkg(wattsPerKg(r.best.watts, r.athlete.weightKg))}</b>
+              <small className="muted">FTP {formatResult(r.best)}</small>
+            </>
+          ) : (
+            <>
+              <b>{formatResult(r.best)}</b>
+              <small className="muted">{formatDetail(r.best)}</small>
+            </>
+          )}
         </span>
       )}
     </li>
@@ -206,6 +226,7 @@ function shortDate(d: Date): string {
   return d.toLocaleDateString("da-DK", { day: "numeric", month: "short", timeZone: "Europe/Copenhagen" });
 }
 
-function short(e: Ranked["best"]): string {
-  return e.watts ? `${ftpFromTwenty(e.watts)} W` : formatDuration(e.seconds ?? 0);
+function short(e: Ranked["best"], kg?: number | null): string {
+  if (e.watts) return kg ? formatWkg(wattsPerKg(e.watts, kg)) : `${ftpFromTwenty(e.watts)} W`;
+  return formatDuration(e.seconds ?? 0);
 }

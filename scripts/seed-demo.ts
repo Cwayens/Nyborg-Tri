@@ -64,6 +64,7 @@ async function main() {
       name: d.name, role: d.role, athleteGroup: d.group, shareActivities: !!d.shares, phone: "20 30 40 50",
       birthDate: d.birthYear ? new Date(`${d.birthYear}-05-10`) : new Date("1988-03-14"),
       gender: d.gender ?? null,
+      weightKg: d.gender === "MALE" && d.group !== "BOERN" ? 74 + d.key.length : d.gender === "FEMALE" ? 60 + d.key.length : null,
       // Børn under 18 har en forælder/værge, som får betalingslinket
       guardianName: d.group === "BOERN" ? "Birgitte Barn" : null,
       guardianEmail: d.group === "BOERN" ? `foraelder-${d.key}@demo.nyborgtri.dk` : null,
@@ -186,7 +187,7 @@ async function main() {
   const mates: { id: string; g: "MALE" | "FEMALE"; f: number; seed: number }[] = [];
   for (const [i, [name, g, by, f]] of MATES.entries()) {
     const email = `klubkammerat-${i + 1}@${"demo.nyborgtri.dk"}`;
-    const data = { name, role: "ATHLETE" as const, athleteGroup: (f < 1.2 ? "ELITE" : "BREDDE") as AthleteGroup, gender: g, birthDate: new Date(`${by}-0${(i % 9) + 1}-15`), leaderboard: true };
+    const data = { name, role: "ATHLETE" as const, athleteGroup: (f < 1.2 ? "ELITE" : "BREDDE") as AthleteGroup, gender: g, birthDate: new Date(`${by}-0${(i % 9) + 1}-15`), leaderboard: true, weightKg: g === "MALE" ? 66 + ((i * 7) % 22) : 54 + ((i * 5) % 16) };
     const u = await prisma.user.upsert({ where: { email }, update: data, create: { email, ...data } });
     mates.push({ id: u.id, g, f, seed: i + 3 });
   }

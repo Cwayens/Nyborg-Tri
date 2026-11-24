@@ -6,6 +6,7 @@ import { FROM_WEARABLE, TESTS, TEST_BY_KEY, change, formatDetail, formatResult, 
 import { DisciplineIcon } from "@/components/Icons";
 import { Sparkline } from "@/components/Sparkline";
 import { dato } from "@/lib/format";
+import { formatWkg, wattsPerKg } from "@/lib/efforts";
 import { deleteBenchmark, saveEffort } from "./actions";
 
 export const metadata = { title: "Mine tests" };
@@ -16,7 +17,7 @@ export default async function Benchmarks({ searchParams }: Props) {
   const user = await requireUser("/benchmarks");
   const sp = await searchParams;
   const tests = TESTS.map((t) => t.test);
-  const [results, efforts, connected, pending] = await Promise.all([
+  const [results, efforts, connected, pending, me] = await Promise.all([
     prisma.benchmarkResult.findMany({ where: { userId: user.id, ...FROM_WEARABLE }, orderBy: { date: "asc" } }),
     // Præstationer fra uret de sidste 180 dage, som ikke er gemt som test endnu
     prisma.effort.findMany({
@@ -26,6 +27,7 @@ export default async function Benchmarks({ searchParams }: Props) {
     }),
     prisma.wearableConnection.count({ where: { userId: user.id } }),
     prisma.activity.count({ where: { userId: user.id, provider: { not: "MANUAL" }, effortsAt: null } }),
+    prisma.user.findUniqueOrThrow({ where: { id: user.id }, select: { weightKg: true } }),
   ]);
 
   const byTest = new Map<string, BenchmarkResult[]>();
@@ -78,6 +80,11 @@ export default async function Benchmarks({ searchParams }: Props) {
                 <>
                   <p className="bm-best">{formatResult(best)}<small>{def.kind === "watts" ? "FTP" : "bedste tid"}</small></p>
                   <p className="muted bm-detail">{[formatDetail(best), dato(best.date)].filter(Boolean).join(" · ")}</p>
+                  {def.kind === "watts" && best.watts && (
+                    me.weightKg
+                      ? <p className="bm-wkg"><b>{formatWkg(wattsPerKg(best.watts, me.weightKg))}</b> <span className="muted">ved {me.weightKg.toLocaleString("da-DK")} kg</span></p>
+                      : <p className="muted bm-detail"><Link href="/profil">Skriv din vægt</Link> for at se W/kg</p>
+                  )}
                   <Sparkline values={list.map(score)} label={`Udvikling i ${def.label}`} />
                   <p className="bm-latest">
                     Seneste: <b>{formatResult(latest!)}</b> {dato(latest!.date)}

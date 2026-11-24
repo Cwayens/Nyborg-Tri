@@ -53,7 +53,7 @@ Sæt `[x]`, når et punkt er klaret.
 - [ ] **Billeder på forsiden** (`public/billeder/`) er hentet fra den gamle side. Bekræft, at de viste personer er ok med at være på forsiden, eller udskift dem med nye billeder.
 - [ ] **Gruppechat**: aftal regler for god tone, og hvem blandt trænerne der holder øje med børnegruppens kanaler. Overvej om forældre skal kunne læse med i børnenes chat.
 - [ ] **Testresultater** kan ses af trænere (bedste resultat pr. atlet). Nævn det i privatlivspolitikken.
-- [ ] **Leaderboard** er frivilligt (samtykke på profilen eller på /leaderboard). Nævn i privatlivspolitikken, at navn, aldersgruppe, køn og bedste præstationer vises for andre medlemmer. Børn under 18 er ikke med (Ironman-grupperne starter ved 18).
+- [ ] **Leaderboard** er frivilligt (samtykke på profilen eller på /leaderboard). Nævn i privatlivspolitikken, at navn, aldersgruppe, køn og bedste præstationer vises for andre medlemmer. Børn under 18 er ikke med (Ironman-grupperne starter ved 18). FTP vises i W/kg; vægten gemmes på profilen og vises aldrig for andre (nævn vægt som personoplysning i privatlivspolitikken). Vægt kan ikke hentes fra Strava med nuværende adgang.
 
 - [ ] Opdater **privatlivspolitikken**: hvilke data der gemmes (navn, adresse, fødselsdato, telefon, betalinger, træningsdata), hvorfor, hvor længe, og hvem der behandler dem.
 - [ ] **Databehandleraftaler** med Vercel, databaseudbyder, Stripe og mailudbyder.

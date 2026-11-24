@@ -31,3 +31,14 @@ export async function leaveLeaderboard() {
   revalidatePath("/leaderboard");
   redirect("/leaderboard");
 }
+
+/** Vægt bruges kun til at regne FTP om til W/kg. */
+export async function setWeight(formData: FormData) {
+  const user = await requireUser("/leaderboard");
+  const kg = Number(String(formData.get("weight") ?? "").replace(",", "."));
+  const back = String(formData.get("back") ?? "/leaderboard");
+  if (!(kg >= 25 && kg <= 200)) redirect(`/leaderboard?fejl=${encodeURIComponent("Skriv din vægt i kg, fx 72,5")}`);
+  await prisma.user.update({ where: { id: user.id }, data: { weightKg: Math.round(kg * 10) / 10 } });
+  revalidatePath("/leaderboard");
+  redirect(back.startsWith("/leaderboard") ? back : "/leaderboard");
+}
