@@ -43,6 +43,10 @@ model User {
   phone     String?
   birthDate DateTime?
   gender    Gender?
+
+  // Forælder/værge for medlemmer under 18. Får betalingslink, kvitteringer og påmindelser.
+  guardianName  String?
+  guardianEmail String?
   address   String?
   zip       String?
   city      String?
@@ -171,6 +175,9 @@ model Payment {
   status                  PaymentStatus @default(PENDING)
   stripeCheckoutSessionId String?       @unique
   stripePaymentIntentId   String?       @unique
+  payToken                String?       @unique // hemmeligt betalingslink sendt til forælder/værge
+  payLinkSentTo           String? // e-mail, betalingslinket blev sendt til
+  typeId                  String? // medlemstypen, der betales for (bruges af betalingslinket)
   paidAt                  DateTime?
   createdAt               DateTime      @default(now())
 

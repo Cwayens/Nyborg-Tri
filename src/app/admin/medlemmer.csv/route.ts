@@ -19,6 +19,7 @@ export async function GET() {
       return {
         Navn: u.name, Email: u.email, Brugertype: userTypeLabel(u.role, u.athleteGroup), Telefon: u.phone, Adresse: u.address, Postnr: u.zip, By: u.city,
         Foedselsdato: u.birthDate ? isoDate(u.birthDate) : "",
+        Vaerge: u.guardianName ?? "", VaergeEmail: u.guardianEmail ?? "",
         Medlemstype: m?.type.name ?? "", Start: m ? isoDate(m.startDate) : "", Slut: m ? isoDate(m.endDate) : "",
         Aktiv: m && m.endDate > now ? "Ja" : "Nej",
       };

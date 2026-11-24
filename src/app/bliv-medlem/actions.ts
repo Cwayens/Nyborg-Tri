@@ -7,6 +7,8 @@ import { prisma } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
 import { redeemCode } from "@/lib/access";
 import { baseUrl } from "@/lib/url";
+import { ageOn, isEmail, needsGuardian } from "@/lib/guardian";
+import { sendPayLink } from "@/lib/paylink";
 
 const schema = z.object({
   typeCode: z.string().min(1),
@@ -16,20 +18,23 @@ const schema = z.object({
   address: z.string().trim().min(2, "Skriv din adresse"),
   zip: z.string().trim().regex(/^\d{4}$/, "Postnummer skal være 4 cifre"),
   city: z.string().trim().min(2, "Skriv din by"),
+  guardianName: z.string().trim().max(100).optional(),
+  guardianEmail: z.string().trim().toLowerCase().max(200).optional(),
 });
 
-function ageOn(birth: Date, on: Date) {
-  let age = on.getFullYear() - birth.getFullYear();
-  const m = on.getMonth() - birth.getMonth();
-  if (m < 0 || (m === 0 && on.getDate() < birth.getDate())) age--;
-  return age;
-}
+const fail = (m: string) => redirect(`/bliv-medlem?fejl=${encodeURIComponent(m)}`);
 
 export async function startCheckout(formData: FormData) {
   const user = await requireUser("/bliv-medlem");
   const parsed = schema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) redirect(`/bliv-medlem?fejl=${encodeURIComponent(parsed.error.issues[0].message)}`);
-  const { typeCode, ...profile } = parsed.data;
+  const { typeCode, guardianName, guardianEmail, ...profile } = parsed.data;
+  const minor = needsGuardian(profile.birthDate);
+  if (minor) {
+    if (!guardianName || guardianName.length < 2) fail("Skriv navnet på en forælder eller værge");
+    if (!guardianEmail || !isEmail(guardianEmail)) fail("Skriv e-mail til en forælder eller værge");
+    if (guardianEmail === user.email?.toLowerCase()) fail("Forælderens e-mail skal være en anden end barnets");
+  }
 
   const type = await prisma.membershipType.findFirst({ where: { code: typeCode, active: true } });
   if (!type) redirect("/bliv-medlem?fejl=Ukendt%20medlemstype");
@@ -37,11 +42,20 @@ export async function startCheckout(formData: FormData) {
     redirect(`/bliv-medlem?fejl=${encodeURIComponent("Ungdomskontingent gælder kun for medlemmer under 18 år")}`);
   }
 
-  await prisma.user.update({ where: { id: user.id }, data: profile });
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { ...profile, guardianName: minor ? guardianName : null, guardianEmail: minor ? guardianEmail : null },
+  });
 
   const payment = await prisma.payment.create({
-    data: { userId: user.id, amountOre: type.priceOre, description: `Kontingent ${type.name}` },
+    data: { userId: user.id, amountOre: type.priceOre, description: `Kontingent ${type.name}`, typeId: type.id },
   });
+
+  // Under 18: betalingslinket sendes til forælder/værge i stedet for at gå direkte til betaling
+  if (minor) {
+    const { sent } = await sendPayLink(payment.id);
+    redirect(sent ? "/bliv-medlem?sendt=1" : "/bliv-medlem?ikkesendt=1");
+  }
 
   const base = await baseUrl();
   const session = await stripe().checkout.sessions.create({
@@ -66,6 +80,17 @@ export async function startCheckout(formData: FormData) {
 
   await prisma.payment.update({ where: { id: payment.id }, data: { stripeCheckoutSessionId: session.id } });
   redirect(session.url!);
+}
+
+/** Send betalingslinket til forælderen igen (fx hvis mailen er blevet væk). */
+export async function resendPayLink() {
+  const user = await requireUser("/bliv-medlem");
+  const p = await prisma.payment.findFirst({
+    where: { userId: user.id, payToken: { not: null }, status: { in: ["PENDING", "FAILED"] } },
+    orderBy: { createdAt: "desc" },
+  });
+  const sent = p ? (await sendPayLink(p.id)).sent : false;
+  redirect(sent ? "/bliv-medlem?sendt=1" : "/bliv-medlem?ikkesendt=1");
 }
 
 const trialSchema = z.object({

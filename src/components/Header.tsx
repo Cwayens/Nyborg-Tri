@@ -21,7 +21,7 @@ export async function Header() {
     <>
       <header className="site-header">
         <div className="wrap header-row">
-          <Link href={user ? "/min-side" : "/"} className="logo" aria-label="Nyborg Triathlon Klub">
+          <Link href="/" className="logo" aria-label="Nyborg Triathlon Klub – til forsiden">
             <Logo />
           </Link>
 

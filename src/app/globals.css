@@ -547,3 +547,7 @@ label.check { display: flex; gap: 8px; align-items: center; font-weight: 400; }
   .sp-admin li { grid-template-columns: 1fr; }
   .sp-fields { grid-template-columns: 1fr; }
 }
+/* Forælder/værge: vises ved ungdomskontingent eller når medlemmet er under 18 */
+.guardian { display: none; border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 12px 14px 14px; gap: 10px; }
+.guardian legend { font-weight: 700; padding: 0 6px; }
+.guardian[data-minor], form:has(select[name=typeCode] option[value=YOUTH]:checked) .guardian { display: grid; }

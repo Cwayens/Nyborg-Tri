@@ -5,12 +5,14 @@ import { renderBody } from "@/lib/content";
 import { dato, kr } from "@/lib/format";
 import { currentMembership } from "@/lib/membership";
 import { TRIAL_DAYS } from "@/lib/access";
-import { requestTrial, startCheckout, redeemCodeAction } from "./actions";
+import { requestTrial, resendPayLink, startCheckout, redeemCodeAction } from "./actions";
+import { needsGuardian } from "@/lib/guardian";
+import { demoEnabled } from "@/lib/demo";
 
 export const metadata = { title: "Bliv medlem" };
 
-export default async function JoinPage({ searchParams }: { searchParams: Promise<{ fejl?: string; annulleret?: string; besked?: string }> }) {
-  const { fejl, annulleret, besked } = await searchParams;
+export default async function JoinPage({ searchParams }: { searchParams: Promise<{ fejl?: string; annulleret?: string; besked?: string; sendt?: string; ikkesendt?: string }> }) {
+  const { fejl, annulleret, besked, sendt, ikkesendt } = await searchParams;
   const session = await auth();
   const [page, types] = await Promise.all([
     prisma.page.findUnique({ where: { path: "bliv-medlem" } }),
@@ -20,6 +22,10 @@ export default async function JoinPage({ searchParams }: { searchParams: Promise
   const current = user ? await currentMembership(user.id) : null;
   const trial = user ? await prisma.trialRequest.findUnique({ where: { userId: user.id } }) : null;
   const payments = user ? await prisma.payment.findMany({ where: { userId: user.id, status: { in: ["PAID", "REFUNDED"] } }, orderBy: { paidAt: "desc" } }) : [];
+  const awaiting = user
+    ? await prisma.payment.findFirst({ where: { userId: user.id, payToken: { not: null }, status: { in: ["PENDING", "FAILED"] } }, orderBy: { createdAt: "desc" } })
+    : null;
+  const minor = needsGuardian(user?.birthDate ?? null);
   const usedCode = user ? await prisma.accessCode.findUnique({ where: { usedById: user.id } }) : null;
 
   return (
@@ -42,6 +48,19 @@ export default async function JoinPage({ searchParams }: { searchParams: Promise
       {fejl && <p className="status-warn">{fejl}</p>}
       {besked === "proeve" && <p className="notice">Tak! Din ansøgning om prøveperiode er sendt. Du får adgang, når bestyrelsen har godkendt den.</p>}
       {annulleret && <p className="muted">Betalingen blev annulleret. Du kan prøve igen herunder.</p>}
+      {awaiting && (
+        <div className={sendt ? "notice" : "card"} style={{ marginBottom: 16 }}>
+          <p style={{ margin: 0 }}>
+            {sendt ? "Betalingslinket er sendt" : "Vi venter på betaling"} til din forælder eller værge på <b>{awaiting.payLinkSentTo}</b>.
+            Når kontingentet er betalt, kan du tilmelde dig træninger.
+          </p>
+          {ikkesendt && <p className="status-warn" style={{ margin: "8px 0 0" }}>Mailen kunne ikke sendes lige nu. Prøv igen om lidt, eller giv linket direkte til din forælder.</p>}
+          {demoEnabled() && <p className="muted" style={{ margin: "8px 0 0" }}>Testversion: <Link href={`/betal/${awaiting.payToken}`}>åbn betalingslinket</Link> som forælderen får.</p>}
+          <form action={resendPayLink} style={{ marginTop: 8 }}>
+            <button className="linklike" type="submit">Send linket igen</button>
+          </form>
+        </div>
+      )}
       {current && (
         <p>
           Du har medlemskab ({current.type.name}{current.source === "TRIAL" ? ", prøveperiode" : current.source === "CODE" ? ", via kode" : ""}) til og med {dato(current.endDate)}. Fornyer du nu, forlænges dit medlemskab med et år fra den dato.
@@ -73,7 +92,13 @@ export default async function JoinPage({ searchParams }: { searchParams: Promise
           <label>Adresse<input name="address" defaultValue={user.address ?? ""} required autoComplete="street-address" /></label>
           <label>Postnr.<input name="zip" defaultValue={user.zip ?? ""} required inputMode="numeric" autoComplete="postal-code" /></label>
           <label>By<input name="city" defaultValue={user.city ?? ""} required autoComplete="address-level2" /></label>
-          <button className="button" type="submit">Gå til betaling</button>
+          <fieldset className="guardian" data-minor={minor || undefined}>
+            <legend>Forælder eller værge</legend>
+            <p className="muted" style={{ margin: 0 }}>Skal udfyldes, hvis du er under 18 år. Vi sender betalingslinket til din forælder eller værge, som også får kvitteringer og påmindelser om fornyelse.</p>
+            <label>Navn<input name="guardianName" defaultValue={user.guardianName ?? ""} autoComplete="off" /></label>
+            <label>E-mail<input type="email" name="guardianEmail" defaultValue={user.guardianEmail ?? ""} autoComplete="off" /></label>
+          </fieldset>
+          <button className="button" type="submit">{minor ? "Send betalingslink til forælder" : "Gå til betaling"}</button>
           <p className="muted">Du betaler sikkert med kort eller MobilePay via Stripe. Klubben ser aldrig dine kortoplysninger.</p>
         </form>
       )}

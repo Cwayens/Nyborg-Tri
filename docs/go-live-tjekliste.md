@@ -59,6 +59,9 @@ Sæt `[x]`, når et punkt er klaret.
 - [ ] **Databehandleraftaler** med Vercel, databaseudbyder, Stripe og mailudbyder.
 - [ ] Samtykke til deling af træningsdata med klubben (wearables) skal være frivilligt og kunne trækkes tilbage.
 - [ ] Forældresamtykke for børn under 15 år, hvis de selv opretter bruger.
+- [x] Medlemmer under 18 skal angive forælder/værge ved indmeldelse. Betalingslinket sendes til værgen (`/betal/<hemmeligt link>`), og Stripe sender kvitteringen til værgens e-mail.
+- [ ] Når der kommer påmindelser om fornyelse, skal de sendes til `billingEmail()` i `src/lib/guardian.ts` (værgen for børn).
+- [ ] Nævn i privatlivspolitikken, at vi gemmer navn og e-mail på forælder/værge for medlemmer under 18.
 - [ ] Rutine for sletning af data, når et medlem melder sig ud.
 
 ## Integrationer

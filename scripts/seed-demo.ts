@@ -64,6 +64,9 @@ async function main() {
       name: d.name, role: d.role, athleteGroup: d.group, shareActivities: !!d.shares, phone: "20 30 40 50",
       birthDate: d.birthYear ? new Date(`${d.birthYear}-05-10`) : new Date("1988-03-14"),
       gender: d.gender ?? null,
+      // Børn under 18 har en forælder/værge, som får betalingslinket
+      guardianName: d.group === "BOERN" ? "Birgitte Barn" : null,
+      guardianEmail: d.group === "BOERN" ? `foraelder-${d.key}@demo.nyborgtri.dk` : null,
       // Leaderboard er frivilligt; de fleste testbrugere er med, så siden har indhold
       leaderboard: !!d.gender && d.group !== "BOERN" && d.key !== "proeve",
     };

@@ -5,6 +5,7 @@ import { z } from "zod";
 import { requireUser } from "@/auth";
 import { prisma } from "@/lib/db";
 import { userTypeLabel } from "@/lib/roles";
+import { isEmail, needsGuardian } from "@/lib/guardian";
 
 export const metadata = { title: "Min profil" };
 
@@ -13,6 +14,8 @@ const schema = z.object({
   phone: z.string().trim().max(20).optional(),
   birthDate: z.string().optional(),
   gender: z.enum(["MALE", "FEMALE", ""]).optional(),
+  guardianName: z.string().trim().max(100).optional(),
+  guardianEmail: z.string().trim().toLowerCase().max(200).optional(),
 });
 
 async function saveProfile(formData: FormData) {
@@ -20,12 +23,14 @@ async function saveProfile(formData: FormData) {
   const user = await requireUser("/profil");
   const r = schema.safeParse(Object.fromEntries(formData));
   if (!r.success) redirect("/profil?fejl=" + encodeURIComponent(r.error.issues[0].message));
-  const { name, phone, birthDate, gender } = r.data;
+  const { name, phone, birthDate, gender, guardianName, guardianEmail } = r.data;
+  if (guardianEmail && !isEmail(guardianEmail)) redirect("/profil?fejl=" + encodeURIComponent("Forælderens e-mail ser forkert ud"));
   const welcome = !!formData.get("next");
   await prisma.user.update({
     where: { id: user.id },
     data: {
       name, phone: phone || null, birthDate: birthDate ? new Date(birthDate) : null, gender: gender || null,
+      ...(formData.has("guardianEmail") ? { guardianName: guardianName || null, guardianEmail: guardianEmail || null } : {}),
       // Leaderboard kræver køn og fødselsdato; samtykket vises ikke i velkomstformularen
       ...(welcome ? {} : { leaderboard: formData.get("leaderboard") === "on" && !!gender && !!birthDate }),
     },
@@ -58,6 +63,14 @@ export default async function Profile({ searchParams }: { searchParams: Promise<
             </select>
           </label>
         </div>
+        {needsGuardian(user.birthDate) && (
+          <fieldset className="guardian" data-minor>
+            <legend>Forælder eller værge</legend>
+            <p className="muted" style={{ margin: 0 }}>Får betalingslink, kvitteringer og påmindelser om fornyelse.</p>
+            <label>Navn<input name="guardianName" defaultValue={user.guardianName ?? ""} /></label>
+            <label>E-mail<input type="email" name="guardianEmail" defaultValue={user.guardianEmail ?? ""} /></label>
+          </fieldset>
+        )}
         {!velkommen && (
           <label className="check">
             <input type="checkbox" name="leaderboard" defaultChecked={user.leaderboard} />

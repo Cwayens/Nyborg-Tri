@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { DisciplineIcon } from "@/components/Icons";
@@ -9,7 +8,7 @@ import { kr } from "@/lib/format";
 import { SponsorBar } from "@/components/SponsorBar";
 
 // Forsiden er til nye medlemmer: hvad får jeg, passer det til mig, hvad koster det, og hvordan starter jeg.
-// Medlemmer, der er logget ind, lander på deres eget overblik.
+// Logoet fører altid hertil; medlemmer, der er logget ind, får en knap til deres overblik i stedet for "Prøv gratis".
 
 const TEAMS = [
   {
@@ -43,7 +42,7 @@ const FAQ = [
 ] as const;
 
 export default async function Home() {
-  if ((await auth())?.user) redirect("/min-side");
+  const member = !!(await auth())?.user;
 
   const now = new Date();
   const [types, week] = await Promise.all([
@@ -67,7 +66,9 @@ export default async function Home() {
             Uanset om du skal i mål på din første sprint eller jagter en ny rekord, så træner du bedre sammen med andre.
           </p>
           <div className="hero-actions">
-            <Link href="/bliv-medlem" className="button big">Prøv gratis i 14 dage</Link>
+            {member
+              ? <Link href="/min-side" className="button big">Gå til mit overblik</Link>
+              : <Link href="/bliv-medlem" className="button big">Prøv gratis i 14 dage</Link>}
           </div>
           <ul className="lp-proof">
             <li><b>ca. 100</b> medlemmer</li>

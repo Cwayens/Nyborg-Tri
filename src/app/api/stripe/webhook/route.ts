@@ -32,7 +32,8 @@ export async function POST(req: Request) {
     }
     case "checkout.session.expired": {
       const paymentId = event.data.object.metadata?.paymentId;
-      if (paymentId) await prisma.payment.updateMany({ where: { id: paymentId, status: "PENDING" }, data: { status: "FAILED" } });
+      // Kun hvis det er det seneste betalingsforsøg (betalingslinket til værgen kan have lavet et nyt)
+      if (paymentId) await prisma.payment.updateMany({ where: { id: paymentId, status: "PENDING", stripeCheckoutSessionId: event.data.object.id }, data: { status: "FAILED" } });
       break;
     }
     case "charge.refunded": {
