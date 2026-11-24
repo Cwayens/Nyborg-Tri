@@ -63,6 +63,9 @@ async function main() {
     const data = {
       name: d.name, role: d.role, athleteGroup: d.group, shareActivities: !!d.shares, phone: "20 30 40 50",
       birthDate: d.birthYear ? new Date(`${d.birthYear}-05-10`) : new Date("1988-03-14"),
+      gender: d.gender ?? null,
+      // Leaderboard er frivilligt; de fleste testbrugere er med, så siden har indhold
+      leaderboard: !!d.gender && d.group !== "BOERN" && d.key !== "proeve",
     };
     users[d.key] = await prisma.user.upsert({ where: { email: demoEmail(d.key) }, update: data, create: { email: demoEmail(d.key), ...data } });
   }
@@ -162,32 +165,97 @@ async function main() {
     }
   }
 
-  // Testresultater: fire tests over et år med fremgang
+  // Ture fra uret (Strava) med bedste præstationer til Mine tests og leaderboard.
+  // Testbrugerne får en forbindelse til Strava med falske nøgler; ingen data hentes rigtigt.
   const ids2 = Object.values(users).map((u) => u.id);
   await prisma.benchmarkResult.deleteMany({ where: { userId: { in: ids2 } } });
-  const BENCH: Record<string, Partial<Record<"RUN_5K" | "RUN_10K" | "BIKE_FTP20" | "SWIM_100" | "SWIM_1500", number>>> = {
-    elite: { RUN_5K: 1140, RUN_10K: 2400, BIKE_FTP20: 320, SWIM_100: 72, SWIM_1500: 1260 },
-    admin: { RUN_5K: 1260, RUN_10K: 2640, BIKE_FTP20: 260, SWIM_100: 88, SWIM_1500: 1500 },
-    traener: { RUN_5K: 1330, RUN_10K: 2790, BIKE_FTP20: 240, SWIM_100: 95 },
-    bredde: { RUN_5K: 1620, RUN_10K: 3420, BIKE_FTP20: 185, SWIM_100: 128, SWIM_1500: 2160 },
-    boern: { RUN_5K: 1500, SWIM_100: 110 },
-    kode: { RUN_5K: 1700 },
+  await prisma.wearableConnection.deleteMany({ where: { userId: { in: ids2 } } });
+
+  // Ekstra klubkammerater, kun til leaderboardet (de kan ikke logge ind)
+  const MATES: [string, "MALE" | "FEMALE", number, number][] = [
+    ["Mads Holm", "MALE", 1999, 1.05], ["Jonas Kjær", "MALE", 1995, 1.18], ["Rasmus Lind", "MALE", 1991, 1.12], ["Søren Bak", "MALE", 1987, 1.25],
+    ["Henrik Due", "MALE", 1983, 1.15], ["Kim Vestergaard", "MALE", 1979, 1.3], ["Peter Friis", "MALE", 1976, 1.2], ["Lars Mørk", "MALE", 1970, 1.32],
+    ["Jens Bruun", "MALE", 1964, 1.4], ["Ole Skov", "MALE", 1957, 1.5], ["Frederik Ravn", "MALE", 2004, 1.1], ["Anders Bech", "MALE", 1989, 1.38],
+    ["Sofie Lund", "FEMALE", 2000, 1.08], ["Ida Krogh", "FEMALE", 1996, 1.2], ["Mette Dahl", "FEMALE", 1992, 1.15], ["Louise Brandt", "FEMALE", 1986, 1.28],
+    ["Camilla Juhl", "FEMALE", 1982, 1.18], ["Maria Thorup", "FEMALE", 1978, 1.35], ["Hanne Ebbesen", "FEMALE", 1971, 1.3], ["Lone Winther", "FEMALE", 1966, 1.45],
+    ["Karen Iversen", "FEMALE", 1958, 1.55], ["Emma Poulsen", "FEMALE", 2003, 1.22], ["Signe Bonde", "FEMALE", 1988, 1.12], ["Trine Gade", "FEMALE", 1975, 1.4],
+  ];
+  const mates: { id: string; g: "MALE" | "FEMALE"; f: number; seed: number }[] = [];
+  for (const [i, [name, g, by, f]] of MATES.entries()) {
+    const email = `klubkammerat-${i + 1}@${"demo.nyborgtri.dk"}`;
+    const data = { name, role: "ATHLETE" as const, athleteGroup: (f < 1.2 ? "ELITE" : "BREDDE") as AthleteGroup, gender: g, birthDate: new Date(`${by}-0${(i % 9) + 1}-15`), leaderboard: true };
+    const u = await prisma.user.upsert({ where: { email }, update: data, create: { email, ...data } });
+    mates.push({ id: u.id, g, f, seed: i + 3 });
+  }
+
+  type T = "RUN_5K" | "RUN_10K" | "RUN_HALF" | "BIKE_FTP20" | "BIKE_40K" | "SWIM_100" | "SWIM_1500";
+  // Niveau: 1.0 = klubbens bedste. Basis er årets bedste for en mand på niveau 1.0
+  const BASE: Record<T, number> = { RUN_5K: 1080, RUN_10K: 2260, RUN_HALF: 5000, BIKE_FTP20: 330, BIKE_40K: 3700, SWIM_100: 70, SWIM_1500: 1200 };
+  const SPORT: Record<T, Discipline> = { RUN_5K: "RUN", RUN_10K: "RUN", RUN_HALF: "RUN", BIKE_FTP20: "BIKE", BIKE_40K: "BIKE", SWIM_100: "SWIM", SWIM_1500: "SWIM" };
+  const DIST: Record<T, number> = { RUN_5K: 5000, RUN_10K: 10000, RUN_HALF: 21098, BIKE_FTP20: 32000, BIKE_40K: 40000, SWIM_100: 100, SWIM_1500: 1500 };
+  const NAMES: Record<T, [string, string]> = {
+    RUN_5K: ["Klubtest 5 km", "Tempoløb"], RUN_10K: ["Klubtest 10 km", "Langtur med fart til sidst"], RUN_HALF: ["Halvmaraton", "Langtur"],
+    BIKE_FTP20: ["FTP-test", "Intervaller 3x20 min"], BIKE_40K: ["Enkeltstart 40 km", "Fællestur"],
+    SWIM_100: ["Testsvøm 100 m", "Intervaller i hallen"], SWIM_1500: ["Testsvøm 1500 m", "Open water i Storebælt"],
   };
-  for (const [key, tests] of Object.entries(BENCH)) {
-    for (const [test, base] of Object.entries(tests)) {
-      const watts = test === "BIKE_FTP20";
-      // Fire tests med 3 måneders mellemrum; ældste er svagest
-      for (let i = 0; i < 4; i++) {
-        const factor = 1 + (3 - i) * 0.025 + (i === 2 ? 0.008 : 0);
-        const v = watts ? Math.round(base / factor) : Math.round(base * factor);
-        await prisma.benchmarkResult.create({
+  const value = (t: T, g: "MALE" | "FEMALE", f: number) =>
+    t === "BIKE_FTP20" ? Math.round(BASE[t] / f / (g === "FEMALE" ? 1.3 : 1)) : Math.round(BASE[t] * f * (g === "FEMALE" ? 1.1 : 1));
+
+  let n = 0;
+  async function effortsFor(userId: string, g: "MALE" | "FEMALE", f: number, seed: number, tests: T[], saveTests: boolean) {
+    for (const t of tests) {
+      const watts = t === "BIKE_FTP20";
+      const best = value(t, g, f);
+      const lastYear = 1.02 + ((seed * 7 + t.length * 3) % 9) / 100; // 2–10 % fremgang
+      // Sidste år (3 ture) og i år (4 ture, bedst til sidst); dagene er bagud fra i dag
+      const plan: [number, number, boolean][] = [
+        [-640, lastYear * 1.03, false], [-540, lastYear * 1.01, false], [-450, lastYear, true],
+        [-300, 1.04, true], [-200, 1.025, true], [-95, 1.01, false], [-25 - (seed % 15), 1, true],
+      ];
+      for (const [i, [days, factor, isTest]] of plan.entries()) {
+        const v = watts ? Math.round(best / factor) : Math.round(best * factor);
+        const date = parseLocal(`${localDate(days - (seed % 5))}T${isTest ? "09:30" : "17:15"}`);
+        const longer = !isTest && t !== "SWIM_100" ? 1.6 : isTest ? 1 : 12;
+        const secs = watts ? 3600 : Math.round(v * longer * 1.04);
+        const act = await prisma.activity.create({
           data: {
-            userId: users[key].id, test: test as never, date: parseLocal(`${localDate(-(3 - i) * 90 - 5)}T12:00`),
-            seconds: watts ? null : v, watts: watts ? v : null, note: i === 3 ? "Klubtest" : null,
+            userId, provider: "STRAVA", externalId: `demo-${userId}-${n++}`, sport: SPORT[t], name: NAMES[t][isTest ? 0 : 1],
+            startAt: date, movingSec: secs, distanceM: Math.round(DIST[t] * (watts ? 1 : longer)), hasPower: watts, effortsAt: new Date(),
           },
         });
+        const effort = await prisma.effort.create({
+          data: { userId, activityId: act.id, test: t, date, seconds: watts ? null : v, watts: watts ? v : null },
+        });
+        // Testbrugerne har gemt klubtestene i Mine tests; resten står som forslag
+        if (saveTests && isTest && i >= 2 && ["RUN_5K", "RUN_10K", "BIKE_FTP20", "SWIM_100", "SWIM_1500"].includes(t)) {
+          await prisma.benchmarkResult.create({
+            data: { userId, test: t, date, seconds: effort.seconds, watts: effort.watts, source: "STRAVA", note: act.name, effortId: effort.id },
+          });
+        }
       }
     }
+  }
+
+  const ALL: T[] = ["RUN_5K", "RUN_10K", "RUN_HALF", "BIKE_FTP20", "BIKE_40K", "SWIM_100", "SWIM_1500"];
+  const MINE: Record<string, [number, T[]]> = {
+    elite: [1.02, ALL],
+    admin: [1.12, ALL],
+    traener: [1.2, ["RUN_5K", "RUN_10K", "BIKE_FTP20", "SWIM_100"]],
+    bredde: [1.38, ["RUN_5K", "RUN_10K", "BIKE_FTP20", "SWIM_100", "SWIM_1500"]],
+    kode: [1.45, ["RUN_5K"]],
+    udloebet: [1.4, ["RUN_5K", "SWIM_1500"]],
+  };
+  for (const [key, [f, tests]] of Object.entries(MINE)) {
+    const d = DEMO_USERS.find((x) => x.key === key)!;
+    await prisma.wearableConnection.create({
+      data: { userId: users[key].id, provider: "STRAVA", externalAthleteId: `demo-${key}`, accessToken: "demo", refreshToken: "demo", expiresAt: new Date(Date.now() + 365 * DAY), lastSyncAt: new Date() },
+    });
+    await effortsFor(users[key].id, d.gender!, f, key.length, tests, true);
+  }
+  for (const m of mates) {
+    await prisma.activity.deleteMany({ where: { userId: m.id } });
+    const tests = ALL.filter((_, i) => (m.seed + i) % 3 !== 0 || i === 0);
+    await effortsFor(m.id, m.g, m.f, m.seed, tests, false);
   }
 
   // Gruppechat
@@ -206,6 +274,7 @@ async function main() {
     ["admin", "VOKSNE", "BIKE", "Med! Mødes ved idrætscentret 6:30.", 19],
     ["elite", "VOKSNE", "RUN", "Ny PR på 5 km til klubtesten 🎉", 50],
     ["boern", "BOERN", "SWIM", "Jeg kunne svømme 100 m crawl uden at stoppe!", 12],
+    ["boern", "BOERN", "SOCIAL", "Hvem kommer til MiniTri til sommer? 🏊‍♂️🚲🏃", 6],
   ];
   for (const [key, room, channel, body, hoursAgo] of CHAT) {
     await prisma.chatMessage.create({ data: { userId: users[key].id, room, channel, body, createdAt: new Date(Date.now() - hoursAgo * 3600 * 1000) } });

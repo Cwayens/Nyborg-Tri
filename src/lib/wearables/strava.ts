@@ -1,5 +1,6 @@
 import type { Discipline } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { extractEfforts, worthChecking, type Streams } from "@/lib/efforts";
 
 // Strava API v3. Docs: https://developers.strava.com/docs/
 const AUTH_URL = "https://www.strava.com/oauth/authorize";
@@ -16,6 +17,7 @@ export type StravaActivity = {
   distance: number;
   total_elevation_gain?: number;
   average_heartrate?: number;
+  device_watts?: boolean;
 };
 
 const SPORT_MAP: Record<string, Discipline> = {
@@ -41,6 +43,7 @@ export function toActivityData(userId: string, a: StravaActivity) {
     distanceM: Math.round(a.distance ?? 0),
     elevationM: Math.round(a.total_elevation_gain ?? 0),
     avgHr: a.average_heartrate ? Math.round(a.average_heartrate) : null,
+    hasPower: !!a.device_watts,
   };
 }
 
@@ -122,17 +125,22 @@ async function confirmGone(connectionId: string, path: string): Promise<boolean>
   }
 }
 
-/** Henter aktiviteter siden sidste synk (første gang: 60 dage tilbage). */
+/** Første gang hentes alt fra 1. januar sidste år, så "mest fremgang" kan sammenligne med sidste år. */
+function firstSyncFrom(): Date {
+  return new Date(new Date().getFullYear() - 1, 0, 1);
+}
+
+/** Henter aktiviteter siden sidste synk. Bedste præstationer udtrækkes bagefter i processEfforts. */
 export async function syncRecent(userId: string): Promise<number> {
   const c = await prisma.wearableConnection.findUnique({ where: { userId_provider: { userId, provider: "STRAVA" } } });
   if (!c) return 0;
-  const since = c.lastSyncAt ? new Date(c.lastSyncAt.getTime() - 3 * 24 * 3600 * 1000) : new Date(Date.now() - 60 * 24 * 3600 * 1000);
+  const since = c.lastSyncAt ? new Date(c.lastSyncAt.getTime() - 3 * 24 * 3600 * 1000) : firstSyncFrom();
   let count = 0;
-  for (let page = 1; page <= 5; page++) {
+  for (let page = 1; page <= 10; page++) {
     const list = await api<StravaActivity[]>(c.id, `/athlete/activities?after=${Math.floor(since.getTime() / 1000)}&per_page=100&page=${page}`);
     for (const a of list) {
       const data = toActivityData(userId, a);
-      await prisma.activity.upsert({ where: { provider_externalId: { provider: "STRAVA", externalId: data.externalId } }, update: data, create: data });
+      await upsertActivity(data);
       count++;
     }
     if (list.length < 100) break;
@@ -160,8 +168,72 @@ export async function handleWebhookEvent(e: { object_type: string; aspect_type: 
     return;
   }
   const a = await api<StravaActivity>(c.id, `/activities/${e.object_id}`);
-  const data = toActivityData(c.userId, a);
-  await prisma.activity.upsert({ where: { provider_externalId: { provider: "STRAVA", externalId } }, update: data, create: data });
+  const saved = await upsertActivity(toActivityData(c.userId, a));
+  // Nye ture behandles med det samme, så leaderboard og Mine tests er opdateret
+  await processActivity(saved.id).catch((err) => console.error("Strava efforts", err));
+}
+
+/** Gemmer en aktivitet. Ændres distance eller tid, skal præstationerne udtrækkes igen. */
+async function upsertActivity(data: ReturnType<typeof toActivityData>) {
+  const where = { provider_externalId: { provider: "STRAVA" as const, externalId: data.externalId } };
+  const old = await prisma.activity.findUnique({ where, select: { distanceM: true, movingSec: true, sport: true } });
+  const changed = !old || old.distanceM !== data.distanceM || old.movingSec !== data.movingSec || old.sport !== data.sport;
+  return prisma.activity.upsert({ where, update: { ...data, ...(changed ? { effortsAt: null } : {}) }, create: data });
+}
+
+type StreamSet = { time?: { data: number[] }; distance?: { data: number[] }; watts?: { data: (number | null)[] } };
+
+/** Udtrækker bedste præstationer (5 km, 20 min watt osv.) fra én aktivitet. Koster ét kald til Strava. */
+export async function processActivity(activityId: string): Promise<number> {
+  const a = await prisma.activity.findUniqueOrThrow({ where: { id: activityId } });
+  let streams: Streams | null = null;
+  if (a.provider === "STRAVA" && a.externalId && worthChecking(a)) {
+    const c = await prisma.wearableConnection.findUnique({ where: { userId_provider: { userId: a.userId, provider: "STRAVA" } } });
+    if (c) {
+      const keys = a.hasPower ? "time,distance,watts" : "time,distance";
+      try {
+        const s = await api<StreamSet>(c.id, `/activities/${a.externalId}/streams?keys=${keys}&key_by_type=true`);
+        streams = { time: s.time?.data, distance: s.distance?.data, watts: s.watts?.data };
+      } catch (e) {
+        // 429 = Stravas grænse for kald er nået; prøv igen ved næste kørsel
+        if (e instanceof StravaError && e.status === 429) throw e;
+      }
+    }
+  }
+  // Kun data fra ure tæller, aldrig manuelt indtastede ture
+  const found = a.provider !== "MANUAL" && worthChecking(a) ? extractEfforts(a, streams) : [];
+  await prisma.$transaction([
+    prisma.effort.deleteMany({ where: { activityId, test: { notIn: found.map((f) => f.test) } } }),
+    ...found.map((f) =>
+      prisma.effort.upsert({
+        where: { activityId_test: { activityId, test: f.test } },
+        update: { seconds: f.seconds, watts: f.watts, date: a.startAt },
+        create: { activityId, userId: a.userId, test: f.test, seconds: f.seconds, watts: f.watts, date: a.startAt },
+      }),
+    ),
+    prisma.activity.update({ where: { id: activityId }, data: { effortsAt: new Date() } }),
+  ]);
+  return found.length;
+}
+
+/**
+ * Behandler aktiviteter, der endnu ikke er tjekket, nyeste først. Strava tillader ca. 100 kald pr. 15 min
+ * og 1000 pr. dag for hele klubben, så det sker i små portioner.
+ */
+export async function processPending(limit: number, userId?: string): Promise<{ processed: number; remaining: number }> {
+  const where = { effortsAt: null, provider: "STRAVA" as const, ...(userId ? { userId } : {}) };
+  const list = await prisma.activity.findMany({ where, orderBy: { startAt: "desc" }, take: limit, select: { id: true } });
+  let processed = 0;
+  for (const { id } of list) {
+    try {
+      await processActivity(id);
+      processed++;
+    } catch (e) {
+      if (e instanceof StravaError && e.status === 429) break;
+      console.error("Strava efforts", id, e);
+    }
+  }
+  return { processed, remaining: await prisma.activity.count({ where }) };
 }
 
 export async function disconnect(userId: string) {

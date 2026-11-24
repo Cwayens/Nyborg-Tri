@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { AthleteGroup } from "@prisma/client";
 import { requireTrainer } from "@/auth";
 import { prisma } from "@/lib/db";
-import { TESTS, formatResult, score } from "@/lib/benchmarks";
+import { FROM_WEARABLE, TESTS, formatResult, score } from "@/lib/benchmarks";
 import { GROUPS, GROUP_LABEL } from "@/lib/roles";
 import { dato } from "@/lib/format";
 
@@ -16,7 +16,7 @@ export default async function TrainerTests({ searchParams }: { searchParams: Pro
 
   const athletes = await prisma.user.findMany({
     where: { athleteGroup: group },
-    select: { id: true, name: true, benchmarks: { select: { test: true, seconds: true, watts: true, date: true } } },
+    select: { id: true, name: true, benchmarks: { where: FROM_WEARABLE, select: { test: true, seconds: true, watts: true, date: true } } },
     orderBy: { name: "asc" },
   });
 

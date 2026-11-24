@@ -5,13 +5,14 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/auth";
 import { prisma } from "@/lib/db";
-import { disconnect, syncRecent } from "@/lib/wearables/strava";
+import { disconnect, processPending, syncRecent } from "@/lib/wearables/strava";
 
 export async function syncStrava() {
   const user = await requireUser("/forbindelser");
   let n = 0;
   try {
     n = await syncRecent(user.id);
+    await processPending(15, user.id);
   } catch {
     redirect("/forbindelser?fejl=" + encodeURIComponent("Kunne ikke hente fra Strava – prøv igen senere"));
   }

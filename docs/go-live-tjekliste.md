@@ -53,6 +53,7 @@ Sæt `[x]`, når et punkt er klaret.
 - [ ] **Billeder på forsiden** (`public/billeder/`) er hentet fra den gamle side. Bekræft, at de viste personer er ok med at være på forsiden, eller udskift dem med nye billeder.
 - [ ] **Gruppechat**: aftal regler for god tone, og hvem blandt trænerne der holder øje med børnegruppens kanaler. Overvej om forældre skal kunne læse med i børnenes chat.
 - [ ] **Testresultater** kan ses af trænere (bedste resultat pr. atlet). Nævn det i privatlivspolitikken.
+- [ ] **Leaderboard** er frivilligt (samtykke på profilen eller på /leaderboard). Nævn i privatlivspolitikken, at navn, aldersgruppe, køn og bedste præstationer vises for andre medlemmer. Børn under 18 er ikke med (Ironman-grupperne starter ved 18).
 
 - [ ] Opdater **privatlivspolitikken**: hvilke data der gemmes (navn, adresse, fødselsdato, telefon, betalinger, træningsdata), hvorfor, hvor længe, og hvem der behandler dem.
 - [ ] **Databehandleraftaler** med Vercel, databaseudbyder, Stripe og mailudbyder.
@@ -65,7 +66,10 @@ Sæt `[x]`, når et punkt er klaret.
 - [ ] **TrainingPeaks API**: søg partneradgang hos TrainingPeaks (API-ansøgning til klubber/coach-platforme). Når den er godkendt, sættes `TRAININGPEAKS_CLIENT_ID` og `TRAININGPEAKS_CLIENT_SECRET`, og koblingen i `src/lib/trainingpeaks.ts` gøres færdig. Indtil da importerer trænere programmer som .zwo/.mrc-filer.
 - [x] Tærskelfart på løb: estimatet (10 km-fart + 3 % eller 5 km-fart + 7 %) er godkendt af Carsten for nu. Kan ændres i `referencesFrom` i `src/lib/workout.ts`.
 
-- [ ] Hent 5 km- og 10 km-tider automatisk fra Stravas "best efforts" (i dag foreslås kun ture på præcis testdistancen).
+- [x] Mine tests og leaderboard bruger kun data fra ure. Bedste 5 km, 10 km, halvmaraton, 40 km, 20 min watt, 100 m og 1500 m udtrækkes automatisk fra hver tur (også midt i længere ture).
+- [ ] **Leaderboard og Strava**: Stravas API-aftale tillader kun at vise en brugers Strava-data for brugeren selv. Derfor tæller Strava-ture ikke på leaderboardet, før klubben har skriftlig tilladelse fra Strava (så sættes `STRAVA_LEADERBOARD=1`). Alternativt skal ure forbindes direkte (Garmin, Polar m.fl., se nedenfor).
+- [ ] Sæt `CRON_SECRET` på Vercel. Cron-jobbet `/api/cron/efforts` kører én gang i døgnet (Hobby-planen). Med Vercel Pro kan det køre hver time, så nye medlemmers gamle ture gennemgås hurtigere.
+- [ ] Strava tillader ca. 1000 kald om dagen for hele appen. Første gang et medlem forbinder, hentes ture fra 1. januar sidste år, og hver tur koster ét kald at gennemgå. Søg om højere grænse hos Strava.
 
 - [ ] **Økonomisystem**: sat på pause. Beslut system (e-conomic, Dinero, Billy …) og aftal kontonumre med kassereren.
 - [ ] **TrainingPeaks**: søg om partneradgang til API'et (kan tage tid).

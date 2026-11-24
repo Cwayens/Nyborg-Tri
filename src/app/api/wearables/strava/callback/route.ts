@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { auth } from "@/auth";
 import { baseUrl } from "@/lib/url";
-import { connectWithCode, syncRecent } from "@/lib/wearables/strava";
+import { connectWithCode, processPending, syncRecent } from "@/lib/wearables/strava";
 
 const back = async (q: string) => Response.redirect(`${await baseUrl()}/forbindelser?${q}`);
 
@@ -20,6 +20,7 @@ export async function GET(req: Request) {
   try {
     await connectWithCode(session.user.id, code, scope);
     const n = await syncRecent(session.user.id);
+    await processPending(10, session.user.id);
     return back(`forbundet=strava&hentet=${n}`);
   } catch (e) {
     console.error(e);

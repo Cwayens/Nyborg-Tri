@@ -42,6 +42,7 @@ model User {
 
   phone     String?
   birthDate DateTime?
+  gender    Gender?
   address   String?
   zip       String?
   city      String?
@@ -65,8 +66,10 @@ model User {
   groupWorkoutParticipants GroupWorkoutParticipant[]
   benchmarks               BenchmarkResult[]
   chatMessages             ChatMessage[]
+  efforts                  Effort[]
 
   shareActivities Boolean @default(false) // samtykke: vis mine aktiviteter i klubstatistikken
+  leaderboard     Boolean @default(false) // samtykke: vis mine bedste præstationer på leaderboardet
   calendarToken   String? @unique // hemmeligt link til kalender-abonnement
 }
 
@@ -349,13 +352,17 @@ model Activity {
   distanceM  Int        @default(0)
   elevationM Int        @default(0)
   avgHr      Int?
+  hasPower   Boolean    @default(false) // wattmåler på cyklen
+  effortsAt  DateTime? // hvornår bedste præstationer blev udtrukket (null = ikke endnu)
   note       String?
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  efforts Effort[]
 
   @@unique([provider, externalId])
+  @@index([effortsAt])
   @@index([userId, startAt])
   @@index([startAt])
 }
@@ -402,6 +409,34 @@ enum BenchmarkTest {
   BIKE_FTP20 // gennemsnitlig watt over 20 minutter; FTP = 95 %
   SWIM_100
   SWIM_1500
+  RUN_HALF // halvmaraton, kun leaderboard
+  BIKE_40K // kun leaderboard
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+/// Bedste præstation på en fast distance (eller 20 min watt) i én aktivitet fra et ur.
+/// Udtrækkes automatisk, også når turen er længere end distancen (fx bedste 5 km i et 8 km-løb).
+model Effort {
+  id         String        @id @default(cuid())
+  userId     String
+  activityId String
+  test       BenchmarkTest
+  date       DateTime
+  seconds    Int?
+  watts      Int?
+  createdAt  DateTime      @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  result   BenchmarkResult?
+
+  @@unique([activityId, test])
+  @@index([test, date])
+  @@index([userId, test])
 }
 
 model BenchmarkResult {
@@ -413,9 +448,11 @@ model BenchmarkResult {
   watts     Int? // for FTP-test
   note      String?
   source    Provider      @default(MANUAL)
+  effortId  String?       @unique // præstationen fra uret, som resultatet blev gemt fra
   createdAt DateTime      @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  effort Effort? @relation(fields: [effortId], references: [id], onDelete: SetNull)
 
   @@index([userId, test, date])
 }
@@ -448,4 +485,16 @@ model ChatMessage {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([room, channel, createdAt])
+}
+
+/// Sponsorer i bjælken på forsiden. Admin redigerer under Administration > Sponsorer.
+model Sponsor {
+  id        String   @id @default(cuid())
+  name      String
+  url       String?
+  logo      String   @db.Text // sti i /public eller data-URL for uploadet logo
+  sortOrder Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

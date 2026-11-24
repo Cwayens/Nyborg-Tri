@@ -31,6 +31,16 @@ export function canUseChat(user: U, room: ChatRoom): boolean {
   return roomsFor(user).includes(room);
 }
 
+/**
+ * Må brugeren skrive i rummet? Børn skriver kun med børn: trænere og admin kan læse og slette i børnenes chat,
+ * men ikke skrive. I Elite og Bredde kan alle med adgang skrive.
+ */
+export function canPost(user: U, room: ChatRoom): boolean {
+  if (!canUseChat(user, room)) return false;
+  if (room === "BOERN") return user.role === "ATHLETE" && user.athleteGroup === "BOERN";
+  return true;
+}
+
 /** Afsender kan slette egne beskeder, trænere og admin kan slette alle (moderation). */
 export function canDeleteMessage(user: U & { id: string }, msg: { userId: string }): boolean {
   return msg.userId === user.id || hasRole(user.role, "TRAINER");

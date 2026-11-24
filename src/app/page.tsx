@@ -6,6 +6,7 @@ import { DisciplineIcon } from "@/components/Icons";
 import { GROUP_LABEL } from "@/lib/roles";
 import { formatTime, weekdayShort } from "@/lib/time";
 import { kr } from "@/lib/format";
+import { SponsorBar } from "@/components/SponsorBar";
 
 // Forsiden er til nye medlemmer: hvad får jeg, passer det til mig, hvad koster det, og hvordan starter jeg.
 // Medlemmer, der er logget ind, lander på deres eget overblik.
@@ -67,7 +68,6 @@ export default async function Home() {
           </p>
           <div className="hero-actions">
             <Link href="/bliv-medlem" className="button big">Prøv gratis i 14 dage</Link>
-            <a href="#priser" className="button ghost big">Se priser</a>
           </div>
           <ul className="lp-proof">
             <li><b>ca. 100</b> medlemmer</li>
@@ -76,6 +76,8 @@ export default async function Home() {
           </ul>
         </div>
       </section>
+
+      <SponsorBar />
 
       <section id="traening" className="lp-section">
         <h2>Find dit hold</h2>

@@ -18,9 +18,23 @@ export const TESTS: TestDef[] = [
   { test: "SWIM_1500", label: "Svøm 1500 m", short: "1500 m", discipline: "SWIM", kind: "time", distanceM: 1500, help: "Crawl i bassin eller åbent vand (skriv det i noten)." },
 ];
 
-export const TEST_BY_KEY = Object.fromEntries(TESTS.map((t) => [t.test, t])) as Record<BenchmarkTest, TestDef>;
+/** Distancerne på leaderboardet: klubbens fem tests plus halvmaraton og 40 km på cykel. */
+export const LEADERBOARD: TestDef[] = [
+  TESTS[0], TESTS[1],
+  { test: "RUN_HALF", label: "Løb halvmaraton", short: "21,1 km", discipline: "RUN", kind: "time", distanceM: 21098, help: "" },
+  TESTS[2],
+  { test: "BIKE_40K", label: "Cykel 40 km", short: "40 km", discipline: "BIKE", kind: "time", distanceM: 40000, help: "" },
+  TESTS[3], TESTS[4],
+];
 
+export const TEST_BY_KEY = Object.fromEntries(LEADERBOARD.map((t) => [t.test, t])) as Record<BenchmarkTest, TestDef>;
+
+/** En af klubbens fem tests (Mine tests). */
 export function isTest(v: unknown): v is BenchmarkTest {
+  return typeof v === "string" && TESTS.some((t) => t.test === v);
+}
+
+export function isLeaderboardTest(v: unknown): v is BenchmarkTest {
   return typeof v === "string" && v in TEST_BY_KEY;
 }
 
@@ -63,6 +77,7 @@ export function formatDetail(r: Result): string {
   const def = TEST_BY_KEY[r.test];
   if (def.kind === "watts") return r.watts ? `${r.watts} W i 20 min` : "";
   if (!r.seconds || !def.distanceM) return "";
+  if (def.discipline === "BIKE") return `${(def.distanceM / 1000 / (r.seconds / 3600)).toLocaleString("da-DK", { maximumFractionDigits: 1 })} km/t`;
   if (def.discipline === "RUN") return `${formatDuration(Math.round(r.seconds / (def.distanceM / 1000)))} /km`;
   if (def.distanceM > 100) return `${formatDuration(Math.round(r.seconds / (def.distanceM / 100)))} /100 m`;
   return "";
@@ -90,3 +105,6 @@ export function matchTest(a: { sport: Discipline; distanceM: number }): Benchmar
   }
   return null;
 }
+
+/** Kun resultater fra ure tæller (Prisma-filter). Gamle manuelt indtastede resultater vises ikke. */
+export const FROM_WEARABLE = { source: { not: "MANUAL" } } as const;

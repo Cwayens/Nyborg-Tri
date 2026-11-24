@@ -68,8 +68,10 @@ Træneren vælger præcis én gruppe for hver træning (Elite, Bredde eller Bør
 
 ## Testresultater og chat
 
-- **Mine tests** (`/benchmarks`): 5 km, 10 km, FTP (20 min), 100 m og 1500 m svøm med historik og udvikling. Ture fra Strava eller manuelt på præcis testdistancen foreslås som resultat. Trænere ser gruppens bedste resultater under Trænerværktøj → Testresultater.
-- **Chat** (`/chat`): kanalerne Løb, Cykling, Svøm og Social. Elite og Bredde deler chat, Børn har deres egen. Trænere og admin har adgang til begge og kan slette beskeder.
+- **Mine tests** (`/benchmarks`): 5 km, 10 km, FTP (20 min), 100 m og 1500 m svøm med historik og udvikling. Resultater kan kun komme fra ure: de bedste præstationer udtrækkes automatisk fra hver tur (`src/lib/efforts.ts`, `processActivity` i `src/lib/wearables/strava.ts`), og atleten gemmer dem som test med ét tryk. Der er ingen manuel indtastning. Trænere ser gruppens bedste resultater under Trænerværktøj → Testresultater.
+- **Leaderboard** (`/leaderboard`): årets bedste og mest fremgang (årets bedste mod sidste års bedste) på 5 km, 10 km, halvmaraton, FTP, 40 km, 100 m og 1500 m, opdelt i køn og Ironman-aldersgrupper. Frivilligt for medlemmet. Ture, der endnu ikke er gennemgået, behandles af cron-jobbet `/api/cron/efforts` (kræver `CRON_SECRET`).
+- **Sponsorer**: bjælken på forsiden redigeres under Administration → Sponsorer (navn, link, logo, rækkefølge, vis/skjul).
+- **Chat** (`/chat`): kanalerne Løb, Cykling, Svøm og Social. Elite og Bredde deler chat, Børn har deres egen. Kun børn kan skrive i børnenes chat; trænere og admin kan læse med og slette beskeder.
 
 ## Træningsprogrammer (TrainingPeaks)
 

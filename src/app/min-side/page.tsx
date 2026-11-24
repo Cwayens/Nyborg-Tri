@@ -11,7 +11,7 @@ import { personalTotals, personalWeeks } from "@/lib/stats";
 import { formatDay, formatTime } from "@/lib/time";
 import { DisciplineIcon, initials } from "@/components/Icons";
 import { WeekChart } from "@/components/WeekChart";
-import { TESTS, formatResult, score } from "@/lib/benchmarks";
+import { FROM_WEARABLE, TESTS, formatResult, score } from "@/lib/benchmarks";
 import { WorkoutView } from "@/components/WorkoutView";
 import { isWorkout, referencesFrom } from "@/lib/workout";
 import { toggleSignup } from "../kalender/actions";
@@ -45,7 +45,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     personalWeeks(user.id, 6),
     personalTotals(user.id, startOfWeek(now)),
     prisma.trainingSession.count({ where: { startsAt: { gte: now, lte: endOfToday } } }),
-    prisma.benchmarkResult.findMany({ where: { userId: user.id }, select: { test: true, seconds: true, watts: true } }),
+    prisma.benchmarkResult.findMany({ where: { userId: user.id, ...FROM_WEARABLE }, select: { test: true, seconds: true, watts: true } }),
     prisma.post.findMany({ where: { published: true }, orderBy: { publishedAt: "desc" }, take: 3, select: { slug: true, title: true, publishedAt: true } }),
   ]);
   const refs = referencesFrom(benchmarks);
@@ -127,13 +127,13 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
       <section className="card" style={{ marginTop: 18 }}>
         <div className="section-head" style={{ margin: "0 0 10px" }}>
           <h2 style={{ fontSize: "1.1rem" }}>Mine tests</h2>
-          <Link href="/benchmarks">{bestByTest.size ? "Se udvikling" : "Tilføj resultat"}</Link>
+          <Link href="/benchmarks">{bestByTest.size ? "Se udvikling" : "Find tests i dine ture"}</Link>
         </div>
         <div className="bm-mini">
           {TESTS.map((t) => {
             const b = bestByTest.get(t.test);
             return (
-              <Link key={t.test} href={b ? "/benchmarks" : `/benchmarks?test=${t.test}#ny`} className={`disc disc-${t.discipline}`}>
+              <Link key={t.test} href="/benchmarks" className={`disc disc-${t.discipline}`}>
                 <span className="muted">{t.short}</span>
                 <b>{b ? formatResult(b) : "–"}</b>
               </Link>

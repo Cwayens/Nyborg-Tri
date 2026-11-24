@@ -8,6 +8,7 @@ import { dayKey, formatDay, formatTime, parseLocal } from "@/lib/time";
 import { toggleSignup } from "./actions";
 import { WorkoutView } from "@/components/WorkoutView";
 import { isWorkout, referencesFrom } from "@/lib/workout";
+import { FROM_WEARABLE } from "@/lib/benchmarks";
 
 export const metadata = { title: "Kalender" };
 
@@ -52,7 +53,7 @@ export default async function Calendar({ searchParams }: Props) {
   const userId = session?.user.id ?? null;
   const eligible = userId ? await canSignUp(userId) : false;
   const refs = userId
-    ? referencesFrom(await prisma.benchmarkResult.findMany({ where: { userId }, select: { test: true, seconds: true, watts: true } }))
+    ? referencesFrom(await prisma.benchmarkResult.findMany({ where: { userId, ...FROM_WEARABLE }, select: { test: true, seconds: true, watts: true } }))
     : null;
 
   // Valgt dag: ?dag=, ellers næste dag med træning fra i dag, ellers første dag med træning i måneden

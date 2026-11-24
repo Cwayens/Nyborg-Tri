@@ -42,7 +42,7 @@ export function WorkoutView({ workout, discipline, refs }: { workout: Workout; d
       <p className="muted workout-note">
         Procent {referenceLabel(discipline)}.{" "}
         {refs && !anyTarget && MISSING[discipline] && (
-          <>Tilføj en <Link href="/benchmarks#ny">{MISSING[discipline]}</Link> under Mine tests, så regner vi dine egne tal ud.</>
+          <>Gem en <Link href="/benchmarks">{MISSING[discipline]}</Link> fra dit ur under Mine tests, så regner vi dine egne tal ud.</>
         )}
         {!refs && <>Log ind for at se dine egne tal.</>}
       </p>

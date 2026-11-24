@@ -7,6 +7,7 @@ export function AdminNav() {
       <Link href="/admin/betalinger">Betalinger</Link>
       <Link href="/admin/adgang">Prøveperioder og koder</Link>
       <Link href="/admin/indhold">Indhold</Link>
+      <Link href="/admin/sponsorer">Sponsorer</Link>
       <a href="/admin/medlemmer.csv">Hent medlemsliste (CSV)</a>
     </p>
   );

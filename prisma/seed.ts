@@ -41,6 +41,22 @@ async function main() {
     },
   });
 
+  // Sponsorer fra den gamle side. Oprettes kun første gang; derefter styrer admin dem.
+  if ((await prisma.sponsor.count()) === 0) {
+    const sponsors = [
+      ["Erik Jørgensen's Eftf.", null, "erik-joergensen"],
+      ["Intersport Nyborg", "https://intersport.dk", "intersport"],
+      ["TilNyborg.dk", "http://www.tilnyborg.dk/", "tilnyborg"],
+      ["Fri BikeShop", "https://www.fribikeshop.dk/", "fri-bike-shop"],
+      ["TYR", "http://tyrdanmark.dk/", "tyr"],
+      ["Løbexperten", "http://www.loebexperten.dk/", "loebeexperten"],
+      ["FIT 4 RUN", "http://www.fit4run.dk/", "fit4run"],
+    ] as const;
+    for (const [i, [name, url, file]] of sponsors.entries()) {
+      await prisma.sponsor.create({ data: { name, url, logo: `/sponsorer/${file}.webp`, sortOrder: i } });
+    }
+  }
+
   console.log("Seed færdig");
 }
 

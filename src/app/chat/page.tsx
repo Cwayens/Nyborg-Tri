@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ChatChannel, ChatRoom } from "@prisma/client";
 import { requireUser } from "@/auth";
 import { prisma } from "@/lib/db";
-import { CHANNELS, CHANNEL_LABEL, ROOM_LABEL, canDeleteMessage, isChannel, MAX_LENGTH, roomsFor } from "@/lib/chat";
+import { CHANNELS, CHANNEL_LABEL, ROOM_LABEL, canDeleteMessage, canPost, isChannel, MAX_LENGTH, roomsFor } from "@/lib/chat";
 import { formatDay, formatTime } from "@/lib/time";
 import { ChatIcon, DisciplineIcon, initials } from "@/components/Icons";
 import { AutoRefresh } from "./AutoRefresh";
@@ -98,6 +98,7 @@ export default async function Chat({ searchParams }: Props) {
         <div id="bund" />
       </section>
 
+      {canPost(user, room) ? (
       <form action={postMessage} className="chat-form">
         <input type="hidden" name="room" value={room} />
         <input type="hidden" name="channel" value={channel} />
@@ -105,7 +106,10 @@ export default async function Chat({ searchParams }: Props) {
         <textarea id="besked" name="body" rows={2} maxLength={MAX_LENGTH} required placeholder={`Skriv til ${CHANNEL_LABEL[channel]} · ${ROOM_LABEL[room]}`} />
         <button className="button" type="submit">Send</button>
       </form>
-      {room === "BOERN" && <p className="muted" style={{ fontSize: "0.88rem" }}>Børnegruppens chat følges af trænerne, som kan slette beskeder.</p>}
+      ) : (
+        <p className="notice chat-readonly">Kun børnene kan skrive her. Som træner eller admin kan du læse med og slette beskeder.</p>
+      )}
+      {room === "BOERN" && canPost(user, room) && <p className="muted" style={{ fontSize: "0.88rem" }}>Kun børnene kan skrive her. Trænerne læser med og kan slette beskeder.</p>}
     </div>
   );
 }
