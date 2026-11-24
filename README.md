@@ -64,6 +64,15 @@ Rolle og atletgruppe sættes af en admin under **Admin → Medlemmer**. En træn
 Nye betalende medlemmer får automatisk gruppen Bredde (eller Børn ved ungdomskontingent), indtil en admin ændrer den.
 Træninger kan målrettes én eller flere grupper (ingen valgt = alle) og gentages ugentligt.
 
+## Tilmelding til træninger
+
+- Alle kan oprette en atletbruger (log ind med mail – profilen oprettes automatisk).
+- Man kan først tilmelde sig træninger i `/kalender`, når man har et aktivt medlemskab, som ikke er passivt. Det kan man få på tre måder:
+  1. **Betaling** af kontingent (Stripe).
+  2. **Prøveperiode på 14 dage**: man søger på *Bliv medlem*, og en admin godkender under **Admin → Prøveperioder og koder**. Én ansøgning pr. person.
+  3. **Engangskode**: en admin opretter koder (medlemstype + antal dage). Hver kode kan kun bruges én gang, og hver bruger kan kun bruge én kode.
+- Indloggede ser navnene på dem der kommer; andre ser kun antallet. Trænere ser deltagerlisten (med telefonnummer) på hver træning.
+
 ## Administration
 
 Log ind med en mail der har rollen ADMIN (sættes af seed via `ADMIN_EMAIL`, eller direkte i databasen):

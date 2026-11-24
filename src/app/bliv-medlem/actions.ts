@@ -5,6 +5,7 @@ import { z } from "zod";
 import { requireUser } from "@/auth";
 import { prisma } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
+import { redeemCode } from "@/lib/access";
 
 const schema = z.object({
   typeCode: z.string().min(1),
@@ -64,4 +65,29 @@ export async function startCheckout(formData: FormData) {
 
   await prisma.payment.update({ where: { id: payment.id }, data: { stripeCheckoutSessionId: session.id } });
   redirect(session.url!);
+}
+
+const trialSchema = z.object({
+  name: z.string().trim().min(2, "Skriv dit fulde navn"),
+  phone: z.string().trim().min(8, "Skriv dit telefonnummer"),
+  message: z.string().trim().max(1000).optional(),
+});
+
+export async function requestTrial(formData: FormData) {
+  const user = await requireUser("/bliv-medlem");
+  const parsed = trialSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) redirect(`/bliv-medlem?fejl=${encodeURIComponent(parsed.error.issues[0].message)}#proeve`);
+  const existing = await prisma.trialRequest.findUnique({ where: { userId: user.id } });
+  if (existing) redirect(`/bliv-medlem?fejl=${encodeURIComponent("Du har allerede søgt om en prøveperiode")}#proeve`);
+  const { name, phone, message } = parsed.data;
+  await prisma.user.update({ where: { id: user.id }, data: { name, phone } });
+  await prisma.trialRequest.create({ data: { userId: user.id, message: message || null } });
+  redirect("/bliv-medlem?besked=proeve#proeve");
+}
+
+export async function redeemCodeAction(formData: FormData) {
+  const user = await requireUser("/bliv-medlem");
+  const result = await redeemCode(user.id, String(formData.get("code") ?? ""));
+  if (!result.ok) redirect(`/bliv-medlem?fejl=${encodeURIComponent(result.error)}#kode`);
+  redirect("/min-side?kode=ok");
 }

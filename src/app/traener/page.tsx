@@ -11,7 +11,7 @@ export default async function TrainerHome({ searchParams }: { searchParams: Prom
   const { gemt, slettet } = await searchParams;
   const sessions = await prisma.trainingSession.findMany({
     where: { startsAt: { gte: new Date() } },
-    include: { createdBy: { select: { id: true, name: true } } },
+    include: { createdBy: { select: { id: true, name: true } }, _count: { select: { signups: true } } },
     orderBy: { startsAt: "asc" },
     take: 100,
   });
@@ -26,7 +26,7 @@ export default async function TrainerHome({ searchParams }: { searchParams: Prom
       </p>
       <div className="table-scroll">
         <table className="list">
-          <thead><tr><th>Dag</th><th>Tid</th><th>Træning</th><th>Grupper</th><th>Træner</th><th /></tr></thead>
+          <thead><tr><th>Dag</th><th>Tid</th><th>Træning</th><th>Grupper</th><th>Træner</th><th>Tilmeldte</th><th /></tr></thead>
           <tbody>
             {sessions.map((s) => (
               <tr key={s.id}>
@@ -35,7 +35,8 @@ export default async function TrainerHome({ searchParams }: { searchParams: Prom
                 <td>{DISCIPLINE_LABEL[s.discipline]}: {s.title}<br /><span className="muted">{s.location}</span></td>
                 <td>{s.groups.length ? s.groups.map((g) => GROUP_LABEL[g]).join(", ") : "Alle"}</td>
                 <td>{s.createdBy.id === user.id ? "Dig" : s.createdBy.name}</td>
-                <td><Link href={`/traener/${s.id}`}>Ret</Link></td>
+                <td>{s._count.signups}</td>
+                <td><Link href={`/traener/${s.id}`}>Ret / deltagere</Link></td>
               </tr>
             ))}
           </tbody>

@@ -49,7 +49,7 @@ scripts/import-wordpress.ts  engangsimport af indhold
 
 ## Fase 2 – træningstilmelding (plan)
 
-`TrainingSession` findes allerede. Mangler: `TrainingSignup` (medlem, session, status) og evt. max deltagere.
+Bygget 24. nov. 2026: `TrainingSignup`, `TrialRequest` (14 dages prøveperiode) og `AccessCode` (engangskoder). `Membership.source` viser om adgangen kommer fra betaling, prøveperiode eller kode. Mulige udvidelser: max deltagere, venteliste, påmindelser.
 Ugekalender hvor medlemmer melder til/fra og ser hvem der kommer. Erstatter WordPress-kalenderen.
 
 ## Fase 3 – TrainingPeaks (plan)

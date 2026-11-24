@@ -71,7 +71,7 @@ export default async function AdminMembers({ searchParams }: { searchParams: Pro
                 <td>{u.name ?? "–"}<br /><span className="muted">{userTypeLabel(u.role, u.athleteGroup)}</span></td>
                 <td>{u.email}</td>
                 <td>{u.phone ?? ""}</td>
-                <td>{m?.type.name ?? "–"}</td>
+                <td>{m?.type.name ?? "–"}{m?.source === "TRIAL" ? " (prøve)" : m?.source === "CODE" ? " (kode)" : ""}</td>
                 <td className={m && m.endDate > now ? "status-ok" : "status-warn"}>{m ? dato(m.endDate) : "Aldrig betalt"}</td>
                 <td>
                   <form action={setUserType} className="inline-form">

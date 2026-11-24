@@ -29,12 +29,12 @@ enum AthleteGroup {
 // ---------- Brugere (Auth.js-modeller + medlemsoplysninger) ----------
 
 model User {
-  id            String    @id @default(cuid())
+  id            String        @id @default(cuid())
   name          String?
-  email         String    @unique
+  email         String        @unique
   emailVerified DateTime?
   image         String?
-  role          Role      @default(ATHLETE)
+  role          Role          @default(ATHLETE)
   athleteGroup  AthleteGroup?
 
   phone     String?
@@ -46,11 +46,16 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  accounts    Account[]
-  sessions    Session[]
-  memberships Membership[]
-  payments    Payment[]
-  trainings   TrainingSession[]
+  accounts       Account[]
+  sessions       Session[]
+  memberships    Membership[]
+  payments       Payment[]
+  trainings      TrainingSession[]
+  signups        TrainingSignup[]
+  trialRequest   TrialRequest?     @relation("TrialRequester")
+  trialDecisions TrialRequest[]    @relation("TrialDecider")
+  codesCreated   AccessCode[]      @relation("CodeCreator")
+  codeUsed       AccessCode?       @relation("CodeUser")
 }
 
 model Account {
@@ -100,15 +105,25 @@ model MembershipType {
   sortOrder   Int     @default(0)
 
   memberships Membership[]
+  accessCodes AccessCode[]
+}
+
+// Hvordan medlemskabet er opnået
+enum MembershipSource {
+  PAYMENT
+  TRIAL // 14 dages prøveperiode godkendt af admin
+  CODE // engangskode fra admin
+  MANUAL
 }
 
 model Membership {
-  id        String   @id @default(cuid())
+  id        String           @id @default(cuid())
   userId    String
   typeId    String
   startDate DateTime
   endDate   DateTime
-  createdAt DateTime @default(now())
+  source    MembershipSource @default(PAYMENT)
+  createdAt DateTime         @default(now())
 
   user    User           @relation(fields: [userId], references: [id], onDelete: Restrict)
   type    MembershipType @relation(fields: [typeId], references: [id])
@@ -216,8 +231,61 @@ model TrainingSession {
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 
-  createdBy User @relation(fields: [createdById], references: [id])
+  createdBy User             @relation(fields: [createdById], references: [id])
+  signups   TrainingSignup[]
 
   @@index([startsAt])
   @@index([seriesId])
+}
+
+model TrainingSignup {
+  id        String   @id @default(cuid())
+  sessionId String
+  userId    String
+  createdAt DateTime @default(now())
+
+  session TrainingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, userId])
+  @@index([userId])
+}
+
+// ---------- Adgang uden betaling ----------
+
+enum TrialStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// Ansøgning om 14 dages prøveperiode. Én pr. bruger.
+model TrialRequest {
+  id          String      @id @default(cuid())
+  userId      String      @unique
+  message     String?
+  status      TrialStatus @default(PENDING)
+  createdAt   DateTime    @default(now())
+  decidedAt   DateTime?
+  decidedById String?
+
+  user      User  @relation("TrialRequester", fields: [userId], references: [id], onDelete: Cascade)
+  decidedBy User? @relation("TrialDecider", fields: [decidedById], references: [id])
+}
+
+// Engangskode der giver medlemskab af en bestemt type i et antal dage.
+model AccessCode {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  typeId      String
+  days        Int
+  note        String?
+  createdById String
+  createdAt   DateTime  @default(now())
+  usedById    String?   @unique
+  usedAt      DateTime?
+
+  type      MembershipType @relation(fields: [typeId], references: [id])
+  createdBy User           @relation("CodeCreator", fields: [createdById], references: [id])
+  usedBy    User?          @relation("CodeUser", fields: [usedById], references: [id])
 }

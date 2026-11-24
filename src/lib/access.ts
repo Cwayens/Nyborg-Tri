@@ -1,0 +1,66 @@
+import { randomInt } from "node:crypto";
+import type { Prisma } from "@prisma/client";
+import { prisma } from "./db";
+import { latestMembershipEnd } from "./membership";
+
+export const TRIAL_DAYS = 14;
+
+/** Må brugeren tilmelde sig træninger? Kræver et aktivt, ikke-passivt medlemskab (betalt, prøveperiode eller kode). */
+export async function canSignUp(userId: string): Promise<boolean> {
+  const m = await prisma.membership.findFirst({
+    where: { userId, startDate: { lte: new Date() }, endDate: { gt: new Date() }, type: { code: { not: "PASSIVE" } } },
+    select: { id: true },
+  });
+  return !!m;
+}
+
+export function addDays(d: Date, days: number): Date {
+  return new Date(d.getTime() + days * 24 * 3600 * 1000);
+}
+
+/** Medlemskab uden betaling. Starter i dag, eller i forlængelse af et eksisterende medlemskab. */
+export async function grantMembership(
+  tx: Prisma.TransactionClient,
+  args: { userId: string; typeId: string; days: number; source: "TRIAL" | "CODE" | "MANUAL" },
+) {
+  const now = new Date();
+  const end = await latestMembershipEnd(args.userId, tx);
+  const startDate = end && end > now ? end : now;
+  return tx.membership.create({
+    data: { userId: args.userId, typeId: args.typeId, source: args.source, startDate, endDate: addDays(startDate, args.days) },
+  });
+}
+
+// Uden O/0 og I/1, så koden er let at læse op og taste
+const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+export function generateCode(): string {
+  const part = () => Array.from({ length: 4 }, () => ALPHABET[randomInt(ALPHABET.length)]).join("");
+  return `NT-${part()}-${part()}`;
+}
+
+export function normalizeCode(input: string): string {
+  return input.trim().toUpperCase().replace(/\s+/g, "");
+}
+
+export type RedeemResult = { ok: true; endDate: Date } | { ok: false; error: string };
+
+/** Indløs en engangskode. Atomisk: koden kan kun bruges én gang, også ved samtidige forsøg. */
+export async function redeemCode(userId: string, input: string): Promise<RedeemResult> {
+  const code = normalizeCode(input);
+  return prisma.$transaction(async (tx) => {
+    const found = await tx.accessCode.findUnique({ where: { code } });
+    if (!found) return { ok: false, error: "Koden findes ikke" };
+    if (found.usedById) return { ok: false, error: "Koden er allerede brugt" };
+    if (await tx.accessCode.findUnique({ where: { usedById: userId } })) {
+      return { ok: false, error: "Du har allerede brugt en kode" };
+    }
+    const claimed = await tx.accessCode.updateMany({
+      where: { id: found.id, usedById: null },
+      data: { usedById: userId, usedAt: new Date() },
+    });
+    if (claimed.count !== 1) return { ok: false, error: "Koden er allerede brugt" };
+    const m = await grantMembership(tx, { userId, typeId: found.typeId, days: found.days, source: "CODE" });
+    return { ok: true, endDate: m.endDate };
+  });
+}

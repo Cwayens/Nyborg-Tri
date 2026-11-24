@@ -13,7 +13,7 @@ export async function completePayment(args: { paymentId: string; typeId: string;
     if (payment.status === "PAID") return false;
 
     const now = new Date();
-    const period = nextPeriod(now, await latestMembershipEnd(payment.userId));
+    const period = nextPeriod(now, await latestMembershipEnd(payment.userId, tx));
     const membership = await tx.membership.create({
       data: { userId: payment.userId, typeId: args.typeId, ...period },
     });

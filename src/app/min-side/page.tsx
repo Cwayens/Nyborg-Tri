@@ -7,8 +7,8 @@ import { userTypeLabel } from "@/lib/roles";
 
 export const metadata = { title: "Min side" };
 
-export default async function MyPage({ searchParams }: { searchParams: Promise<{ betaling?: string }> }) {
-  const { betaling } = await searchParams;
+export default async function MyPage({ searchParams }: { searchParams: Promise<{ betaling?: string; kode?: string }> }) {
+  const { betaling, kode } = await searchParams;
   const sessionUser = await requireUser();
   const user = await prisma.user.findUniqueOrThrow({ where: { id: sessionUser.id } });
   const [membership, payments] = await Promise.all([
@@ -24,6 +24,7 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
   return (
     <>
       {betaling === "ok" && <p className="notice">Tak for din betaling! Dit medlemskab er registreret (det kan tage et øjeblik, før det vises).</p>}
+      {kode === "ok" && <p className="notice">Koden er brugt. Du kan nu tilmelde dig træninger.</p>}
       <h1>Hej {user.name ?? user.email}</h1>
       <p className="muted">
         Brugertype: {userTypeLabel(user.role, user.athleteGroup)} · <Link href="/kalender">Se dine træninger i kalenderen</Link>
@@ -33,7 +34,8 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
         <h2 style={{ marginTop: 0 }}>Medlemskab</h2>
         {membership ? (
           <p>
-            <span className="status-ok">Aktivt</span> · {membership.type.name} · gyldigt til og med {dato(membership.endDate)}
+            <span className="status-ok">Aktivt</span> · {membership.type.name}
+            {membership.source === "TRIAL" ? " (prøveperiode)" : membership.source === "CODE" ? " (via kode)" : ""} · gyldigt til og med {dato(membership.endDate)}
           </p>
         ) : (
           <p>

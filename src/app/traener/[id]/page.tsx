@@ -21,11 +21,26 @@ export default async function EditTraining({ params, searchParams }: Props) {
       </>
     );
   }
-  const training = await prisma.trainingSession.findUnique({ where: { id } });
+  const training = await prisma.trainingSession.findUnique({
+    where: { id },
+    include: { signups: { include: { user: { select: { name: true, email: true, phone: true } } }, orderBy: { createdAt: "asc" } } },
+  });
   if (!training) notFound();
   return (
     <>
       <h1>Ret træning</h1>
+      <section className="card" style={{ marginBottom: 24 }}>
+        <h2 style={{ marginTop: 0 }}>Tilmeldte ({training.signups.length})</h2>
+        {training.signups.length === 0 ? (
+          <p className="muted">Ingen tilmeldte endnu.</p>
+        ) : (
+          <ol>
+            {training.signups.map((s) => (
+              <li key={s.id}>{s.user.name ?? s.user.email}{s.user.phone ? ` · ${s.user.phone}` : ""}</li>
+            ))}
+          </ol>
+        )}
+      </section>
       {fejl && <p className="status-warn">{fejl}</p>}
       <TrainingForm action={updateTraining.bind(null, id)} training={training} />
       <form action={deleteTraining.bind(null, id)} className="stack" style={{ marginTop: 32 }}>
