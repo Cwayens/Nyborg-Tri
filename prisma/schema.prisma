@@ -77,6 +77,7 @@ model User {
   shareActivities Boolean @default(false) // samtykke: vis mine aktiviteter i klubstatistikken
   leaderboard     Boolean @default(false) // samtykke: vis mine bedste præstationer på leaderboardet
   calendarToken   String? @unique // hemmeligt link til kalender-abonnement
+  deletedAt       DateTime? // kontoen er slettet; rækken er anonymiseret, men betalinger gemmes efter bogføringsloven
 }
 
 model Account {

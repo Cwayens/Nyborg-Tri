@@ -6,6 +6,7 @@ import { requireUser } from "@/auth";
 import { prisma } from "@/lib/db";
 import { userTypeLabel } from "@/lib/roles";
 import { isEmail, needsGuardian } from "@/lib/guardian";
+import { deleteMyAccount } from "./actions";
 
 export const metadata = { title: "Min profil" };
 
@@ -93,6 +94,26 @@ export default async function Profile({ searchParams }: { searchParams: Promise<
           {user.athleteProfile && <><Link href="/profil/atlet">Min atletprofil</Link> · </>}
           <Link href="/forbindelser">Ure, deling og kalender</Link> · <Link href="/bliv-medlem">Medlemskab og kvitteringer</Link>
         </p>
+      )}
+      {!velkommen && (
+        <section id="slet" className="card stack data-rights">
+          <h2 style={{ margin: 0 }}>Dine data</h2>
+          <p style={{ margin: 0 }}>
+            Du kan hente alt, hvad vi har gemt om dig, som en fil. Læs mere i vores <Link href="/privatlivspolitik">privatlivspolitik</Link>.
+          </p>
+          <p style={{ margin: 0 }}><a className="button secondary small" href="/api/mine-data" download>Hent mine data</a></p>
+          <details>
+            <summary>Slet min profil</summary>
+            <form action={deleteMyAccount} className="stack" style={{ marginTop: 10 }}>
+              <p style={{ margin: 0 }}>
+                Dine oplysninger, træninger fra uret, testresultater, tilmeldinger, chatbeskeder og atletprofil slettes, og forbindelsen til Strava
+                afbrydes. Betalinger gemmes i 5 år, fordi bogføringsloven kræver det, men uden dit navn og din mail. Det kan ikke fortrydes.
+              </p>
+              <label>Skriv SLET for at bekræfte<input name="confirm" autoComplete="off" required style={{ maxWidth: 200 }} /></label>
+              <button className="button danger" type="submit" style={{ justifySelf: "start" }}>Slet min profil</button>
+            </form>
+          </details>
+        </section>
       )}
     </>
   );

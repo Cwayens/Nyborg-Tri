@@ -760,3 +760,31 @@ label.check { display: flex; gap: 8px; align-items: center; font-weight: 400; }
 .notfound h1 { margin-bottom: 8px; }
 /* Atlet uden billede: lavere felt, så kortet ikke bliver en stor grøn flade */
 .athlete-card .athlete-noimg { aspect-ratio: 3 / 2; font-size: 2.2rem; }
+.button.danger { background: #b42318; border-color: #b42318; color: #fff; }
+.button.danger:hover { background: #912018; }
+.data-rights { margin-top: 24px; }
+.data-rights summary { cursor: pointer; color: #b42318; font-weight: 600; }
+/* Privatlivspolitik */
+.policy { max-width: 760px; }
+.policy h2 { margin-top: 28px; }
+.policy table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+.policy th, .policy td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.policy-toc { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.9rem; }
+@media (max-width: 640px) { .policy table, .policy tbody, .policy tr, .policy td, .policy th { display: block; } .policy thead { display: none; } .policy td:first-child { font-weight: 700; border: 0; padding-bottom: 0; } }
+.policy .lead { color: var(--muted); font-size: 1.1rem; }
+/* Indmeldelse uden login */
+.join-guest { max-width: 680px; }
+.join-guest .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.join-guest input, .join-guest select { width: 100%; box-sizing: border-box; }
+.join-plan { border: 0; padding: 0; margin: 0; display: grid; gap: 8px; }
+.join-plan legend { font-weight: 700; margin-bottom: 8px; }
+.join-option { display: flex; gap: 12px; align-items: flex-start; border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 12px 14px; cursor: pointer; }
+.join-option input { width: auto; margin-top: 4px; }
+.join-option span { display: grid; }
+.join-option:has(input:checked) { border-color: var(--accent); background: var(--ok-bg); }
+.join-guest:has(input[value="trial"]:checked) .join-paid { display: none; }
+.join-guest:has(input[value="pay"]:checked) .join-trial { display: none; }
+.join-guest .hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+.join-guest .small { font-size: 0.85rem; }
+@media (max-width: 560px) { .join-guest .row2 { grid-template-columns: 1fr; } }
+.join-guest .guardian { display: grid; }

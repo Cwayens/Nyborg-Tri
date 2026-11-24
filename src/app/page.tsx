@@ -157,7 +157,7 @@ export default async function Home() {
               <h3>{t.name}</h3>
               <p className="amount">{kr(t.priceOre)}<small> / år</small></p>
               {t.description && <p className="muted">{t.description}</p>}
-              <Link href="/bliv-medlem" className={`button${t.code === "ADULT" ? "" : " secondary"}`}>
+              <Link href="/bliv-medlem?plan=betal#meld-ind" className={`button${t.code === "ADULT" ? "" : " secondary"}`}>
                 {t.code === "PASSIVE" ? "Støt klubben" : "Kom i gang"}
               </Link>
             </div>

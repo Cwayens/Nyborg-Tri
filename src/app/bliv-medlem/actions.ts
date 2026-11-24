@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { requireUser } from "@/auth";
+import { requireUser, signIn } from "@/auth";
 import { prisma } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
 import { redeemCode } from "@/lib/access";
@@ -57,10 +57,15 @@ export async function startCheckout(formData: FormData) {
     redirect(sent ? "/bliv-medlem?sendt=1" : "/bliv-medlem?ikkesendt=1");
   }
 
+  redirect(await checkoutUrl(payment.id, user.id, user.email ?? undefined, type, "/min-side?betaling=ok"));
+}
+
+/** Opretter en Stripe-betaling for kontingentet og returnerer adressen, man sendes til. */
+async function checkoutUrl(paymentId: string, userId: string, email: string | undefined, type: { id: string; name: string; priceOre: number }, success: string) {
   const base = await baseUrl();
   const session = await stripe().checkout.sessions.create({
     mode: "payment",
-    customer_email: user.email ?? undefined,
+    customer_email: email,
     locale: "da",
     line_items: [
       {
@@ -72,14 +77,93 @@ export async function startCheckout(formData: FormData) {
         },
       },
     ],
-    metadata: { paymentId: payment.id, userId: user.id, typeId: type.id },
-    payment_intent_data: { metadata: { paymentId: payment.id } },
-    success_url: `${base}/min-side?betaling=ok`,
+    metadata: { paymentId, userId, typeId: type.id },
+    payment_intent_data: { metadata: { paymentId } },
+    success_url: `${base}${success}`,
     cancel_url: `${base}/bliv-medlem?annulleret=1`,
   });
+  await prisma.payment.update({ where: { id: paymentId }, data: { stripeCheckoutSessionId: session.id } });
+  return session.url!;
+}
 
-  await prisma.payment.update({ where: { id: payment.id }, data: { stripeCheckoutSessionId: session.id } });
-  redirect(session.url!);
+// --- Indmeldelse uden at være logget ind ---
+
+const guestSchema = schema.extend({
+  email: z.string().trim().toLowerCase().max(200),
+  plan: z.enum(["pay", "trial"]),
+  message: z.string().trim().max(1000).optional(),
+});
+
+const guestFail = (m: string) => redirect(`/bliv-medlem?fejl=${encodeURIComponent(m)}#meld-ind`);
+
+/** Sender et login-link uden at afsløre, om mailen allerede findes. */
+async function sendLoginLink(email: string, redirectTo: string) {
+  try {
+    await signIn("nodemailer", { email, redirect: false, redirectTo });
+  } catch (e) {
+    console.error("[bliv-medlem] login-link kunne ikke sendes", e);
+  }
+}
+
+/**
+ * Indmeldelse i ét forløb: navn, mail og betaling (eller prøveperiode) uden at logge ind først.
+ * Vi opretter profilen og sender et login-link til mailen. Findes mailen allerede, får personen kun et login-link,
+ * så ingen kan ændre en andens profil ved at skrive deres mail.
+ */
+export async function joinAsGuest(formData: FormData) {
+  if (String(formData.get("website") ?? "")) redirect("/login/tjek-mail");
+  const plan = formData.get("plan") === "trial" ? "trial" : "pay";
+  const parsed = guestSchema.safeParse({ ...Object.fromEntries(formData), plan, typeCode: formData.get("typeCode") || "ADULT" });
+  if (!parsed.success) guestFail(parsed.error.issues[0].message);
+  const { email, typeCode, guardianName, guardianEmail, message, plan: _plan, ...profile } = parsed.data!;
+  if (!isEmail(email)) guestFail("Skriv en gyldig e-mail");
+
+  const existing = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+  if (existing) {
+    await sendLoginLink(email, "/bliv-medlem");
+    redirect("/bliv-medlem/tjek-mail?findes=1");
+  }
+
+  // Bremse mod misbrug: højst 30 nye profiler i timen via formularen
+  const recent = await prisma.user.count({ where: { createdAt: { gte: new Date(Date.now() - 3600_000) }, emailVerified: null } });
+  if (recent >= 30) guestFail("Der er mange indmeldelser lige nu. Prøv igen om lidt.");
+
+  const minor = needsGuardian(profile.birthDate);
+  if (minor) {
+    if (!guardianName || guardianName.length < 2) guestFail("Skriv navnet på en forælder eller værge");
+    if (!guardianEmail || !isEmail(guardianEmail)) guestFail("Skriv e-mail til en forælder eller værge");
+    if (guardianEmail === email) guestFail("Forælderens e-mail skal være en anden end barnets");
+  }
+  const type = plan === "pay" ? await prisma.membershipType.findFirst({ where: { code: typeCode, active: true } }) : null;
+  if (plan === "pay" && !type) guestFail("Vælg en medlemstype");
+  if (type?.code === "YOUTH" && ageOn(profile.birthDate, new Date()) >= 18) guestFail("Ungdomskontingent gælder kun for medlemmer under 18 år");
+
+  const user = await prisma.user.create({
+    data: { email, ...profile, guardianName: minor ? guardianName : null, guardianEmail: minor ? guardianEmail : null },
+  });
+
+  if (plan === "trial") {
+    await prisma.trialRequest.create({ data: { userId: user.id, message: message || null } });
+    await sendLoginLink(email, "/min-side");
+    redirect("/bliv-medlem/tjek-mail?proeve=1");
+  }
+
+  const payment = await prisma.payment.create({
+    data: { userId: user.id, amountOre: type!.priceOre, description: `Kontingent ${type!.name}`, typeId: type!.id },
+  });
+  await sendLoginLink(email, "/min-side");
+  if (minor) {
+    const { sent } = await sendPayLink(payment.id);
+    redirect(`/bliv-medlem/tjek-mail?foraelder=${sent ? 1 : 0}`);
+  }
+  let url: string | null = null;
+  try {
+    url = await checkoutUrl(payment.id, user.id, email, type!, "/bliv-medlem/tjek-mail?betalt=1");
+  } catch (e) {
+    console.error("[bliv-medlem] Stripe fejlede", e);
+  }
+  // Profilen er oprettet; kan betalingen ikke startes, logger personen ind med linket og betaler derfra
+  redirect(url ?? "/bliv-medlem/tjek-mail?betalingsfejl=1");
 }
 
 /** Send betalingslinket til forælderen igen (fx hvis mailen er blevet væk). */

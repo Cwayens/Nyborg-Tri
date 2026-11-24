@@ -5,14 +5,14 @@ import { renderBody } from "@/lib/content";
 import { dato, kr } from "@/lib/format";
 import { currentMembership } from "@/lib/membership";
 import { TRIAL_DAYS } from "@/lib/access";
-import { requestTrial, resendPayLink, startCheckout, redeemCodeAction } from "./actions";
+import { joinAsGuest, requestTrial, resendPayLink, startCheckout, redeemCodeAction } from "./actions";
 import { needsGuardian } from "@/lib/guardian";
 import { demoEnabled } from "@/lib/demo";
 
 export const metadata = { title: "Bliv medlem" };
 
-export default async function JoinPage({ searchParams }: { searchParams: Promise<{ fejl?: string; annulleret?: string; besked?: string; sendt?: string; ikkesendt?: string }> }) {
-  const { fejl, annulleret, besked, sendt, ikkesendt } = await searchParams;
+export default async function JoinPage({ searchParams }: { searchParams: Promise<{ fejl?: string; annulleret?: string; besked?: string; sendt?: string; ikkesendt?: string; plan?: string }> }) {
+  const { fejl, annulleret, besked, sendt, ikkesendt, plan } = await searchParams;
   const session = await auth();
   const [page, types] = await Promise.all([
     prisma.page.findUnique({ where: { path: "bliv-medlem" } }),
@@ -44,7 +44,7 @@ export default async function JoinPage({ searchParams }: { searchParams: Promise
         ))}
       </div>
 
-      <h2>{current ? "Forny medlemskab" : "Meld dig ind og betal"}</h2>
+      <h2>{current ? "Forny medlemskab" : user ? "Meld dig ind og betal" : "Meld dig ind eller prøv gratis"}</h2>
       {fejl && <p className="status-warn">{fejl}</p>}
       {besked === "proeve" && <p className="notice">Tak! Din ansøgning om prøveperiode er sendt. Du får adgang, når bestyrelsen har godkendt den.</p>}
       {annulleret && <p className="muted">Betalingen blev annulleret. Du kan prøve igen herunder.</p>}
@@ -68,9 +68,51 @@ export default async function JoinPage({ searchParams }: { searchParams: Promise
       )}
 
       {!user ? (
-        <p>
-          <Link className="button" href="/login?callbackUrl=/bliv-medlem">Log ind for at melde dig ind</Link>
-        </p>
+        <form action={joinAsGuest} id="meld-ind" className="card stack join-guest">
+          <fieldset className="join-plan">
+            <legend>Hvad vil du?</legend>
+            <label className="join-option">
+              <input type="radio" name="plan" value="trial" defaultChecked={plan !== "betal"} />
+              <span><b>Prøv gratis i {TRIAL_DAYS} dage</b><small className="muted">Træn med, før du beslutter dig. Bestyrelsen godkender prøveperioden.</small></span>
+            </label>
+            <label className="join-option">
+              <input type="radio" name="plan" value="pay" defaultChecked={plan === "betal"} />
+              <span><b>Meld mig ind og betal</b><small className="muted">Betal med kort eller MobilePay. Medlemskabet gælder 1 år.</small></span>
+            </label>
+          </fieldset>
+          <label className="join-paid">
+            Medlemstype
+            <select name="typeCode" defaultValue="ADULT">
+              {types.map((t) => <option key={t.code} value={t.code}>{t.name} – {kr(t.priceOre)}</option>)}
+            </select>
+          </label>
+          <div className="row2">
+            <label>Fulde navn<input name="name" required autoComplete="name" /></label>
+            <label>E-mail<input type="email" name="email" required autoComplete="email" /></label>
+          </div>
+          <div className="row2">
+            <label>Telefon<input name="phone" required autoComplete="tel" inputMode="tel" /></label>
+            <label>Fødselsdato<input type="date" name="birthDate" required /></label>
+          </div>
+          <label>Adresse<input name="address" required autoComplete="street-address" /></label>
+          <div className="row2">
+            <label>Postnr.<input name="zip" required inputMode="numeric" autoComplete="postal-code" /></label>
+            <label>By<input name="city" required autoComplete="address-level2" defaultValue="Nyborg" /></label>
+          </div>
+          <fieldset className="guardian">
+            <legend>Forælder eller værge</legend>
+            <p className="muted" style={{ margin: 0 }}>Skal udfyldes, hvis du er under 18 år. Forælderen får betalingslink og kvitteringer.</p>
+            <label>Navn<input name="guardianName" autoComplete="off" /></label>
+            <label>E-mail<input type="email" name="guardianEmail" autoComplete="off" /></label>
+          </fieldset>
+          <label className="join-trial">Lidt om dig (valgfrit)<input name="message" placeholder="fx erfaring, og hvad du vil prøve" /></label>
+          <label className="hp" aria-hidden="true">Lad feltet være tomt<input name="website" tabIndex={-1} autoComplete="off" /></label>
+          <button className="button" type="submit" style={{ justifySelf: "start" }}>Fortsæt</button>
+          <p className="muted small" style={{ margin: 0 }}>
+            Vi sender dig et login-link på mail, så du kan komme ind på din side. Har du allerede en profil? <Link href="/login?callbackUrl=/bliv-medlem">Log ind</Link>.
+            Se hvordan vi passer på dine data i vores <Link href="/privatlivspolitik">privatlivspolitik</Link>.
+          </p>
+        </form>
       ) : (
         <form action={startCheckout} className="stack">
           <label>
