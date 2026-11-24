@@ -19,6 +19,7 @@ export type References = { ftp?: number | null; thresholdPace?: number | null; s
 export function parseWorkoutFile(name: string, content: string): Workout {
   const ext = name.toLowerCase().split(".").pop();
   const text = content.replace(/^﻿/, "").trim();
+  if (ext === "fit") throw new Error("FIT-filer læses med parseWorkoutUpload (binær fil)");
   if (ext === "zwo" || text.startsWith("<")) return parseZwo(text);
   if (ext === "json" || text.startsWith("{") || text.startsWith("[")) return parseTpStructure(JSON.parse(text));
   if (ext === "mrc" || ext === "erg" || /\[COURSE DATA\]/i.test(text)) return parseMrc(text);
