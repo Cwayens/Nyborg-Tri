@@ -33,6 +33,8 @@ Test: `npm test` · Typecheck: `npm run typecheck`
 4. Gå til projektets **Storage → Create Database → Neon (Postgres)**, vælg region Frankfurt og forbind til projektet. Så sættes `DATABASE_URL` automatisk.
 5. Gå til **Deployments → ⋯ → Redeploy**. Nu bygges siden med tabeller, kontingentsatser og indhold fra den gamle side, og du får et link.
 
+**Testbrugere:** sæt `DEMO_MODE` = `1` og redeploy. Så kan man på /login vælge "Log ind som testbruger" (admin, træner, elite, bredde, børn, prøveperiode, kode, ansøger og ny bruger) uden mail. Fjernes før go-live.
+
 Login og betaling virker først, når `EMAIL_SERVER`/`EMAIL_FROM` og Stripe-nøgler er sat (se nedenfor).
 
 ## Betaling (Stripe)

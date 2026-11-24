@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { baseUrl } from "@/lib/url";
 import { buildIcs, type IcsEvent } from "@/lib/ics";
 import { DISCIPLINE_LABEL } from "@/lib/roles";
 
@@ -8,7 +9,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
   const user = await prisma.user.findUnique({ where: { calendarToken: token.replace(/\.ics$/, "") } });
   if (!user) return new Response("Not found", { status: 404 });
   const from = new Date(Date.now() - 14 * 24 * 3600 * 1000);
-  const base = process.env.AUTH_URL ?? "";
+  const base = await baseUrl();
 
   const [trainings, workouts] = await Promise.all([
     prisma.trainingSession.findMany({

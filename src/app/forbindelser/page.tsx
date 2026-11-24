@@ -1,5 +1,6 @@
 import { requireUser } from "@/auth";
 import { prisma } from "@/lib/db";
+import { baseUrl } from "@/lib/url";
 import { dato } from "@/lib/format";
 import { PROVIDERS, providerConfigured } from "@/lib/wearables/providers";
 import { disconnectStrava, newCalendarLink, setSharing, syncStrava } from "./actions";
@@ -13,7 +14,7 @@ export default async function Connections({ searchParams }: Props) {
   const { fejl, hentet, forbundet } = await searchParams;
   const user = await prisma.user.findUniqueOrThrow({ where: { id: sessionUser.id }, include: { wearableConnections: true } });
   const strava = user.wearableConnections.find((c) => c.provider === "STRAVA");
-  const base = process.env.AUTH_URL ?? "";
+  const base = await baseUrl();
   const calUrl = user.calendarToken ? `${base}/api/kalender/${user.calendarToken}.ics` : null;
 
   return (

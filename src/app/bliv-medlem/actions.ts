@@ -6,6 +6,7 @@ import { requireUser } from "@/auth";
 import { prisma } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
 import { redeemCode } from "@/lib/access";
+import { baseUrl } from "@/lib/url";
 
 const schema = z.object({
   typeCode: z.string().min(1),
@@ -42,7 +43,7 @@ export async function startCheckout(formData: FormData) {
     data: { userId: user.id, amountOre: type.priceOre, description: `Kontingent ${type.name}` },
   });
 
-  const base = process.env.AUTH_URL ?? "http://localhost:3000";
+  const base = await baseUrl();
   const session = await stripe().checkout.sessions.create({
     mode: "payment",
     customer_email: user.email ?? undefined,

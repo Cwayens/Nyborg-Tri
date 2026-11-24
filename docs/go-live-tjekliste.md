@@ -8,6 +8,7 @@ Sæt `[x]`, når et punkt er klaret.
 - [ ] **Ny `AUTH_SECRET`** i Vercel (den nuværende er delt i chat). Generér med `npx auth secret`, og gem den som *Sensitive* environment variable.
 - [ ] **Første administrator**: sæt `ADMIN_EMAIL` til kassererens/formandens mail og redeploy, eller sæt rollen i Admin bagefter.
 - [ ] Gennemgå hvem der har adgang til Vercel, GitHub, databasen og Stripe (mindst 2 fra bestyrelsen, så klubben ikke afhænger af én person).
+- [ ] **Slå testbrugere fra**: fjern `DEMO_MODE` i Vercel, redeploy, og slet testdata med `npm run db:demo -- --slet` (fjerner alle brugere på @demo.nyborgtri.dk og deres træninger, aktiviteter og koder).
 - [ ] **Vercel-plan**: Hobby-planen er kun til ikke-kommerciel brug. Tjek om klubben (med betalinger) skal på Pro, eller om en anden hosting passer bedre.
 
 ## Login-mails

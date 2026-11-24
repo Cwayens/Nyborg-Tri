@@ -14,7 +14,8 @@
     "db:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
     "import:wordpress": "tsx scripts/import-wordpress.ts",
-    "vercel-build": "prisma generate && prisma migrate deploy && tsx prisma/seed.ts && (if [ \"$IMPORT_WP_ON_BUILD\" = \"1\" ]; then tsx scripts/import-wordpress.ts || echo \"WordPress-import fejlede\"; fi) && next build"
+    "vercel-build": "prisma generate && prisma migrate deploy && tsx prisma/seed.ts && (if [ \"$IMPORT_WP_ON_BUILD\" = \"1\" ]; then tsx scripts/import-wordpress.ts || echo \"WordPress-import fejlede\"; fi) && (if [ \"$DEMO_MODE\" = \"1\" ]; then tsx scripts/seed-demo.ts; fi) && next build",
+    "db:demo": "tsx scripts/seed-demo.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "2.11.3",

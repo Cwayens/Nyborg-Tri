@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { Header } from "@/components/Header";
+import { demoEnabled } from "@/lib/demo";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -16,6 +17,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="da">
       <body>
         <a href="#indhold" className="skip">Spring til indhold</a>
+        {demoEnabled() && (
+          <div className="demo-banner">Testversion med testbrugere · <Link href="/login">Skift bruger</Link></div>
+        )}
         <Header />
         <main id="indhold" className="wrap main">{children}</main>
         <footer className="site-footer">

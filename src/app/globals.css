@@ -261,3 +261,5 @@ label.check { display: flex; gap: 8px; align-items: center; font-weight: 400; }
 }
 @media (max-width: 640px) { .item > .pill { display: none; } .weekbars { height: 90px; } }
 .weekbars span.seg { border-radius: 3px; }
+.demo-banner { background: #fff4d6; color: #6b4a00; text-align: center; font-size: 0.85rem; padding: 5px 12px; font-weight: 600; }
+.demo-banner a { color: inherit; }

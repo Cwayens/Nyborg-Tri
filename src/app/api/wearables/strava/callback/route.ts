@@ -1,13 +1,13 @@
 import { cookies } from "next/headers";
 import { auth } from "@/auth";
+import { baseUrl } from "@/lib/url";
 import { connectWithCode, syncRecent } from "@/lib/wearables/strava";
 
-const base = () => process.env.AUTH_URL ?? "http://localhost:3000";
-const back = (q: string) => Response.redirect(`${base()}/forbindelser?${q}`);
+const back = async (q: string) => Response.redirect(`${await baseUrl()}/forbindelser?${q}`);
 
 export async function GET(req: Request) {
   const session = await auth();
-  if (!session?.user) return Response.redirect(`${base()}/login?callbackUrl=/forbindelser`);
+  if (!session?.user) return Response.redirect(`${await baseUrl()}/login?callbackUrl=/forbindelser`);
   const url = new URL(req.url);
   const jar = await cookies();
   const expected = jar.get("strava_state")?.value;
