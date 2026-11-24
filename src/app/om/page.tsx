@@ -53,9 +53,8 @@ const TIMELINE: { year: string; title: string; text: React.ReactNode; img?: stri
 ];
 
 const PARTNERS = [
-  { name: "Odense Triathlon Klub", what: "Vi træner og deler erfaringer med vores naboklub i Odense.", url: "https://www.otk.dk/" },
-  { name: "Dansk Triathlon Forbund", what: "Klubben er medlem af DTriF, så du kan få licens og stille op til danske stævner.", url: "https://www.triatlon.dk/" },
-  { name: "Idrætsforeninger i Nyborg", what: "Vi samarbejder med byens andre klubber om baner, bassin og arrangementer.", url: null },
+  { name: "Dansk Triathlon Forbund", what: "NyborgTri er medlem af DTriF, så du kan få licens og stille op til danske stævner.", url: "https://www.triatlon.dk/" },
+  { name: "Idrætsforeninger i Nyborg", what: "NyborgTri samarbejder med byens andre klubber om baner, bassin og arrangementer.", url: null },
 ];
 
 const GALLERY = [
