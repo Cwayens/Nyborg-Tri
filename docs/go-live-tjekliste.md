@@ -83,6 +83,7 @@ Sæt `[x]`, når et punkt er klaret.
 - [ ] Bekræft Stravas API-vilkår: vi viser Strava-data kun for ejeren selv (ikke i klubstatistikken). Tjek om det stadig gælder.
 - [ ] **Garmin**: søg om adgang til Garmin Connect Developer Program, så Garmin-data kan indgå direkte (og i klubstatistikken).
 - [ ] **Polar, Wahoo, Coros, Suunto**: søg API-adgang hos dem, der bruges mest i klubben.
+- [ ] **Program direkte på uret ved tilmelding**: i dag henter atleten en personlig .fit/.zwo-fil (virker med Garmin, Wahoo, Coros, Hammerhead og Zwift). For at sende automatisk skal klubben have adgang til *Garmin Connect Developer Program → Training API* (kræver ansøgning som virksomhed/forening), *Wahoo Cloud API* (workouts og planer) og evt. Coros/Suunto partnerprogrammer. Stravas API kan ikke sende workouts.
 
 ## Kommunikation
 

@@ -587,3 +587,5 @@ label.check { display: flex; gap: 8px; align-items: center; font-weight: 400; }
 .ath-admin-img.big { width: 72px; height: 72px; font-size: 1.4rem; }
 .ath-sponsors { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 10px 14px; display: flex; flex-wrap: wrap; gap: 8px 18px; }
 .ath-sponsors legend { font-weight: 700; padding: 0 6px; }
+.workout-export { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; font-size: 0.9rem; }
+.workout-export > span { font-weight: 600; }

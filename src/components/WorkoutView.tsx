@@ -10,7 +10,7 @@ const MISSING: Partial<Record<Discipline, string>> = {
 };
 
 // Programmet trin for trin med atletens personlige watt eller tempo
-export function WorkoutView({ workout, discipline, refs }: { workout: Workout; discipline: Discipline; refs: References | null }) {
+export function WorkoutView({ workout, discipline, refs, downloadId }: { workout: Workout; discipline: Discipline; refs: References | null; downloadId?: string }) {
   const total = totalDuration(workout);
   const anyTarget = workout.blocks.some((b) => b.steps.some((s) => personalTarget(discipline, s, refs ?? {})));
   return (
@@ -46,6 +46,14 @@ export function WorkoutView({ workout, discipline, refs }: { workout: Workout; d
         )}
         {!refs && <>Log ind for at se dine egne tal.</>}
       </p>
+      {downloadId && (
+        <div className="workout-export">
+          <span>Læg på uret:</span>
+          <a href={`/api/program/${downloadId}?format=fit`} className="button small secondary" download>Hent til ur (.fit)</a>
+          {discipline !== "SWIM" && <a href={`/api/program/${downloadId}?format=zwo`} className="button small ghost" download>Zwift (.zwo)</a>}
+          <Link href="/program-paa-uret" className="muted">Sådan gør du</Link>
+        </div>
+      )}
     </details>
   );
 }

@@ -165,7 +165,9 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
                 {GROUP_LABEL[s.group]}
               </p>
               {s.description && <p style={{ whiteSpace: "pre-line" }}>{s.description}</p>}
-              {!publicView && isWorkout(s.workout) && <WorkoutView workout={s.workout} discipline={s.discipline} refs={refs} />}
+              {!publicView && isWorkout(s.workout) && (
+                <WorkoutView workout={s.workout} discipline={s.discipline} refs={refs} downloadId={s.signups.some((x) => x.user.id === userId) ? s.id : undefined} />
+              )}
               {!publicView && <Attendees names={s.signups.map((x) => x.user.name ?? "Unavngivet")} count={s.signups.length} />}
             </div>
             {publicView && !s.cancelledAt && s.startsAt > new Date() && (

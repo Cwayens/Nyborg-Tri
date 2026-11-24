@@ -162,7 +162,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                   <h3 style={t.cancelledAt ? { textDecoration: "line-through" } : undefined}>{t.title}</h3>
                   {t.cancelledAt && <span className="pill warn">Aflyst{t.cancelReason ? `: ${t.cancelReason}` : ""}</span>}
                   <p className="muted">{formatDay(t.startsAt)} kl. {formatTime(t.startsAt)}–{formatTime(t.endsAt)} · {t.location}</p>
-                  {isWorkout(t.workout) && <WorkoutView workout={t.workout} discipline={t.discipline} refs={refs} />}
+                  {isWorkout(t.workout) && <WorkoutView workout={t.workout} discipline={t.discipline} refs={refs} downloadId={joined ? t.id : undefined} />}
                   <Attendees names={t.signups.map((s) => s.user.name)} />
                 </div>
                 {eligible && !t.cancelledAt && (
