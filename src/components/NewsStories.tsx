@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { isFresh, postImages } from "@/lib/news";
 import { translator, type Locale } from "@/lib/i18n-core";
 
@@ -22,10 +21,6 @@ export function NewsStories({ posts, loc = "da" }: { posts: P[]; loc?: Locale })
           </a>
         );
       })}
-      <Link href="/nyheder" className="story-bubble all">
-        <span className="story-ring"><span className="story-ph" aria-hidden="true">☰</span></span>
-        <span className="story-label">{t("Alle nyheder", "All news")}</span>
-      </Link>
     </nav>
   );
 }
