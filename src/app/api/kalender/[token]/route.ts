@@ -4,6 +4,7 @@ import { buildIcs, type IcsEvent } from "@/lib/ics";
 import { DISCIPLINE_LABEL } from "@/lib/roles";
 import { CLUB } from "@/lib/club";
 import { teamsFor } from "@/lib/visibility";
+import { isChild } from "@/lib/child-safety";
 
 // Personligt kalender-abonnement: dine tilmeldte træninger, dit holds træninger og Træn sammen-ture.
 export async function GET(_req: Request, { params }: { params: Promise<{ token: string }> }) {
@@ -20,7 +21,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
       where: { startsAt: { gte: from }, teamId: { in: teams }, OR: [{ signups: { some: { userId: user.id } } }, ...(ownTeam ? [{ teamId: ownTeam }] : [])] },
       include: { signups: { where: { userId: user.id }, select: { id: true } } },
     }),
-    prisma.groupWorkout.findMany({
+    // Børn har ikke Træn sammen (child-safety.ts)
+    isChild(user) ? Promise.resolve([]) : prisma.groupWorkout.findMany({
       where: { startsAt: { gte: from }, OR: [{ hostId: user.id }, { participants: { some: { userId: user.id } } }] },
     }),
   ]);

@@ -1,5 +1,6 @@
 "use server";
 
+import { NOT_CHILD } from "@/lib/child-safety";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/auth";
@@ -22,7 +23,7 @@ export async function requestMentor(formData: FormData) {
   await requireFeature("mentor");
   if (await prisma.mentorship.findUnique({ where: { menteeId: user.id } })) redirect("/mentor");
   const mentors = await prisma.user.findMany({
-    where: { mentor: true, deletedAt: null, id: { not: user.id } },
+    where: { mentor: true, deletedAt: null, id: { not: user.id }, ...NOT_CHILD },
     select: { id: true, name: true, email: true, _count: { select: { mentorFor: true } } },
   });
   if (!mentors.length) redirect("/mentor?fejl=" + encodeURIComponent("Der er ingen ledige mentorer lige nu. Prøv igen senere, eller skriv i chatten."));

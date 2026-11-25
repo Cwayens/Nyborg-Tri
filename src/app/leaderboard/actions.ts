@@ -4,10 +4,12 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/auth";
 import { prisma } from "@/lib/db";
+import { requireFeature } from "@/lib/features";
 
 // Deltagelse er frivillig (samtykke). Køn og fødselsdato bruges til Ironman-aldersgrupperne.
 export async function joinLeaderboard(formData: FormData) {
   const user = await requireUser("/leaderboard");
+  await requireFeature("leaderboard"); // også lukket for børn
   const gender = formData.get("gender");
   const birth = String(formData.get("birthDate") ?? "");
   const back = String(formData.get("back") ?? "/leaderboard");

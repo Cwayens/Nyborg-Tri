@@ -1,3 +1,4 @@
+import { NOT_CHILD } from "@/lib/child-safety";
 import Link from "next/link";
 import { requireUser } from "@/auth";
 import { prisma } from "@/lib/db";
@@ -16,7 +17,7 @@ export default async function Buddies({ searchParams }: { searchParams: Promise<
   const { gemt, fejl, ret } = await searchParams;
   const mine = await prisma.buddyProfile.findUnique({ where: { userId: user.id } });
   const others = mine
-    ? await prisma.buddyProfile.findMany({ where: { userId: { not: user.id }, user: { deletedAt: null } }, include: { user: { select: { name: true, email: true } } } })
+    ? await prisma.buddyProfile.findMany({ where: { userId: { not: user.id }, user: { deletedAt: null, ...NOT_CHILD } }, include: { user: { select: { name: true, email: true } } } })
     : [];
   const matches = mine
     ? others.map((o) => ({ o, m: matchBuddy(mine, o) })).filter((x) => x.m.score > 0).sort((a, b) => b.m.score - a.m.score).slice(0, 20)

@@ -9,6 +9,7 @@ import { prisma } from "@/lib/db";
 import { parseLocal } from "@/lib/time";
 import { readProgram, workoutValue } from "@/lib/program-upload";
 import { isWorkout, totalDuration, type Workout } from "@/lib/workout";
+import { requireFeature } from "@/lib/features";
 
 const schema = z.object({
   discipline: z.enum(["SWIM", "BIKE", "RUN", "STRENGTH", "OTHER"]),
@@ -24,6 +25,7 @@ const schema = z.object({
 
 export async function createWorkout(formData: FormData) {
   const user = await requireUser("/traen-sammen");
+  await requireFeature("traensammen"); // også lukket for børn
   if (!(await canSignUp(user.id))) redirect("/bliv-medlem?fejl=" + encodeURIComponent("Kun medlemmer kan slå træningsture op"));
   const plannedId = String(formData.get("plannedId") ?? "").replace(/[^a-z0-9]/gi, "");
   const back = `/traen-sammen?ny=1${plannedId ? `&fra=${plannedId}` : ""}&fejl=`;
@@ -60,6 +62,7 @@ export async function createWorkout(formData: FormData) {
 
 export async function toggleJoin(formData: FormData) {
   const user = await requireUser("/traen-sammen");
+  await requireFeature("traensammen");
   const workoutId = String(formData.get("id"));
   const w = await prisma.groupWorkout.findUnique({ where: { id: workoutId }, include: { _count: { select: { participants: true } } } });
   if (!w || w.startsAt < new Date()) return;

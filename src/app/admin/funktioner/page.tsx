@@ -2,7 +2,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/auth";
 import { AdminNav } from "@/components/AdminNav";
-import { FEATURES, FEATURE_GROUPS, FEATURE_KEYS, featuresOff, setFeaturesOff } from "@/lib/features";
+import { FEATURES, FEATURE_GROUPS, FEATURE_KEYS, clubFeaturesOff, setFeaturesOff } from "@/lib/features";
 
 export const metadata = { title: "Admin – funktioner" };
 
@@ -17,7 +17,7 @@ async function save(formData: FormData) {
 export default async function Features({ searchParams }: { searchParams: Promise<{ gemt?: string }> }) {
   await requireAdmin();
   const { gemt } = await searchParams;
-  const off = await featuresOff();
+  const off = await clubFeaturesOff();
   return (
     <>
       <h1>Funktioner</h1>

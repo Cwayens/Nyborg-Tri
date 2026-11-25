@@ -1,3 +1,4 @@
+import { NOT_CHILD } from "@/lib/child-safety";
 import Link from "next/link";
 import { requireUser } from "@/auth";
 import { prisma } from "@/lib/db";
@@ -17,7 +18,7 @@ export default async function Races({ searchParams }: { searchParams: Promise<{ 
   const since = new Date(Date.now() - 864e5);
   const races = await prisma.race.findMany({
     where: { date: { gte: since } },
-    include: { entries: { include: { user: { select: { id: true, name: true, email: true, deletedAt: true } } }, orderBy: { createdAt: "asc" } } },
+    include: { entries: { where: { user: NOT_CHILD }, include: { user: { select: { id: true, name: true, email: true, deletedAt: true } } }, orderBy: { createdAt: "asc" } } },
     orderBy: { date: "asc" },
   });
   const today = new Date().toISOString().slice(0, 10);

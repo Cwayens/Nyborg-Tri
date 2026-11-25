@@ -1,3 +1,4 @@
+import { NOT_CHILD } from "@/lib/child-safety";
 import Link from "next/link";
 import { requireUser } from "@/auth";
 import { canSignUp } from "@/lib/access";
@@ -20,8 +21,8 @@ export default async function TrainTogether({ searchParams }: Props) {
   const from = fra && (await isOn("egetprogram")) ? await prisma.plannedWorkout.findFirst({ where: { id: fra, userId: user.id, sharedId: null } }) : null;
   const eligible = await canSignUp(user.id);
   const workouts = await prisma.groupWorkout.findMany({
-    where: { startsAt: { gte: new Date(Date.now() - 2 * 3600 * 1000) }, ...(sport ? { discipline: sport as never } : {}) },
-    include: { host: { select: { name: true } }, participants: { include: { user: { select: { id: true, name: true } } }, orderBy: { createdAt: "asc" } } },
+    where: { startsAt: { gte: new Date(Date.now() - 2 * 3600 * 1000) }, host: NOT_CHILD, ...(sport ? { discipline: sport as never } : {}) },
+    include: { host: { select: { name: true } }, participants: { where: { user: NOT_CHILD }, include: { user: { select: { id: true, name: true } } }, orderBy: { createdAt: "asc" } } },
     orderBy: { startsAt: "asc" },
     take: 50,
   });
