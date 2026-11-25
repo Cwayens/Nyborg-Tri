@@ -3,14 +3,17 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { Discipline } from "@prisma/client";
-import { requireUser } from "@/auth";
+import { requireMember, requireUser } from "@/auth";
 import { prisma } from "@/lib/db";
+import { isChild } from "@/lib/guardian";
 import { requireFeature } from "@/lib/features";
 import { TIMES, parseMinSec } from "@/lib/buddy";
 
 export async function saveBuddy(formData: FormData) {
-  const user = await requireUser("/makker");
+  const user = await requireMember("/makker");
   await requireFeature("makker");
+  const me = await prisma.user.findUniqueOrThrow({ where: { id: user.id }, select: { birthDate: true, athleteGroup: true } });
+  if (isChild(me)) redirect("/makker");
   const disciplines = (["RUN", "BIKE", "SWIM"] as Discipline[]).filter((d) => formData.get(`d_${d}`) === "on");
   if (!disciplines.length) redirect("/makker?fejl=" + encodeURIComponent("Vælg mindst én sport"));
   const times = Object.keys(TIMES).filter((t) => formData.get(`t_${t}`) === "on");

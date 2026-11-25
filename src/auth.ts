@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import type { AthleteGroup, Role } from "@prisma/client";
 import { hasRole } from "@/lib/roles";
 import { prisma } from "@/lib/db";
+import { canSignUp } from "@/lib/access";
 import { CLUB } from "@/lib/club";
 
 declare module "next-auth" {
@@ -58,3 +59,17 @@ export async function requireRole(min: Role, callbackUrl: string) {
 
 export const requireAdmin = () => requireRole("ADMIN", "/admin");
 export const requireTrainer = () => requireRole("TRAINER", "/traener");
+
+/**
+ * Sider, der viser andre medlemmers navne, mails eller telefonnumre, kræver et aktivt medlemskab.
+ * Alle kan oprette et login med en mail, så login alene er ikke nok. Trænere og admin har altid adgang.
+ */
+export async function isMember(user: { id: string; role: Role }): Promise<boolean> {
+  return hasRole(user.role, "TRAINER") || (await canSignUp(user.id));
+}
+
+export async function requireMember(callbackUrl: string) {
+  const user = await requireUser(callbackUrl);
+  if (!(await isMember(user))) redirect("/bliv-medlem?fejl=" + encodeURIComponent("Siden er kun for medlemmer af klubben"));
+  return user;
+}

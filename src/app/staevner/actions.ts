@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { requireUser } from "@/auth";
+import { requireMember, requireUser } from "@/auth";
 import { prisma } from "@/lib/db";
 import { requireFeature } from "@/lib/features";
 import { hasRole } from "@/lib/roles";
@@ -18,7 +18,7 @@ const raceSchema = z.object({
 });
 
 export async function createRace(formData: FormData) {
-  const user = await requireUser("/staevner");
+  const user = await requireMember("/staevner");
   await requireFeature("staevner");
   const r = raceSchema.safeParse(Object.fromEntries(formData));
   if (!r.success) redirect("/staevner?ny=1&fejl=" + encodeURIComponent(r.error.issues[0].message));
@@ -54,7 +54,7 @@ const entrySchema = z.object({
 });
 
 export async function saveEntry(formData: FormData) {
-  const user = await requireUser("/staevner");
+  const user = await requireMember("/staevner");
   await requireFeature("staevner");
   const r = entrySchema.safeParse(Object.fromEntries(formData));
   if (!r.success) redirect("/staevner?fejl=" + encodeURIComponent(r.error.issues[0].message));

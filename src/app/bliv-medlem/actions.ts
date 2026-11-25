@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireUser, signIn } from "@/auth";
+import { loginLinkAllowed } from "@/lib/login-limit";
 import { prisma } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
 import { redeemCode } from "@/lib/access";
@@ -99,6 +100,7 @@ const guestFail = (m: string) => redirect(`/bliv-medlem?fejl=${encodeURIComponen
 
 /** Sender et login-link uden at afsløre, om mailen allerede findes. */
 async function sendLoginLink(email: string, redirectTo: string) {
+  if (!(await loginLinkAllowed(email))) return;
   try {
     await signIn("nodemailer", { email, redirect: false, redirectTo });
   } catch (e) {

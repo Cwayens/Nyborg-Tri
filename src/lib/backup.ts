@@ -15,7 +15,8 @@ const TABLES = [
   "user", "account", "membershipType", "membership", "payment", "page", "post",
   "trainingSession", "trainingSignup", "trialRequest", "accessCode", "wearableConnection", "activity", "groupWorkout",
   "groupWorkoutParticipant", "effort", "benchmarkResult", "chatMessage", "sponsor", "athleteProfile", "contactPerson",
-  "contactMessage", "mailLog",
+  "contactMessage", "mailLog", "setting", "buddyProfile", "mentorship", "beginnerPlan", "tip", "challenge",
+  "challengeParticipant", "race", "raceEntry",
 ] as const;
 
 function key(): Buffer {

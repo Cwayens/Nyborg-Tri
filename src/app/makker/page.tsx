@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireUser } from "@/auth";
+import { requireMember } from "@/auth";
 import { prisma } from "@/lib/db";
 import { requireFeature } from "@/lib/features";
 import { DISCIPLINE_LABEL } from "@/lib/roles";
@@ -7,16 +7,27 @@ import { TIMES, matchBuddy, minSec, type Time } from "@/lib/buddy";
 import { DisciplineIcon, initials } from "@/components/Icons";
 import { removeBuddy, saveBuddy } from "./actions";
 import { CLUB } from "@/lib/club";
+import { adultFilter, isChild } from "@/lib/guardian";
 
 export const metadata = { title: "Find en makker" };
 
 export default async function Buddies({ searchParams }: { searchParams: Promise<{ gemt?: string; fejl?: string; ret?: string }> }) {
-  const user = await requireUser("/makker");
+  const user = await requireMember("/makker");
   await requireFeature("makker");
   const { gemt, fejl, ret } = await searchParams;
+  // Makkerordningen er for voksne: børn kan ikke lave en profil, og børns profiler vises aldrig
+  const me = await prisma.user.findUniqueOrThrow({ where: { id: user.id }, select: { birthDate: true, athleteGroup: true } });
+  if (isChild(me)) {
+    return (
+      <>
+        <h1>Find en makker</h1>
+        <p className="notice">Makkerordningen er for voksne medlemmer. Spørg din træner, hvis du gerne vil finde nogen at træne med.</p>
+      </>
+    );
+  }
   const mine = await prisma.buddyProfile.findUnique({ where: { userId: user.id } });
   const others = mine
-    ? await prisma.buddyProfile.findMany({ where: { userId: { not: user.id }, user: { deletedAt: null } }, include: { user: { select: { name: true, email: true } } } })
+    ? await prisma.buddyProfile.findMany({ where: { userId: { not: user.id }, user: { deletedAt: null, ...adultFilter() } }, include: { user: { select: { name: true, email: true } } } })
     : [];
   const matches = mine
     ? others.map((o) => ({ o, m: matchBuddy(mine, o) })).filter((x) => x.m.score > 0).sort((a, b) => b.m.score - a.m.score).slice(0, 20)

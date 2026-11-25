@@ -3,7 +3,7 @@ import type { AthleteGroup } from "@prisma/client";
 import { auth } from "@/auth";
 import { canSignUp } from "@/lib/access";
 import { prisma } from "@/lib/db";
-import { DISCIPLINE_LABEL, GROUP_LABEL, GROUPS, canJoinGroup, trainingVisibleFor } from "@/lib/roles";
+import { DISCIPLINE_LABEL, GROUP_LABEL, GROUPS, canJoinGroup, hasRole, trainingVisibleFor } from "@/lib/roles";
 import { dayKey, formatDay, formatTime, parseLocal } from "@/lib/time";
 import { setPaceGroup, toggleSignup } from "@/app/kalender/actions";
 import { isOn } from "@/lib/features";
@@ -60,6 +60,10 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
   const userId = session?.user.id ?? null;
   const [tempo, testdage] = await Promise.all([isOn("tempo"), isOn("testdage")]);
   const eligible = userId ? await canSignUp(userId) : false;
+  // Hvem der kommer, er personoplysninger: kun medlemmer og trænere ser navnene, og navne på børnehold
+  // ser kun trænere og børnene selv. Alle andre ser kun antallet.
+  const trainer = !!session && hasRole(session.user.role, "TRAINER");
+  const namesVisible = (g: AthleteGroup) => trainer || (eligible && (g !== "BOERN" || own === "BOERN"));
   const refs = userId
     ? referencesFrom(await prisma.benchmarkResult.findMany({ where: { userId, ...FROM_WEARABLE }, select: { test: true, seconds: true, watts: true } }))
     : null;
@@ -173,10 +177,10 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
               {!publicView && isWorkout(s.workout) && (
                 <WorkoutView workout={s.workout} discipline={s.discipline} refs={refs} downloadId={s.signups.some((x) => x.user.id === userId) ? s.id : undefined} />
               )}
-              {!publicView && tempo && s.paceGroups.length > 0 ? (
+              {!publicView && tempo && s.paceGroups.length > 0 && namesVisible(s.group) ? (
                 <PaceAttendees groups={s.paceGroups} signups={s.signups.map((x) => ({ name: x.user.name ?? "Unavngivet", pace: x.paceGroup }))} />
               ) : (
-                !publicView && <Attendees names={s.signups.map((x) => x.user.name ?? "Unavngivet")} count={s.signups.length} />
+                !publicView && <Attendees names={namesVisible(s.group) ? s.signups.map((x) => x.user.name ?? "Unavngivet") : null} count={s.signups.length} />
               )}
               {!publicView && tempo && s.paceGroups.length > 0 && s.signups.some((x) => x.user.id === userId) && s.startsAt > new Date() && (
                 <form action={setPaceGroup} className="pace-change">
@@ -235,7 +239,7 @@ function PaceAttendees({ groups, signups }: { groups: string[]; signups: { name:
   );
 }
 
-// Navne vises kun for indloggede; andre ser kun antallet
+// Navne vises kun for medlemmer (se namesVisible); andre ser kun antallet
 function Attendees({ names, count }: { names: string[] | null; count: number }) {
   if (count === 0) return <p className="muted attendees">Ingen tilmeldte endnu</p>;
   return (
