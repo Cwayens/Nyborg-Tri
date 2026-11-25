@@ -87,10 +87,6 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
   const trainer = !!session && hasRole(session.user.role, "TRAINER");
   const kindOf = (id: string | null) => allTeams.find((x) => x.id === id)?.kind ?? null;
   const namesVisible = (teamId: string | null) => trainer || (eligible && (kindOf(teamId) !== "BOERN" || kindOf(own) === "BOERN"));
-  // Hvem der kommer, er personoplysninger: kun medlemmer og trænere ser navnene, og navne på børnehold
-  // ser kun trænere og børnene selv. Alle andre ser kun antallet.
-  const trainer = !!session && hasRole(session.user.role, "TRAINER");
-  const namesVisible = (g: AthleteGroup) => trainer || (eligible && (g !== "BOERN" || own === "BOERN"));
   const refs = userId
     ? referencesFrom(await prisma.benchmarkResult.findMany({ where: { userId, ...FROM_WEARABLE }, select: { test: true, seconds: true, watts: true } }))
     : null;
