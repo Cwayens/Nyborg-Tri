@@ -7,6 +7,8 @@ import { requireAdmin } from "@/auth";
 import { prisma } from "@/lib/db";
 import { readMembers, type ImportRow } from "@/lib/member-import";
 import { defaultGroupFor } from "@/lib/roles";
+import { matchTeam } from "@/lib/teams";
+import { getTeams } from "@/lib/visibility";
 
 const key = (adminId: string) => `import_preview_${adminId}`;
 const fail = (msg: string): never => redirect(`/admin/import?fejl=${encodeURIComponent(msg)}`);
@@ -39,6 +41,7 @@ export async function runImport() {
   const rows = ((saved?.value as { rows?: ImportRow[] } | null)?.rows ?? []).filter((r) => r.errors.length === 0);
   if (!rows.length) fail("Der er ingen rækker at importere");
   const types = await prisma.membershipType.findMany();
+  const teams = await getTeams();
   const findType = (t: string | null) => {
     if (!t) return null;
     const n = t.toLowerCase();
@@ -55,7 +58,8 @@ export async function runImport() {
       data: {
         name: r.name, email: r.email, phone: r.phone, birthDate: r.birthDate ? new Date(`${r.birthDate}T12:00:00Z`) : null,
         address: r.address, zip: r.zip, city: r.city, guardianName: r.guardianName, guardianEmail: r.guardianEmail,
-        athleteGroup: r.group ?? (type ? defaultGroupFor(type.code) : null),
+        // Holdet findes på navn (fx "U17"), ellers på gruppe; databasen giver så det første hold af den type
+        ...((r.groupText && matchTeam(r.groupText, teams)) ? { teamId: matchTeam(r.groupText!, teams)!.id } : { athleteGroup: r.group ?? (type ? defaultGroupFor(type.code) : null) }),
         ...(type && until && until > now ? { memberships: { create: { typeId: type.id, source: "MANUAL", startDate: now, endDate: until } } } : {}),
       },
     });

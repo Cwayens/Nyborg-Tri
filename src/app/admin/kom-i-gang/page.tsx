@@ -33,11 +33,12 @@ export default async function Onboarding({ searchParams }: { searchParams: Promi
   const sp = await searchParams;
   const keys = await prisma.setting.findMany({ where: { key: { in: Object.values(SITE_KEYS) } }, select: { key: true } });
   const has = (k: keyof typeof SITE_KEYS) => keys.some((x) => x.key === SITE_KEYS[k]);
-  const [members, staff, types, off] = await Promise.all([
+  const [members, staff, types, off, teams] = await Promise.all([
     prisma.user.count({ where: { deletedAt: null } }),
     prisma.user.count({ where: { deletedAt: null, role: { in: ["TRAINER", "ADMIN"] } } }),
     prisma.membershipType.count({ where: { active: true } }),
     featuresOff(),
+    prisma.team.findMany({ where: { active: true }, select: { name: true } }),
   ]);
   const stripeKey = process.env.STRIPE_SECRET_KEY ?? "";
   const stripeMode = stripeKey.startsWith("sk_live_") ? "live" : stripeKey ? "test" : null;
@@ -49,6 +50,7 @@ export default async function Onboarding({ searchParams }: { searchParams: Promi
     { title: "Navn, logo og farver", text: "Klubbens navn, logo, farver, mail, CVR og Facebook.", href: "/admin/klubben?del=klub", link: "Ret klubbens oplysninger", done: ownName, note: ownName ? CLUB.name : undefined },
     { title: "Forside og Om klubben", text: "Tekster og billeder, så siden fortæller jeres historie.", href: "/admin/klubben?del=forside", link: "Ret forsiden", done: has("home") && has("about") },
     { title: "Træningssteder og ruter", text: "Hvor I træner, og ruter fra GPX-filer.", href: "/admin/klubben?del=steder", link: "Ret træningssteder", done: has("places") },
+    { title: "Hold", text: "Klubbens hold, fx U13, Motion og Elite, og hvem der ser hvilke træninger.", href: "/admin/hold", link: "Ret hold", done: teams.map((t) => t.name).join() !== "Elite,Bredde,Børn", note: teams.map((t) => t.name).join(", ") },
     { title: "Medlemstyper og priser", text: "Fx voksen, ungdom, familie og støttemedlem med pris pr. år.", href: "/admin/medlemstyper", link: "Ret medlemstyper", done: has("club") && types > 0, note: `${types} kan vælges` },
     { title: "Importér medlemmer", text: "Fra Excel eller jeres gamle system. Medlemmerne logger ind med deres mail.", href: "/admin/import", link: "Importér fra Excel", done: members > 1, note: `${members} medlemmer` },
     { title: "Trænere og bestyrelse", text: "Giv trænere og bestyrelse den rigtige adgang under Medlemmer.", href: "/admin", link: "Se medlemmer", done: staff > 1, note: `${staff} trænere og admins` },

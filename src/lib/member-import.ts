@@ -92,7 +92,7 @@ export function parseGroup(v: string): AthleteGroup | null {
 
 export type ImportRow = {
   line: number; name: string; email: string; phone: string | null; birthDate: string | null; address: string | null; zip: string | null; city: string | null;
-  group: AthleteGroup | null; type: string | null; paidUntil: string | null; guardianName: string | null; guardianEmail: string | null; errors: string[];
+  group: AthleteGroup | null; groupText: string | null; type: string | null; paidUntil: string | null; guardianName: string | null; guardianEmail: string | null; errors: string[];
 };
 
 const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -124,7 +124,7 @@ export function readMembers(text: string, maxRows = 2000): { rows: ImportRow[]; 
     return {
       line: i + 2, name: name.slice(0, 100), email, phone: get(r, "phone").slice(0, 30) || null,
       birthDate: birth ? birth.toISOString().slice(0, 10) : null, address: get(r, "address").slice(0, 120) || null,
-      zip: get(r, "zip").slice(0, 10) || null, city: get(r, "city").slice(0, 60) || null, group: parseGroup(get(r, "group")),
+      zip: get(r, "zip").slice(0, 10) || null, city: get(r, "city").slice(0, 60) || null, group: parseGroup(get(r, "group")), groupText: get(r, "group").slice(0, 60) || null,
       type: get(r, "type").slice(0, 60) || null, paidUntil: paid ? paid.toISOString().slice(0, 10) : null,
       guardianName: get(r, "guardianName").slice(0, 100) || null, guardianEmail: ge || null, errors,
     };

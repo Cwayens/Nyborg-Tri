@@ -38,7 +38,9 @@ model User {
   emailVerified DateTime?
   image         String?
   role          Role          @default(ATHLETE)
-  athleteGroup  AthleteGroup?
+  athleteGroup  AthleteGroup? // følger holdets type (se Team)
+  teamId        String?
+  team          Team?         @relation(fields: [teamId], references: [id], onDelete: SetNull)
 
   phone     String?
   birthDate DateTime?
@@ -262,7 +264,9 @@ model TrainingSession {
   location     String
   startsAt     DateTime
   endsAt       DateTime
-  group        AthleteGroup // hver træning er for præcis én gruppe
+  group        AthleteGroup // følger holdets type (se Team)
+  teamId       String?
+  team         Team?          @relation(fields: [teamId], references: [id], onDelete: SetNull)
   cancelledAt  DateTime? // aflyst af træner – vises i kalenderen i stedet for at forsvinde
   cancelReason String?
   seriesId     String? // fælles id for ugentligt gentagne træninger
@@ -763,4 +767,21 @@ model ClubRoute {
   pts       Json // [[lat, lng], ...] forenklet til kortet
   sortOrder Int        @default(0)
   createdAt DateTime   @default(now())
+}
+
+// Klubbens hold, fx Elite, Bredde, Masters og Børn. Hvert hold har en type (kind), som styrer børnebeskyttelse,
+// chatrum og standarder; athleteGroup på medlemmer og træninger holdes automatisk i trit med holdets type
+// (databasetrigger i migrationen 20261125050000_hold).
+model Team {
+  id        String       @id @default(cuid())
+  name      String
+  kind      AthleteGroup
+  sees      String[]     @default([]) // andre hold, som holdets medlemmer kan se træninger for
+  public    Boolean      @default(false) // besøgende, prøvemedlemmer og medlemmer uden hold ser holdets træninger
+  active    Boolean      @default(true)
+  sortOrder Int          @default(0)
+  createdAt DateTime     @default(now())
+
+  members   User[]
+  trainings TrainingSession[]
 }

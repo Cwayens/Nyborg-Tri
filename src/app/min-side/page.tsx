@@ -6,7 +6,7 @@ import { prisma } from "@/lib/db";
 import { formatHours, startOfWeek } from "@/lib/activities";
 import { dato } from "@/lib/format";
 import { currentMembership } from "@/lib/membership";
-import { DISCIPLINE_LABEL, GROUP_LABEL, hasRole } from "@/lib/roles";
+import { DISCIPLINE_LABEL, hasRole } from "@/lib/roles";
 import { personalTotals, personalWeeks } from "@/lib/stats";
 import { formatDay, formatTime } from "@/lib/time";
 import { DisciplineIcon, initials } from "@/components/Icons";
@@ -18,14 +18,14 @@ import { toggleSignup } from "../kalender/actions";
 import { GrowSection } from "@/components/GrowSection";
 import { TrophySection } from "@/components/TrophySection";
 import { featuresOff } from "@/lib/features";
-import { groupsFor } from "@/lib/visibility";
+import { teamsFor } from "@/lib/visibility";
 
 export const metadata = { title: "Overblik" };
 
 export default async function Dashboard({ searchParams }: { searchParams: Promise<{ betaling?: string; kode?: string }> }) {
   const { betaling, kode } = await searchParams;
   const sessionUser = await requireUser();
-  const user = await prisma.user.findUniqueOrThrow({ where: { id: sessionUser.id }, include: { wearableConnections: { select: { provider: true } } } });
+  const user = await prisma.user.findUniqueOrThrow({ where: { id: sessionUser.id }, include: { wearableConnections: { select: { provider: true } }, team: { select: { name: true } } } });
   // Nye brugere skriver først deres navn, så andre kan se hvem der kommer
   if (!user.name) redirect("/profil?velkommen=1");
   const now = new Date();
@@ -36,9 +36,9 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     currentMembership(user.id),
     canSignUp(user.id),
     prisma.trainingSession.findMany({ where: { startsAt: { gte: now }, signups: { some: { userId: user.id } } }, orderBy: { startsAt: "asc" }, take: 5 }),
-    user.athleteGroup && (await groupsFor(user.id)).includes(user.athleteGroup)
+    user.teamId && (await teamsFor(user.id)).includes(user.teamId)
       ? prisma.trainingSession.findMany({
-          where: { startsAt: { gte: now, lt: in7 }, group: user.athleteGroup },
+          where: { startsAt: { gte: now, lt: in7 }, teamId: user.teamId },
           include: { signups: { include: { user: { select: { id: true, name: true } } } } }, orderBy: { startsAt: "asc" }, take: 6,
         })
       : Promise.resolve([]),
@@ -48,7 +48,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     }),
     personalWeeks(user.id, 6),
     personalTotals(user.id, startOfWeek(now)),
-    prisma.trainingSession.count({ where: { startsAt: { gte: now, lte: endOfToday }, group: { in: await groupsFor(user.id) } } }),
+    prisma.trainingSession.count({ where: { startsAt: { gte: now, lte: endOfToday }, teamId: { in: await teamsFor(user.id) } } }),
     prisma.benchmarkResult.findMany({ where: { userId: user.id, ...FROM_WEARABLE }, select: { test: true, seconds: true, watts: true } }),
     prisma.post.findMany({ where: { published: true }, orderBy: { publishedAt: "desc" }, take: 3, select: { slug: true, title: true, publishedAt: true } }),
   ]);
@@ -75,7 +75,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         <div>
           <h1 style={{ marginBottom: 4 }}>Hej{firstName ? ` ${firstName}` : ""} 👋</h1>
           <p className="muted" style={{ margin: 0 }}>
-            {user.athleteGroup ? `${GROUP_LABEL[user.athleteGroup]}-gruppen` : "Ingen gruppe endnu"} ·{" "}
+            {user.team ? `Hold: ${user.team.name}` : "Intet hold endnu"} ·{" "}
             {membership ? <>Medlem til {dato(membership.endDate)}</> : <Link href="/bliv-medlem">Bliv medlem</Link>}
             {today > 0 && <> · {today} klubtræning{today > 1 ? "er" : ""} i dag</>}
           </p>
@@ -154,13 +154,13 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
       </section>
       )}
 
-      {user.athleteGroup && (
+      {user.team && (
         <>
           <div className="section-head">
-            <h2>{GROUP_LABEL[user.athleteGroup]}: de næste 7 dage</h2>
+            <h2>{user.team.name}: de næste 7 dage</h2>
             <Link href="/kalender">Se alle</Link>
           </div>
-          {groupTrainings.length === 0 ? <div className="card empty">Ingen træninger for din gruppe den næste uge.</div> : groupTrainings.map((t) => {
+          {groupTrainings.length === 0 ? <div className="card empty">Ingen træninger for dit hold den næste uge.</div> : groupTrainings.map((t) => {
             const joined = t.signups.some((s) => s.user.id === user.id);
             return (
               <article key={t.id} className={`card training disc disc-${t.discipline}`}>

@@ -9,7 +9,7 @@ export async function GET() {
   if (session?.user.role !== "ADMIN") return new Response("Forbidden", { status: 403 });
 
   const users = await prisma.user.findMany({
-    include: { memberships: { orderBy: { endDate: "desc" }, take: 1, include: { type: true } } },
+    include: { memberships: { orderBy: { endDate: "desc" }, take: 1, include: { type: true } }, team: { select: { name: true } } },
     orderBy: { name: "asc" },
   });
   const now = new Date();
@@ -17,7 +17,7 @@ export async function GET() {
     users.map((u) => {
       const m = u.memberships[0];
       return {
-        Navn: u.name, Email: u.email, Brugertype: userTypeLabel(u.role, u.athleteGroup), Telefon: u.phone, Adresse: u.address, Postnr: u.zip, By: u.city,
+        Navn: u.name, Email: u.email, Brugertype: userTypeLabel(u.role, null), Hold: u.team?.name ?? "", Telefon: u.phone, Adresse: u.address, Postnr: u.zip, By: u.city,
         Foedselsdato: u.birthDate ? isoDate(u.birthDate) : "",
         Vaerge: u.guardianName ?? "", VaergeEmail: u.guardianEmail ?? "",
         Medlemstype: m?.type.name ?? "", Start: m ? isoDate(m.startDate) : "", Slut: m ? isoDate(m.endDate) : "",

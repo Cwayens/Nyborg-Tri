@@ -1,9 +1,8 @@
 import Link from "next/link";
-import type { AthleteGroup } from "@prisma/client";
 import { auth } from "@/auth";
 import { canSignUp } from "@/lib/access";
 import { prisma } from "@/lib/db";
-import { DISCIPLINE_LABEL, GROUP_LABEL, GROUPS, canJoinGroup, trainingVisibleFor } from "@/lib/roles";
+import { DISCIPLINE_LABEL } from "@/lib/roles";
 import { dayKey, formatDay, formatTime, parseLocal } from "@/lib/time";
 import { setPaceGroup, toggleSignup } from "@/app/kalender/actions";
 import { isOn } from "@/lib/features";
@@ -12,9 +11,9 @@ import { TEST_BY_KEY } from "@/lib/benchmarks";
 import { WorkoutView } from "@/components/WorkoutView";
 import { isWorkout, referencesFrom } from "@/lib/workout";
 import { FROM_WEARABLE } from "@/lib/benchmarks";
-import { calendarViewer } from "@/lib/visibility";
+import { calendarViewer, getTeams, teamsFor } from "@/lib/visibility";
+import { canJoinTeam } from "@/lib/teams";
 import { deletePlanned } from "@/app/kalender/mit-program/actions";
-import { visibleGroups } from "@/lib/roles";
 
 export type CalendarParams = { gruppe?: string; maaned?: string; dag?: string };
 
@@ -30,12 +29,14 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
   const session = publicView ? null : await auth();
   const base = publicView ? "/traening" : "/kalender";
   const viewer = await calendarViewer(session?.user.id);
-  const own = viewer?.athleteGroup ?? null;
-  // Hvilke grupper man må se (klubbens regler, se visibleGroups). Besøgende ser kun bredde.
-  const allowed = viewer?.groups ?? visibleGroups(null);
-  // Som standard egen gruppe; "alle" viser alt, man må se
-  const pick = sp.gruppe === "alle" ? null : GROUPS.includes(sp.gruppe as AthleteGroup) ? (sp.gruppe as AthleteGroup) : own;
-  const group: AthleteGroup | null = pick && allowed.includes(pick) && allowed.length > 1 ? pick : null;
+  const own = viewer?.teamId ?? null;
+  // Hvilke hold man må se (eget hold og dem, holdet ser; se visibleTeams). Besøgende ser de åbne hold.
+  const allTeams = await getTeams();
+  const allowed = await teamsFor(viewer?.id);
+  const teamName = new Map(allTeams.map((t) => [t.id, t.name]));
+  // Som standard eget hold; "alle" viser alt, man må se. ?gruppe= tager både hold-id og gammel gruppe (fx ELITE)
+  const pick = sp.gruppe === "alle" ? null : sp.gruppe ? (allTeams.find((t) => t.id === sp.gruppe) ?? allTeams.find((t) => t.kind === sp.gruppe && allowed.includes(t.id)))?.id ?? null : own;
+  const group: string | null = pick && allowed.includes(pick) && allowed.length > 1 ? pick : null;
 
   // Måned (dansk tid). ?maaned=2026-11
   const todayKey = dayKey(new Date());
@@ -48,7 +49,7 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
 
   const sessions = (
     await prisma.trainingSession.findMany({
-      where: { startsAt: { gte: parseLocal(`${monthKey}-01T00:00`), lt: parseLocal(`${next}-01T00:00`) }, group: { in: group ? [group] : allowed } },
+      where: { startsAt: { gte: parseLocal(`${monthKey}-01T00:00`), lt: parseLocal(`${next}-01T00:00`) }, teamId: { in: group ? [group] : allowed } },
       include: {
         createdBy: { select: { name: true } },
         // Besøgende må ikke se, hvem der kommer
@@ -58,7 +59,7 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
       },
       orderBy: { startsAt: "asc" },
     })
-  ).filter((s) => trainingVisibleFor(s.group, group));
+  );
 
   const days = new Map<string, typeof sessions>();
   for (const s of sessions) days.set(dayKey(s.startsAt), [...(days.get(dayKey(s.startsAt)) ?? []), s]);
@@ -116,7 +117,7 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
         <Link href={`${base}?gruppe=alle&maaned=${monthKey}`} className={group === null ? "active" : undefined}>Alle</Link>
         {allowed.map((g) => (
           <Link key={g} href={`${base}?gruppe=${g}&maaned=${monthKey}`} className={group === g ? "active" : undefined}>
-            {GROUP_LABEL[g]}{own === g ? " (min gruppe)" : ""}
+            {teamName.get(g)}{own === g ? " (mit hold)" : ""}
           </Link>
         ))}
       </p>}
@@ -128,7 +129,7 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
         </p>
       )}
       {eligible && !own && viewer?.role === "ATHLETE" && (
-        <p className="card">Du er endnu ikke tilknyttet en gruppe (Elite, Bredde eller Børn). Kontakt bestyrelsen, så du kan tilmelde dig træninger.</p>
+        <p className="card">Du er endnu ikke tilknyttet et hold. Kontakt bestyrelsen, så du kan tilmelde dig træninger.</p>
       )}
 
       <section className="month card" aria-label={`${MONTHS[m - 1]} ${y}`}>
@@ -211,7 +212,7 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
                 {s.location}
                 {s.createdBy.name && !publicView ? ` · Træner: ${s.createdBy.name}` : ""}
                 {" · "}
-                {GROUP_LABEL[s.group]}
+                {teamName.get(s.teamId ?? "")}
               </p>
               {s.description && <p style={{ whiteSpace: "pre-line" }}>{s.description}</p>}
               {!publicView && isWorkout(s.workout) && (
@@ -238,7 +239,7 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
             {publicView && !s.cancelledAt && s.startsAt > new Date() && (
               <Link href="/bliv-medlem" className="button small secondary signup">Prøv gratis</Link>
             )}
-            {userId && !s.cancelledAt && s.startsAt > new Date() && (s.signups.some((x) => x.user.id === userId) || (eligible && viewer && canJoinGroup(viewer, s.group, viewer.trial))) && (
+            {userId && !s.cancelledAt && s.startsAt > new Date() && (s.signups.some((x) => x.user.id === userId) || (eligible && viewer && canJoinTeam(viewer, s.teamId, allTeams, viewer.trial))) && (
               <form action={toggleSignup} className="signup">
                 <input type="hidden" name="sessionId" value={s.id} />
                 {s.signups.some((x) => x.user.id === userId) ? (

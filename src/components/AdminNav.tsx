@@ -8,6 +8,7 @@ export async function AdminNav() {
       <Link href="/admin/kom-i-gang">Kom i gang</Link>
       <Link href="/admin">Medlemmer</Link>
       <Link href="/admin/import">Importér</Link>
+      <Link href="/admin/hold">Hold</Link>
       <Link href="/admin/medlemstyper">Medlemstyper</Link>
       <Link href="/admin/betalinger">Betalinger</Link>
       <Link href="/admin/adgang">Prøveperioder og koder</Link>

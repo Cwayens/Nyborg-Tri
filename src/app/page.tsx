@@ -2,7 +2,6 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { DisciplineIcon } from "@/components/Icons";
-import { GROUP_LABEL } from "@/lib/roles";
 import { formatTime, weekdayShort } from "@/lib/time";
 import { kr } from "@/lib/format";
 import { SponsorBar } from "@/components/SponsorBar";
@@ -10,7 +9,7 @@ import { AthleteCard } from "@/components/AthleteCard";
 import { VISIBLE_ATHLETE } from "@/lib/athletes";
 import { isOn } from "@/lib/features";
 import { CLUB } from "@/lib/club";
-import { groupsFor } from "@/lib/visibility";
+import { teamNames, teamsFor } from "@/lib/visibility";
 import { getHome } from "@/lib/site";
 import { Inline } from "@/components/Inline";
 
@@ -22,16 +21,16 @@ import { Inline } from "@/components/Inline";
 export default async function Home() {
   const session = await auth();
   const member = !!session?.user;
-  const groups = await groupsFor(session?.user.id);
+  const [teams, names] = await Promise.all([teamsFor(session?.user.id), teamNames()]);
   const c = await getHome();
 
   const now = new Date();
   const [types, week, featured] = await Promise.all([
     prisma.membershipType.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
     prisma.trainingSession.findMany({
-      where: { startsAt: { gte: now, lt: new Date(now.getTime() + 7 * 864e5) }, cancelledAt: null, group: { in: groups } },
+      where: { startsAt: { gte: now, lt: new Date(now.getTime() + 7 * 864e5) }, cancelledAt: null, teamId: { in: teams } },
       orderBy: { startsAt: "asc" },
-      select: { id: true, title: true, discipline: true, startsAt: true, group: true, location: true },
+      select: { id: true, title: true, discipline: true, startsAt: true, teamId: true, location: true },
     }),
     prisma.athleteProfile.findMany({
       where: { ...VISIBLE_ATHLETE, featured: true },
@@ -92,7 +91,7 @@ export default async function Home() {
                 <DisciplineIcon discipline={t.discipline} />
                 <span className="lp-when"><b>{weekdayShort(t.startsAt)}</b> {formatTime(t.startsAt)}</span>
                 <span className="lp-what">{t.title}<small>{t.location}</small></span>
-                <span className="pill">{GROUP_LABEL[t.group]}</span>
+                <span className="pill">{names.get(t.teamId ?? "")}</span>
               </li>
             ))}
           </ul>

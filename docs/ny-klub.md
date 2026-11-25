@@ -49,6 +49,13 @@ Admin retter selv det meste under **Admin → Klubben**, uden at koden skal ænd
 Standardindholdet er Nyborgs og står i `src/data/site-default.ts`. Det, der stadig kræver en udvikler:
 begynderforløbet (`src/data/begynder.ts`), menupunktet NyborgTri Cup (`src/lib/navigation.ts`) og telefonikonerne (`public/icon-*.png`).
 
+## 3a. Hold
+
+Under **Admin → Hold** opretter klubben sine egne hold (fx U13, U17, Motion, Elite). Hvert hold har en type
+(konkurrence, motion/bredde eller børn og unge), som styrer reglerne: børnehold får mails via forældre og eget chatrum,
+konkurrencehold kan få atletprofiler. Et medlem ser sit eget holds træninger og de hold, holdet er sat til at se.
+Trænere og admins ser alt. Besøgende og prøvemedlemmer ser de åbne hold. En ny installation starter med Elite, Bredde og Børn.
+
 ## 4. Funktioner
 
 Admin kan slå 18 funktioner til og fra under Admin → Funktioner. En ny klub kan starte med få og tænde flere senere.

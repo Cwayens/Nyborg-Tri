@@ -1,7 +1,7 @@
 import { requireTrainer } from "@/auth";
 import { AdminNav } from "@/components/AdminNav";
 import { prisma } from "@/lib/db";
-import { AUDIENCES, recipients } from "@/lib/bulkmail";
+import { audienceLabel, audiences, recipients } from "@/lib/bulkmail";
 import { sendGroupMail } from "./actions";
 import { requireFeature } from "@/lib/features";
 
@@ -14,10 +14,10 @@ export default async function MailPage({ searchParams }: Props) {
   await requireFeature("mail");
   const user = await requireTrainer();
   const sp = await searchParams;
-  const allowed = AUDIENCES.filter((a) => user.role === "ADMIN" || a.trainerAllowed);
+  const allowed = (await audiences()).filter((a) => user.role === "ADMIN" || a.trainerAllowed);
   const counts = await Promise.all(allowed.map(async (a) => [(await recipients(a.value, "IMPORTANT")).length, (await recipients(a.value, "NEWS")).length] as const));
   const log = await prisma.mailLog.findMany({ orderBy: { createdAt: "desc" }, take: 20 });
-  const label = (v: string) => AUDIENCES.find((a) => a.value === v)?.label ?? v;
+  const labels = new Map(await Promise.all([...new Set(log.map((m) => m.audience))].map(async (v) => [v, await audienceLabel(v)] as const)));
   return (
     <>
       <h1>Mail til medlemmer</h1>
@@ -66,7 +66,7 @@ export default async function MailPage({ searchParams }: Props) {
                 <tr key={m.id}>
                   <td>{m.createdAt.toLocaleString("da-DK", { dateStyle: "short", timeStyle: "short", timeZone: "Europe/Copenhagen" })}</td>
                   <td>{m.subject}{m.kind === "IMPORTANT" && <span className="pill" style={{ marginLeft: 6 }}>Vigtig</span>}</td>
-                  <td>{label(m.audience)}</td>
+                  <td>{labels.get(m.audience)}</td>
                   <td>{m.recipients}{m.failed > 0 && <span className="status-warn-text"> ({m.failed} fejlede)</span>}</td>
                   <td>{m.sentByName}</td>
                 </tr>

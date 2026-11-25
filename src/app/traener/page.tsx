@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireTrainer } from "@/auth";
 import { prisma } from "@/lib/db";
-import { DISCIPLINE_LABEL, GROUP_LABEL } from "@/lib/roles";
+import { DISCIPLINE_LABEL } from "@/lib/roles";
 import { formatDay, formatTime } from "@/lib/time";
 import { featuresOff } from "@/lib/features";
 
@@ -13,7 +13,7 @@ export default async function TrainerHome({ searchParams }: { searchParams: Prom
   const off = await featuresOff();
   const sessions = await prisma.trainingSession.findMany({
     where: { startsAt: { gte: new Date() } },
-    include: { createdBy: { select: { id: true, name: true } }, _count: { select: { signups: true } } },
+    include: { createdBy: { select: { id: true, name: true } }, team: { select: { name: true } }, _count: { select: { signups: true } } },
     orderBy: { startsAt: "asc" },
     take: 100,
   });
@@ -30,14 +30,14 @@ export default async function TrainerHome({ searchParams }: { searchParams: Prom
       </p>
       <div className="table-scroll">
         <table className="list">
-          <thead><tr><th>Dag</th><th>Tid</th><th>Træning</th><th>Gruppe</th><th>Træner</th><th>Tilmeldte</th><th /></tr></thead>
+          <thead><tr><th>Dag</th><th>Tid</th><th>Træning</th><th>Hold</th><th>Træner</th><th>Tilmeldte</th><th /></tr></thead>
           <tbody>
             {sessions.map((s) => (
               <tr key={s.id}>
                 <td>{formatDay(s.startsAt)}</td>
                 <td>{formatTime(s.startsAt)}–{formatTime(s.endsAt)}</td>
                 <td>{s.cancelledAt && <span className="pill warn">Aflyst</span>} {DISCIPLINE_LABEL[s.discipline]}: {s.title}<br /><span className="muted">{s.location}</span></td>
-                <td>{GROUP_LABEL[s.group]}</td>
+                <td>{s.team?.name ?? "–"}</td>
                 <td>{s.createdBy.id === user.id ? "Dig" : s.createdBy.name}</td>
                 <td>{s._count.signups}</td>
                 <td><Link href={`/traener/${s.id}`}>Ret / deltagere</Link></td>

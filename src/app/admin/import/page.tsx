@@ -3,7 +3,8 @@ import { requireAdmin } from "@/auth";
 import { AdminNav } from "@/components/AdminNav";
 import { prisma } from "@/lib/db";
 import { FIELD_LABEL, type ImportField, type ImportRow } from "@/lib/member-import";
-import { GROUP_LABEL } from "@/lib/roles";
+import { matchTeam } from "@/lib/teams";
+import { getTeams } from "@/lib/visibility";
 import { cancelImport, previewImport, runImport } from "./actions";
 
 export const metadata = { title: "Admin – importér medlemmer" };
@@ -15,6 +16,8 @@ export default async function ImportMembers({ searchParams }: Props) {
   const sp = await searchParams;
   const saved = sp.vis ? await prisma.setting.findUnique({ where: { key: `import_preview_${admin.id}` } }) : null;
   const data = saved?.value as { rows: ImportRow[]; mapped: ImportField[]; name: string } | undefined;
+  const teams = await getTeams();
+  const teamOf = (r: ImportRow) => (r.groupText && matchTeam(r.groupText, teams)) || (r.group && teams.find((t) => t.active && t.kind === r.group)) || null;
   const ok = data?.rows.filter((r) => !r.errors.length) ?? [];
   const bad = data?.rows.filter((r) => r.errors.length) ?? [];
   const known = data ? new Set((await prisma.user.findMany({ where: { email: { in: ok.map((r) => r.email) } }, select: { email: true } })).map((u) => u.email.toLowerCase())) : new Set<string>();
@@ -67,11 +70,11 @@ export default async function ImportMembers({ searchParams }: Props) {
           )}
           <div className="table-scroll">
             <table className="list">
-              <thead><tr><th>Navn</th><th>Mail</th><th>Gruppe</th><th>Medlemstype</th><th>Betalt til</th><th></th></tr></thead>
+              <thead><tr><th>Navn</th><th>Mail</th><th>Hold</th><th>Medlemstype</th><th>Betalt til</th><th></th></tr></thead>
               <tbody>
                 {ok.slice(0, 200).map((r) => (
                   <tr key={r.line}>
-                    <td>{r.name}</td><td>{r.email}</td><td>{r.group ? GROUP_LABEL[r.group] : "–"}</td><td>{r.type ?? "–"}</td><td>{r.paidUntil ?? "–"}</td>
+                    <td>{r.name}</td><td>{r.email}</td><td>{teamOf(r)?.name ?? "–"}</td><td>{r.type ?? "–"}</td><td>{r.paidUntil ?? "–"}</td>
                     <td>{known.has(r.email) ? <span className="pill">Findes</span> : <span className="pill ok">Ny</span>}</td>
                   </tr>
                 ))}
