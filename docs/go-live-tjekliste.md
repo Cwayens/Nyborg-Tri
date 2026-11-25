@@ -128,6 +128,14 @@ Alle otte, og 10 af de øvrige funktioner (Træn sammen, programmer til uret, Mi
 - [ ] Bekræft kalenderreglerne: besøgende ser kun bredde-træninger, og elite kan se men ikke tilmelde sig bredde.
 - [ ] Ugens tip og Find en makker er slået fra som standard. Kan slås til under Admin → Funktioner.
 
+## Økonomi
+
+- [ ] Giv kassereren opgaven Kasserer på medlemmet under Administration (så får vedkommende kun Økonomi, Betalinger og Medlemstyper).
+- [ ] Kassereren tjekker kategorierne og kontonumrene (src/lib/finance.ts), så de passer til klubbens kontoplan og bogføringsprogram.
+- [ ] Læg årets budget ind under Økonomi → Budget.
+- [ ] Test eksporten (CSV) i bogføringsprogrammet, fx Dinero, e-conomic eller Foreningsadministrator.
+- [ ] Testversionens eksempelposteringer og budget ryger ikke med til den rigtige database (de lægges kun ind af demo-seed).
+
 ## Andre klubber (senere)
 
 - [ ] Beslut ejerskab af selskabet (ApS) og aftalen med NyborgTri. Se planen "Platformen til andre klubber".

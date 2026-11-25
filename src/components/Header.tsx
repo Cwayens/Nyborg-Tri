@@ -53,7 +53,7 @@ export async function Header() {
                   <Link href="/forbindelser">{t("Ure, apps og kalender", "Watches, apps and calendar")}</Link>
                   <Link href="/bliv-medlem">{t("Medlemskab og betaling", "Membership and payment")}</Link>
                   {hasRole(user.role, "TRAINER") ? <Link href="/traener">{t("Trænerværktøj", "Coach tools")}</Link> : staff && staff.leads.length > 0 && <Link href="/traener">{t("Holdleder", "Team leader")}</Link>}
-                  {user.role === "ADMIN" ? <Link href="/admin">{t("Administration", "Admin")}</Link> : staff?.duties.includes("TREASURER") && <Link href="/admin/betalinger">{t("Kasserer", "Treasurer")}</Link>}
+                  {user.role === "ADMIN" ? <Link href="/admin">{t("Administration", "Admin")}</Link> : staff?.duties.includes("TREASURER") && <Link href="/admin/oekonomi">{t("Økonomi", "Finance")}</Link>}
                   <div className="dropdown-sep" />
                   <Link href="/klubben">{t("Klubinfo og nyheder", "Club info and news")}</Link>
                   <form action={logout}>

@@ -9,6 +9,7 @@ export async function AdminNav() {
   // Kassereren ser kun sin del af administrationen
   if (me && me.role !== "ADMIN") return (
     <p style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+      <Link href="/admin/oekonomi">Økonomi</Link>
       <Link href="/admin/betalinger">Betalinger</Link>
       <Link href="/admin/medlemstyper">Medlemstyper</Link>
       <a href="/admin/medlemmer.csv">Hent medlemsliste (CSV)</a>
@@ -21,6 +22,7 @@ export async function AdminNav() {
       <Link href="/admin/import">Importér</Link>
       <Link href="/admin/hold">Hold</Link>
       <Link href="/admin/medlemstyper">Medlemstyper</Link>
+      <Link href="/admin/oekonomi">Økonomi</Link>
       <Link href="/admin/betalinger">Betalinger</Link>
       <Link href="/admin/adgang">Prøveperioder og koder</Link>
       <Link href="/admin/klubben">Klubben</Link>

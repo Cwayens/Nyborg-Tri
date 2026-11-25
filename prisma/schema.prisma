@@ -96,6 +96,7 @@ model User {
   deletedAt       DateTime? // kontoen er slettet; rækken er anonymiseret, men betalinger gemmes efter bogføringsloven
   plannedWorkouts PlannedWorkout[]
   postReactions   PostReaction[]
+  ledgerEntries   LedgerEntry[]
 }
 
 model Account {
@@ -554,6 +555,7 @@ model Sponsor {
   updatedAt   DateTime @updatedAt
 
   athletes AthleteProfile[]
+  ledger   LedgerEntry[]
 }
 
 /// Offentlig profil på /atleter. Admin opretter og fremhæver; atleten skal give samtykke, før den vises.
@@ -824,4 +826,42 @@ model Branch {
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
   teams     Team[]
+}
+
+// ---------- Økonomi (kasserer og admin) ----------
+
+enum LedgerKind {
+  INCOME
+  EXPENSE
+}
+
+/// En postering i klubbens regnskab, skrevet ind af kassereren. Kontingent betalt med kort kommer fra Payment og står ikke her.
+model LedgerEntry {
+  id           String     @id @default(cuid())
+  voucherNo    Int        @unique @default(autoincrement()) // bilagsnummer
+  date         DateTime   @db.Date
+  kind         LedgerKind
+  category     String // kode fra FINANCE_CATEGORIES i src/lib/finance.ts
+  amountOre    Int // altid positivt; kind afgør retningen
+  text         String
+  counterparty String? // fx leverandør eller kommune
+  sponsorId    String?
+  sponsor      Sponsor?   @relation(fields: [sponsorId], references: [id], onDelete: SetNull)
+  receipt      String?    @db.Text // billede eller PDF af bilaget
+  createdById  String?
+  createdBy    User?      @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([date])
+}
+
+/// Budget pr. kategori og år
+model BudgetLine {
+  id        String @id @default(cuid())
+  year      Int
+  category  String
+  amountOre Int
+
+  @@unique([year, category])
 }

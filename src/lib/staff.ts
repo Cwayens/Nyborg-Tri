@@ -6,7 +6,8 @@ import { hasRole } from "./roles";
 
 // Roller ud over atlet, træner og admin:
 // - Holdleder (Team.leaders): opretter og retter træninger og skriver mail for sine egne hold. Kun voksenhold (børnehold ledes af trænere).
-// - Kasserer (Duty TREASURER): betalinger, medlemstyper og medlemslisten (CSV), uden resten af administrationen.
+// - Kasserer (Duty TREASURER): økonomimodulet (posteringer, budget, restancer, eksport), betalinger, medlemstyper og
+//   medlemslisten (CSV), uden resten af administrationen.
 // - Frivillig (Duty VOLUNTEER): står på listen over frivillige og kan få mail som frivillig.
 
 export const DUTY_LABEL: Record<Duty, string> = { TREASURER: "Kasserer", VOLUNTEER: "Frivillig" };
@@ -43,7 +44,7 @@ async function current(callbackUrl: string): Promise<Staff> {
 }
 
 /** Kasserer eller admin. */
-export async function requireTreasurer(callbackUrl = "/admin/betalinger"): Promise<Staff> {
+export async function requireTreasurer(callbackUrl = "/admin/oekonomi"): Promise<Staff> {
   const s = await current(callbackUrl);
   if (!isTreasurer(s)) redirect("/min-side");
   return s;

@@ -70,6 +70,7 @@ async function main() {
       guardianEmail: d.group === "BOERN" ? `foraelder-${d.key}@demo.nyborgtri.dk` : null,
       // Leaderboard er frivilligt; de fleste testbrugere er med, så siden har indhold
       leaderboard: !!d.gender && d.group !== "BOERN" && d.key !== "proeve",
+      duties: d.duties ?? [],
     };
     users[d.key] = await prisma.user.upsert({ where: { email: demoEmail(d.key) }, update: data, create: { email: demoEmail(d.key), ...data } });
   }
@@ -304,6 +305,36 @@ async function main() {
   ];
   for (const [key, room, channel, body, hoursAgo] of CHAT) {
     await prisma.chatMessage.create({ data: { userId: users[key].id, room, channel, body, createdAt: new Date(Date.now() - hoursAgo * 3600 * 1000) } });
+  }
+
+  // Økonomi: eksempler på posteringer og budget for i år, så kassererens sider har indhold (kun hvis der intet er)
+  const year = new Date().getFullYear();
+  if ((await prisma.ledgerEntry.count()) === 0) {
+    const day = (m: number, d: number) => new Date(Date.UTC(year, m - 1, d));
+    const now = new Date();
+    const LEDGER: [number, number, "INCOME" | "EXPENSE", string, number, string, string | null][] = [
+      [1, 15, "EXPENSE", "BANELEJE", 1850000, "Baneleje svømmehal, forår", "Nyborg Kommune"],
+      [2, 1, "EXPENSE", "FORBUND", 640000, "Klubkontingent DTriF og forsikring", "Dansk Triathlon Forbund"],
+      [3, 10, "INCOME", "TILSKUD", 1200000, "Aktivitetstilskud", "Nyborg Kommune"],
+      [3, 20, "EXPENSE", "TRAENER", 450000, "Trænerkursus, 2 trænere", "DGI"],
+      [4, 5, "INCOME", "SPONSOR", 1000000, `Sponsorat ${year}`, null],
+      [5, 12, "EXPENSE", "UDSTYR", 820000, "Klubdragter, 20 stk.", "Sportsmaster"],
+      [5, 30, "INCOME", "SALG", 560000, "Salg af klubdragter", null],
+      [6, 14, "INCOME", "STAEVNE_IND", 2340000, "Startgebyrer NyborgTri", null],
+      [6, 14, "EXPENSE", "STAEVNE_UD", 1480000, "Tidtagning, medaljer og forplejning", null],
+      [8, 22, "EXPENSE", "ARRANGEMENT", 380000, "Sommerafslutning", null],
+      [9, 1, "EXPENSE", "BANELEJE", 1850000, "Baneleje svømmehal, efterår", "Nyborg Kommune"],
+      [10, 3, "EXPENSE", "ADMIN", 89000, "Hjemmeside og domæne", null],
+    ];
+    const sponsor = await prisma.sponsor.findFirst({ orderBy: { sortOrder: "asc" }, select: { id: true } });
+    for (const [m, d, kind, category, amountOre, text, counterparty] of LEDGER) {
+      if (day(m, d) > now) continue;
+      await prisma.ledgerEntry.create({ data: { date: day(m, d), kind, category, amountOre, text, counterparty, sponsorId: category === "SPONSOR" ? sponsor?.id ?? null : null, createdById: users.kasserer.id } });
+    }
+    const BUDGET: Record<string, number> = { KONTINGENT: 9000000, SPONSOR: 1500000, TILSKUD: 1200000, STAEVNE_IND: 2000000, SALG: 500000, BANELEJE: 3800000, FORBUND: 650000, TRAENER: 800000, STAEVNE_UD: 1500000, UDSTYR: 800000, ARRANGEMENT: 500000, ADMIN: 150000 };
+    for (const [category, amountOre] of Object.entries(BUDGET)) {
+      await prisma.budgetLine.upsert({ where: { year_category: { year, category } }, update: {}, create: { year, category, amountOre } });
+    }
   }
 
   console.log(`Demodata oprettet: ${DEMO_USERS.length} testbrugere, ${created.length} træninger`);

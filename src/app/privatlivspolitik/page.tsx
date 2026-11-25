@@ -16,6 +16,7 @@ const DATA: [string, string, string, string][] = [
   ["Medlemskab", "Navn, mail, telefon, fødselsdato, adresse og medlemstype", "For at kunne have dig som medlem og opkræve kontingent (aftale)", "Indtil du sletter din profil. Bestyrelsen rydder op i tidligere medlemmer én gang om året"],
   ["Forælder eller værge", "Navn og mail på forælder til medlemmer under 18 år", "Betalingslink, kvitteringer og vigtige beskeder (aftale)", "Som medlemmet"],
   ["Betalinger", "Beløb, dato, medlemstype og betalingsreference. Kortoplysninger gemmes kun hos Stripe, aldrig hos os", "Bogføringsloven (retlig forpligtelse)", "5 år efter regnskabsårets udløb"],
+  ["Regnskab", "Klubbens posteringer og bilag. Kassereren ser, hvem der mangler at betale eller forny, og kan sende en påmindelse", "Bogføringsloven og opkrævning af kontingent (retlig forpligtelse og aftale)", "5 år efter regnskabsårets udløb"],
   ["Træning", "Tilmeldinger til træninger og Træn sammen-ture", "Så trænerne ved, hvem der kommer (legitim interesse)", "Som medlemmet"],
   ["Data fra dit ur", "Træninger fra Strava eller andre forbundne tjenester: sport, tid, distance, puls og watt, samt bedste præstationer udregnet heraf", "Kun hvis du selv forbinder dit ur (samtykke)", "Indtil du afbryder forbindelsen eller sletter din profil"],
   ["Vægt", "Din vægt, hvis du skriver den", "Til at udregne FTP i watt pr. kg (samtykke). Andre ser kun W/kg, aldrig vægten", "Indtil du fjerner den"],

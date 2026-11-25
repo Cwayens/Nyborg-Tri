@@ -1048,3 +1048,21 @@ form.admin-form, .admin-form { max-width: 920px; }
 .join-guest .join-mentor { display: flex; align-items: flex-start; gap: 10px; }
 .join-mentor input { flex: none; margin-top: 4px; width: auto; }
 .join-mentor span small { display: block; font-weight: 400; margin-top: 2px; }
+
+/* ---------- Økonomi ---------- */
+.neg { color: var(--warn); }
+.stat .value.neg { color: var(--warn); }
+table.num td:not(:first-child), table.num th:not(:first-child), td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+table.list tfoot th, table.list tfoot td { border-top: 2px solid var(--line); }
+.kind-pick { display: flex; gap: 18px; border: 0; padding: 0; margin: 0; }
+.finance-form:has(input[name=kind][value=INCOME]:checked) .cat-expense,
+.finance-form:has(input[name=kind][value=EXPENSE]:checked) .cat-income { display: none; }
+.finance-list td.actions { display: flex; gap: 12px; align-items: center; white-space: nowrap; }
+.confirm-del summary { cursor: pointer; color: var(--link); list-style: none; }
+.confirm-del summary::-webkit-details-marker { display: none; }
+.confirm-del[open] summary { margin-bottom: 4px; }
+.budget-row { display: grid; grid-template-columns: 1fr 130px; gap: 10px; align-items: center; }
+.budget-row span small { display: block; font-weight: 400; font-size: 0.78rem; }
+.budget-row input { text-align: right; }
+.finance-budget fieldset { margin: 0; }
+.finance-budget legend { padding: 0; }
