@@ -1,3 +1,5 @@
+import { INTL, type Locale } from "./i18n-core";
+
 // Træningstider indtastes og vises i dansk tid, uanset serverens tidszone.
 const TZ = "Europe/Copenhagen";
 
@@ -35,19 +37,19 @@ export function addWeeksLocal(value: string, weeks: number): string {
   return `${d.toISOString().slice(0, 10)}T${time}`;
 }
 
-export function formatTime(d: Date): string {
-  return new Intl.DateTimeFormat("da-DK", { timeZone: TZ, hour: "2-digit", minute: "2-digit" }).format(d);
+export function formatTime(d: Date, loc: Locale = "da"): string {
+  return new Intl.DateTimeFormat(INTL[loc], { timeZone: TZ, hour: "2-digit", minute: "2-digit" }).format(d);
 }
 
-export function formatDay(d: Date): string {
-  return new Intl.DateTimeFormat("da-DK", { timeZone: TZ, weekday: "long", day: "numeric", month: "long" }).format(d);
+export function formatDay(d: Date, loc: Locale = "da"): string {
+  return new Intl.DateTimeFormat(INTL[loc], { timeZone: TZ, weekday: "long", day: "numeric", month: "long" }).format(d);
 }
 
 export function dayKey(d: Date): string {
   return new Intl.DateTimeFormat("sv-SE", { timeZone: TZ }).format(d);
 }
 
-export function weekdayShort(d: Date): string {
-  const s = new Intl.DateTimeFormat("da-DK", { weekday: "short", timeZone: TZ }).format(d).replace(".", "");
+export function weekdayShort(d: Date, loc: Locale = "da"): string {
+  const s = new Intl.DateTimeFormat(INTL[loc], { weekday: "short", timeZone: TZ }).format(d).replace(".", "");
   return s.charAt(0).toUpperCase() + s.slice(1);
 }

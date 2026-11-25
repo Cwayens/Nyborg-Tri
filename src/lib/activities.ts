@@ -1,15 +1,16 @@
 import type { Activity, Discipline, Provider } from "@prisma/client";
+import { INTL, type Locale } from "./i18n-core";
 
 export const SPORTS: Discipline[] = ["SWIM", "BIKE", "RUN", "STRENGTH", "OTHER"];
 
-export function formatDuration(sec: number): string {
+export function formatDuration(sec: number, loc: Locale = "da"): string {
   const h = Math.floor(sec / 3600);
   const m = Math.round((sec % 3600) / 60);
-  return h > 0 ? `${h} t ${m.toString().padStart(2, "0")} min` : `${m} min`;
+  return h > 0 ? `${h} ${loc === "en" ? "h" : "t"} ${m.toString().padStart(2, "0")} min` : `${m} min`;
 }
 
-export function formatHours(sec: number): string {
-  return (sec / 3600).toLocaleString("da-DK", { maximumFractionDigits: 1 }) + " t";
+export function formatHours(sec: number, loc: Locale = "da"): string {
+  return (sec / 3600).toLocaleString(INTL[loc], { maximumFractionDigits: 1 }) + (loc === "en" ? " h" : " t");
 }
 
 export function formatDistance(m: number, sport: Discipline): string {

@@ -253,7 +253,7 @@ label.check { display: flex; gap: 8px; align-items: center; font-weight: 400; }
 
 /* ---------- App-navigation (indlogget) ---------- */
 .appnav-top { display: flex; gap: 2px; margin-left: 12px; }
-.appnav-top a { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 10px; color: var(--muted); text-decoration: none; font-weight: 600; }
+.appnav-top a { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 10px; color: var(--muted); text-decoration: none; font-weight: 600; white-space: nowrap; }
 .appnav-top a:hover { background: var(--bg); color: var(--text); }
 .appnav-top a[aria-current="page"] { background: color-mix(in srgb, var(--sea) 12%, transparent); color: var(--sea); }
 .usermenu { margin-left: auto; position: relative; }

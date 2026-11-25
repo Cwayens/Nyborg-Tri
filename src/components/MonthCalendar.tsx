@@ -2,7 +2,8 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { canSignUp } from "@/lib/access";
 import { prisma } from "@/lib/db";
-import { DISCIPLINE_LABEL } from "@/lib/roles";
+import { disciplineLabel } from "@/lib/roles";
+import { getLocale, translator, type T } from "@/lib/i18n";
 import { dayKey, formatDay, formatTime, parseLocal } from "@/lib/time";
 import { setPaceGroup, toggleSignup } from "@/app/kalender/actions";
 import { isOn } from "@/lib/features";
@@ -17,8 +18,11 @@ import { deletePlanned } from "@/app/kalender/mit-program/actions";
 
 export type CalendarParams = { gruppe?: string; maaned?: string; dag?: string; afdeling?: string };
 
-const WEEKDAYS = ["Man", "Tir", "Ons", "Tor", "Fre", "Lør", "Søn"];
-const MONTHS = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
+const WEEKDAYS = { da: ["Man", "Tir", "Ons", "Tor", "Fre", "Lør", "Søn"], en: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] };
+const MONTHS_ALL = {
+  da: ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"],
+  en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+};
 const pad = (n: number) => String(n).padStart(2, "0");
 
 /**
@@ -29,6 +33,9 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
   const session = publicView ? null : await auth();
   const base = publicView ? "/traening" : "/kalender";
   const viewer = await calendarViewer(session?.user.id);
+  const loc = await getLocale();
+  const t = translator(loc);
+  const MONTHS = MONTHS_ALL[loc];
   const own = viewer?.teamId ?? null;
   // Hvilke hold man må se (eget hold og dem, holdet ser; se visibleTeams). Besøgende ser de åbne hold.
   const [allTeams, branches] = await Promise.all([getTeams(), getBranches()]);
@@ -100,56 +107,56 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
       {publicView ? (
         <div className="section-head" style={{ marginTop: 0 }}>
           <div>
-            <h1 style={{ margin: "0 0 4px" }}>Træning</h1>
-            <p className="muted" style={{ margin: 0 }}>Her er klubbens træninger. Som medlem tilmelder du dig med ét tryk, og de første 14 dage er gratis.</p>
+            <h1 style={{ margin: "0 0 4px" }}>{t("Træning", "Training")}</h1>
+            <p className="muted" style={{ margin: 0 }}>{t("Her er klubbens træninger. Som medlem tilmelder du dig med ét tryk, og de første 14 dage er gratis.", "Here are the club's trainings. As a member you sign up with one tap, and the first 14 days are free.")}</p>
           </div>
-          <Link href="/bliv-medlem" className="button">Prøv gratis i 14 dage</Link>
+          <Link href="/bliv-medlem" className="button">{t("Prøv gratis i 14 dage", "Try free for 14 days")}</Link>
         </div>
       ) : (
         <div className="section-head" style={{ marginTop: 0 }}>
-          <h1 style={{ margin: 0 }}>Kalender</h1>
+          <h1 style={{ margin: 0 }}>{t("Kalender", "Calendar")}</h1>
           <span className="cal-links">
-            {ownOn && <Link href="/kalender/mit-program" className="button small secondary">+ Importér eget program</Link>}
-            <Link href="/forbindelser" className="muted">Få kalenderen på telefonen →</Link>
+            {ownOn && <Link href="/kalender/mit-program" className="button small secondary">{t("+ Importér eget program", "+ Import your own plan")}</Link>}
+            <Link href="/forbindelser" className="muted">{t("Få kalenderen på telefonen →", "Get the calendar on your phone →")}</Link>
           </span>
         </div>
       )}
       {branches.length > 1 && <p className="filters">
-        <span className="muted">Afdeling:</span>
-        <Link href={`${base}?gruppe=alle&maaned=${monthKey}`} className={!branch ? "active" : undefined}>Alle</Link>
+        <span className="muted">{t("Afdeling:", "Branch:")}</span>
+        <Link href={`${base}?gruppe=alle&maaned=${monthKey}`} className={!branch ? "active" : undefined}>{t("Alle", "All")}</Link>
         {branches.map((b) => (
           <Link key={b.id} href={`${base}?gruppe=alle&afdeling=${b.id}&maaned=${monthKey}`} className={branch?.id === b.id ? "active" : undefined}>{b.name}</Link>
         ))}
       </p>}
       {allowed.length > 1 && <p className="filters">
-        <span className="muted">Vis:</span>
-        <Link href={`${base}?gruppe=alle&maaned=${monthKey}${branch ? `&afdeling=${branch.id}` : ""}`} className={group === null ? "active" : undefined}>Alle</Link>
+        <span className="muted">{t("Vis:", "Show:")}</span>
+        <Link href={`${base}?gruppe=alle&maaned=${monthKey}${branch ? `&afdeling=${branch.id}` : ""}`} className={group === null ? "active" : undefined}>{t("Alle", "All")}</Link>
         {allowed.map((g) => (
           <Link key={g} href={`${base}?gruppe=${g}&maaned=${monthKey}${branch ? `&afdeling=${branch.id}` : ""}`} className={group === g ? "active" : undefined}>
-            {teamName.get(g)}{own === g ? " (mit hold)" : ""}
+            {teamName.get(g)}{own === g ? t(" (mit hold)", " (my team)") : ""}
           </Link>
         ))}
       </p>}
 
       {!eligible && !publicView && (
         <p className="card">
-          Du kan tilmelde dig træninger, når du har betalt kontingent, fået en prøveperiode eller brugt en kode.{" "}
-          <Link href="/bliv-medlem">Se mulighederne</Link>
+          {t("Du kan tilmelde dig træninger, når du har betalt kontingent, fået en prøveperiode eller brugt en kode.", "You can sign up for trainings once you've paid your fee, got a trial or used a code.")}{" "}
+          <Link href="/bliv-medlem">{t("Se mulighederne", "See the options")}</Link>
         </p>
       )}
       {eligible && !own && viewer?.role === "ATHLETE" && (
-        <p className="card">Du er endnu ikke tilknyttet et hold. Kontakt bestyrelsen, så du kan tilmelde dig træninger.</p>
+        <p className="card">{t("Du er endnu ikke tilknyttet et hold. Kontakt bestyrelsen, så du kan tilmelde dig træninger.", "You're not on a team yet. Contact the board so you can sign up for trainings.")}</p>
       )}
 
       <section className="month card" aria-label={`${MONTHS[m - 1]} ${y}`}>
         <header className="month-head">
-          <Link href={url(prev)} className="button ghost small" aria-label="Forrige måned">‹</Link>
+          <Link href={url(prev)} className="button ghost small" aria-label={t("Forrige måned", "Previous month")}>‹</Link>
           <h2>{MONTHS[m - 1].replace(/^./, (c) => c.toUpperCase())} {y}</h2>
-          <Link href={url(next)} className="button ghost small" aria-label="Næste måned">›</Link>
-          {!todayKey.startsWith(monthKey) && <Link href={url(todayKey.slice(0, 7), todayKey)} className="month-today">I dag</Link>}
+          <Link href={url(next)} className="button ghost small" aria-label={t("Næste måned", "Next month")}>›</Link>
+          {!todayKey.startsWith(monthKey) && <Link href={url(todayKey.slice(0, 7), todayKey)} className="month-today">{t("I dag", "Today")}</Link>}
         </header>
         <div className="month-grid">
-          {WEEKDAYS.map((d) => <div key={d} className="month-wd" aria-hidden="true">{d}</div>)}
+          {WEEKDAYS[loc].map((d) => <div key={d} className="month-wd" aria-hidden="true">{d}</div>)}
           {cells.map((key, i) => {
             if (!key) return <div key={`x${i}`} className="month-cell empty" />;
             const list = days.get(key) ?? [];
@@ -160,18 +167,20 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
             const cls = ["month-cell", key === todayKey && "today", key === selected && "selected", key < todayKey && "past", mine && "mine"].filter(Boolean).join(" ");
             return (
               <Link key={key} href={url(monthKey, key)} className={cls} aria-current={key === selected ? "date" : undefined} scroll={false}
-                aria-label={`${Number(key.slice(8))}. ${MONTHS[m - 1]}: ${list.length ? `${list.length} træning${list.length > 1 ? "er" : ""}` : "ingen træninger"}${ownList.length ? `, ${ownList.length} i dit eget program` : ""}`}>
+                aria-label={loc === "en"
+                  ? `${Number(key.slice(8))} ${MONTHS[m - 1]}: ${list.length ? `${list.length} training${list.length > 1 ? "s" : ""}` : "no trainings"}${ownList.length ? `, ${ownList.length} in your own plan` : ""}`
+                  : `${Number(key.slice(8))}. ${MONTHS[m - 1]}: ${list.length ? `${list.length} træning${list.length > 1 ? "er" : ""}` : "ingen træninger"}${ownList.length ? `, ${ownList.length} i dit eget program` : ""}`}>
                 <span className="month-num">{Number(key.slice(8))}</span>
                 <span className="month-items">
                   {list.slice(0, clubN).map((s) => (
                     <span key={s.id} className={`month-item disc disc-${s.discipline}${s.cancelledAt ? " cancelled" : ""}`}>
-                      <i />{formatTime(s.startsAt)} {s.title}
+                      <i />{formatTime(s.startsAt, loc)} {s.title}
                     </span>
                   ))}
                   {ownList.slice(0, ownN).map((p) => (
                     <span key={p.id} className={`month-item own disc disc-${p.discipline}`}><i />{p.time ? `${p.time} ` : ""}{p.title}</span>
                   ))}
-                  {more > 0 && <span className="month-more">+{more} mere</span>}
+                  {more > 0 && <span className="month-more">+{more} {t("mere", "more")}</span>}
                 </span>
                 <span className="month-dots" aria-hidden="true">
                   {list.slice(0, 4).map((s) => <i key={s.id} className={`disc disc-${s.discipline}${s.cancelledAt ? " cancelled" : ""}`} />)}
@@ -184,25 +193,25 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
       </section>
 
       <section className="day" id="dag">
-        <h2>{formatDay(parseLocal(`${selected}T12:00`))}</h2>
-        {selectedList.length === 0 && selectedOwn.length === 0 && <p className="card empty">Ingen træninger denne dag.</p>}
+        <h2>{formatDay(parseLocal(`${selected}T12:00`), loc)}</h2>
+        {selectedList.length === 0 && selectedOwn.length === 0 && <p className="card empty">{t("Ingen træninger denne dag.", "No trainings this day.")}</p>}
         {selectedOwn.map((p) => (
           <article key={p.id} className={`card training own disc disc-${p.discipline}`}>
-            <div className="training-time">{p.time ?? "Hele dagen"}</div>
+            <div className="training-time">{p.time ?? t("Hele dagen", "All day")}</div>
             <div>
-              <span className="own-label">Dit eget program · kun du kan se det</span>
+              <span className="own-label">{t("Dit eget program · kun du kan se det", "Your own plan · only you can see it")}</span>
               <h3>{p.title}</h3>
-              <p className="muted">{DISCIPLINE_LABEL[p.discipline]}{p.durationMin ? ` · ${p.durationMin} min` : ""}{p.sharedId ? " · delt i Træn sammen" : ""}</p>
+              <p className="muted">{disciplineLabel(p.discipline, loc)}{p.durationMin ? ` · ${p.durationMin} min` : ""}{p.sharedId ? t(" · delt i Træn sammen", " · shared in Train together") : ""}</p>
               {p.description && <p style={{ whiteSpace: "pre-line" }}>{p.description}</p>}
               {isWorkout(p.workout) && <WorkoutView workout={p.workout} discipline={p.discipline} refs={refs} downloadId={p.id} kind="eget" />}
             </div>
             <div className="signup item-actions">
-              {shareOn && !p.sharedId && p.day >= todayKey && <Link href={`/traen-sammen?ny=1&fra=${p.id}`} className="button small">Del i Træn sammen</Link>}
-              {p.sharedId && <Link href="/traen-sammen" className="button small secondary">Se turen</Link>}
+              {shareOn && !p.sharedId && p.day >= todayKey && <Link href={`/traen-sammen?ny=1&fra=${p.id}`} className="button small">{t("Del i Træn sammen", "Share in Train together")}</Link>}
+              {p.sharedId && <Link href="/traen-sammen" className="button small secondary">{t("Se turen", "See the session")}</Link>}
               <form action={deletePlanned}>
                 <input type="hidden" name="id" value={p.id} />
                 <input type="hidden" name="back" value={url(monthKey, selected)} />
-                <button className="button small ghost" type="submit">Slet</button>
+                <button className="button small ghost" type="submit">{t("Slet", "Delete")}</button>
               </form>
             </div>
           </article>
@@ -210,16 +219,16 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
         {selectedList.map((s) => (
           <article key={s.id} className={`card training disc disc-${s.discipline}`}>
             <div className="training-time">
-              {formatTime(s.startsAt)}–{formatTime(s.endsAt)}
+              {formatTime(s.startsAt, loc)}–{formatTime(s.endsAt, loc)}
             </div>
             <div>
-              <span className="disc-label">{DISCIPLINE_LABEL[s.discipline]}</span>
-              {testdage && s.testDay && <span className="pill test-pill">Testdag: {TEST_BY_KEY[s.testDay].label}</span>}
+              <span className="disc-label">{disciplineLabel(s.discipline, loc)}</span>
+              {testdage && s.testDay && <span className="pill test-pill">{t("Testdag", "Test day")}: {TEST_BY_KEY[s.testDay].label}</span>}
               <h3 style={s.cancelledAt ? { textDecoration: "line-through" } : undefined}>{s.title}</h3>
-              {s.cancelledAt && <p><span className="pill warn">Aflyst{s.cancelReason ? `: ${s.cancelReason}` : ""}</span></p>}
+              {s.cancelledAt && <p><span className="pill warn">{t("Aflyst", "Cancelled")}{s.cancelReason ? `: ${s.cancelReason}` : ""}</span></p>}
               <p className="muted">
                 {s.location}
-                {s.createdBy.name && !publicView ? ` · Træner: ${s.createdBy.name}` : ""}
+                {s.createdBy.name && !publicView ? ` · ${t("Træner", "Coach")}: ${s.createdBy.name}` : ""}
                 {" · "}
                 {teamName.get(s.teamId ?? "")}
               </p>
@@ -228,40 +237,40 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
                 <WorkoutView workout={s.workout} discipline={s.discipline} refs={refs} downloadId={s.signups.some((x) => x.user.id === userId) ? s.id : undefined} />
               )}
               {!publicView && tempo && s.paceGroups.length > 0 ? (
-                <PaceAttendees groups={s.paceGroups} signups={s.signups.map((x) => ({ name: x.user.name ?? "Unavngivet", pace: x.paceGroup }))} />
+                <PaceAttendees t={t} groups={s.paceGroups} signups={s.signups.map((x) => ({ name: x.user.name ?? t("Unavngivet", "Unnamed"), pace: x.paceGroup }))} />
               ) : (
-                !publicView && <Attendees names={s.signups.map((x) => x.user.name ?? "Unavngivet")} count={s.signups.length} />
+                !publicView && <Attendees t={t} names={s.signups.map((x) => x.user.name ?? t("Unavngivet", "Unnamed"))} count={s.signups.length} />
               )}
               {!publicView && tempo && s.paceGroups.length > 0 && s.signups.some((x) => x.user.id === userId) && s.startsAt > new Date() && (
                 <form action={setPaceGroup} className="pace-change">
                   <input type="hidden" name="sessionId" value={s.id} />
-                  <label>Din gruppe
+                  <label>{t("Din gruppe", "Your group")}
                     <select name="paceGroup" defaultValue={s.signups.find((x) => x.user.id === userId)?.paceGroup ?? ""}>
-                      <option value="">Ved ikke endnu</option>
+                      <option value="">{t("Ved ikke endnu", "Not sure yet")}</option>
                       {s.paceGroups.map((g) => <option key={g} value={g}>{g}</option>)}
                     </select>
                   </label>
-                  <button className="button small ghost" type="submit">Skift</button>
+                  <button className="button small ghost" type="submit">{t("Skift", "Change")}</button>
                 </form>
               )}
             </div>
             {publicView && !s.cancelledAt && s.startsAt > new Date() && (
-              <Link href="/bliv-medlem" className="button small secondary signup">Prøv gratis</Link>
+              <Link href="/bliv-medlem" className="button small secondary signup">{t("Prøv gratis", "Try free")}</Link>
             )}
             {userId && !s.cancelledAt && s.startsAt > new Date() && (s.signups.some((x) => x.user.id === userId) || (eligible && viewer && canJoinTeam(viewer, s.teamId, allTeams, viewer.trial))) && (
               <form action={toggleSignup} className="signup">
                 <input type="hidden" name="sessionId" value={s.id} />
                 {s.signups.some((x) => x.user.id === userId) ? (
-                  <button className="button secondary small" type="submit">✓ Tilmeldt · Afmeld</button>
+                  <button className="button secondary small" type="submit">{t("✓ Tilmeldt · Afmeld", "✓ Signed up · Cancel")}</button>
                 ) : (
                   <>
                     {tempo && s.paceGroups.length > 0 && (
-                      <select name="paceGroup" aria-label="Vælg tempogruppe" defaultValue={suggestGroup(s.paceGroups, refs ?? {}, s.discipline) ?? ""}>
-                        <option value="">Vælg tempo</option>
+                      <select name="paceGroup" aria-label={t("Vælg tempogruppe", "Choose pace group")} defaultValue={suggestGroup(s.paceGroups, refs ?? {}, s.discipline) ?? ""}>
+                        <option value="">{t("Vælg tempo", "Choose pace")}</option>
                         {s.paceGroups.map((g) => <option key={g} value={g}>{g}</option>)}
                       </select>
                     )}
-                    <button className="button small" type="submit">Tilmeld</button>
+                    <button className="button small" type="submit">{t("Tilmeld", "Sign up")}</button>
                   </>
                 )}
               </form>
@@ -274,15 +283,15 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
 }
 
 // Tilmeldte fordelt på tempogrupper
-function PaceAttendees({ groups, signups }: { groups: string[]; signups: { name: string; pace: string | null }[] }) {
-  if (signups.length === 0) return <p className="muted attendees">Ingen tilmeldte endnu. Vælg din tempogruppe, når du tilmelder dig.</p>;
+function PaceAttendees({ t, groups, signups }: { t: T; groups: string[]; signups: { name: string; pace: string | null }[] }) {
+  if (signups.length === 0) return <p className="muted attendees">{t("Ingen tilmeldte endnu. Vælg din tempogruppe, når du tilmelder dig.", "No one signed up yet. Choose your pace group when you sign up.")}</p>;
   const rows = [...groups, null].map((g) => ({ g, names: signups.filter((x) => (g ? x.pace === g : !x.pace || !groups.includes(x.pace))).map((x) => x.name) }));
   return (
     <div className="attendees pace-groups">
-      <strong>{signups.length} kommer</strong>
+      <strong>{signups.length} {t("kommer", "coming")}</strong>
       <ul>
         {rows.filter((r) => r.g || r.names.length).map((r) => (
-          <li key={r.g ?? "-"}><span className="pill">{r.g ?? "Ingen gruppe"}</span> {r.names.length ? <span className="muted">{r.names.join(", ")}</span> : <span className="muted">Ingen endnu</span>}</li>
+          <li key={r.g ?? "-"}><span className="pill">{r.g ?? t("Ingen gruppe", "No group")}</span> {r.names.length ? <span className="muted">{r.names.join(", ")}</span> : <span className="muted">{t("Ingen endnu", "None yet")}</span>}</li>
         ))}
       </ul>
     </div>
@@ -290,11 +299,11 @@ function PaceAttendees({ groups, signups }: { groups: string[]; signups: { name:
 }
 
 // Navne vises kun for indloggede; andre ser kun antallet
-function Attendees({ names, count }: { names: string[] | null; count: number }) {
-  if (count === 0) return <p className="muted attendees">Ingen tilmeldte endnu</p>;
+function Attendees({ t, names, count }: { t: T; names: string[] | null; count: number }) {
+  if (count === 0) return <p className="muted attendees">{t("Ingen tilmeldte endnu", "No one signed up yet")}</p>;
   return (
     <p className="attendees">
-      <strong>{count} kommer</strong>
+      <strong>{count} {t("kommer", "coming")}</strong>
       {names && <span className="muted">: {names.join(", ")}</span>}
     </p>
   );

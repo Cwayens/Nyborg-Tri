@@ -9,6 +9,7 @@ import { hiddenHrefs } from "@/lib/features";
 import { Logo, MenuIcon, initials } from "./Icons";
 import { CLUB } from "@/lib/club";
 import { staffOf } from "@/lib/staff";
+import { getLocale, translator } from "@/lib/i18n";
 
 export async function Header() {
   const session = await auth();
@@ -16,6 +17,8 @@ export async function Header() {
   const staff = user ? await staffOf(user.id) : null;
   const expired = user ? await membershipExpired(user.id) : null;
   const hidden = await hiddenHrefs();
+  const loc = await getLocale();
+  const t = translator(loc);
   const nav = navigation.filter((i) => !hidden.includes(i.href));
 
   async function logout() {
@@ -27,56 +30,56 @@ export async function Header() {
     <>
       <header className="site-header">
         <div className="wrap header-row">
-          <Link href="/" className="logo" aria-label={`${CLUB.name} – til forsiden`}>
+          <Link href="/" className="logo" aria-label={`${CLUB.name} – ${t("til forsiden", "home")}`}>
             <Logo />
           </Link>
 
           {user ? (
             <>
-              <AppNav variant="top" hidden={hidden} />
+              <AppNav variant="top" hidden={hidden} loc={loc} />
               <details className="usermenu">
-                <summary aria-label="Min profil og menu">
+                <summary aria-label={t("Min profil og menu", "My profile and menu")}>
                   <span className="avatar big">{initials(user.name ?? user.email)}</span>
                 </summary>
                 <div className="dropdown">
                   <div className="dropdown-head">
-                    <strong>{user.name ?? "Min profil"}</strong>
+                    <strong>{user.name ?? t("Min profil", "My profile")}</strong>
                     <span className="muted">{user.email}</span>
                   </div>
-                  <Link href="/profil">Min profil</Link>
-                  {!hidden.includes("/benchmarks") && <Link href="/benchmarks">Mine tests</Link>}
-                  <Link href="/aktiviteter">Mine aktiviteter</Link>
-                  <Link href="/forbindelser">Ure, apps og kalender</Link>
-                  <Link href="/bliv-medlem">Medlemskab og betaling</Link>
-                  {hasRole(user.role, "TRAINER") ? <Link href="/traener">Trænerværktøj</Link> : staff && staff.leads.length > 0 && <Link href="/traener">Holdleder</Link>}
-                  {user.role === "ADMIN" ? <Link href="/admin">Administration</Link> : staff?.duties.includes("TREASURER") && <Link href="/admin/betalinger">Kasserer</Link>}
+                  <Link href="/profil">{t("Min profil", "My profile")}</Link>
+                  {!hidden.includes("/benchmarks") && <Link href="/benchmarks">{t("Mine tests", "My tests")}</Link>}
+                  <Link href="/aktiviteter">{t("Mine aktiviteter", "My activities")}</Link>
+                  <Link href="/forbindelser">{t("Ure, apps og kalender", "Watches, apps and calendar")}</Link>
+                  <Link href="/bliv-medlem">{t("Medlemskab og betaling", "Membership and payment")}</Link>
+                  {hasRole(user.role, "TRAINER") ? <Link href="/traener">{t("Trænerværktøj", "Coach tools")}</Link> : staff && staff.leads.length > 0 && <Link href="/traener">{t("Holdleder", "Team leader")}</Link>}
+                  {user.role === "ADMIN" ? <Link href="/admin">{t("Administration", "Admin")}</Link> : staff?.duties.includes("TREASURER") && <Link href="/admin/betalinger">{t("Kasserer", "Treasurer")}</Link>}
                   <div className="dropdown-sep" />
-                  <Link href="/klubben">Klubinfo og nyheder</Link>
+                  <Link href="/klubben">{t("Klubinfo og nyheder", "Club info and news")}</Link>
                   <form action={logout}>
-                    <button type="submit" className="linklike">Log ud</button>
+                    <button type="submit" className="linklike">{t("Log ud", "Log out")}</button>
                   </form>
                 </div>
               </details>
             </>
           ) : (
             <>
-              <nav aria-label="Hovedmenu" className="publicnav">
+              <nav aria-label={t("Hovedmenu", "Main menu")} className="publicnav">
                 <ul className="menu">
                   {nav.map((item) => (
-                    <li key={item.href}><Link href={item.href}>{item.label}</Link></li>
+                    <li key={item.href}><Link href={item.href}>{loc === "en" && item.en ? item.en : item.label}</Link></li>
                   ))}
                 </ul>
               </nav>
               <div className="account">
-                <Link href="/login" className="hide-sm">Log ind</Link>
-                <Link href="/bliv-medlem" className="button small">Bliv medlem</Link>
+                <Link href="/login" className="hide-sm">{t("Log ind", "Log in")}</Link>
+                <Link href="/bliv-medlem" className="button small">{t("Bliv medlem", "Join")}</Link>
               </div>
               <details className="burger">
-                <summary aria-label="Åbn menu"><MenuIcon /></summary>
+                <summary aria-label={t("Åbn menu", "Open menu")}><MenuIcon /></summary>
                 <div className="burger-panel">
-                  {nav.map((item) => <Link key={item.href} href={item.href}>{item.label}</Link>)}
-                  <Link href="/bliv-medlem">Bliv medlem</Link>
-                  <Link href="/login">Log ind</Link>
+                  {nav.map((item) => <Link key={item.href} href={item.href}>{loc === "en" && item.en ? item.en : item.label}</Link>)}
+                  <Link href="/bliv-medlem">{t("Bliv medlem", "Join")}</Link>
+                  <Link href="/login">{t("Log ind", "Log in")}</Link>
                 </div>
               </details>
             </>
@@ -86,12 +89,12 @@ export async function Header() {
       {expired && (
         <div className="unpaid-bar" role="status">
           <div className="wrap">
-            <strong>Mangler betaling.</strong> Dit medlemskab udløb {dato(expired.endDate)}, så du kan ikke tilmelde dig træninger.{" "}
-            <Link href="/bliv-medlem">Forny medlemskab</Link>
+            <strong>{t("Mangler betaling.", "Payment due.")}</strong> {t(`Dit medlemskab udløb ${dato(expired.endDate)}, så du kan ikke tilmelde dig træninger.`, `Your membership expired on ${dato(expired.endDate, loc)}, so you can't sign up for trainings.`)}{" "}
+            <Link href="/bliv-medlem">{t("Forny medlemskab", "Renew membership")}</Link>
           </div>
         </div>
       )}
-      {user && <AppNav variant="bottom" hidden={hidden} />}
+      {user && <AppNav variant="bottom" hidden={hidden} loc={loc} />}
     </>
   );
 }

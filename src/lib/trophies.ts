@@ -1,4 +1,5 @@
 import type { Discipline } from "@prisma/client";
+import type { Locale } from "./i18n-core";
 
 // Mærker og sjove titler efter, hvor mange træninger man har været med til. Tæller klubtræninger, man var tilmeldt
 // (ikke aflyste), og ture under Træn sammen, man var med på eller stod for. Vises kun for medlemmet selv.
@@ -19,6 +20,21 @@ export const LEVELS = [
 ] as const;
 
 export type Level = (typeof LEVELS)[number];
+
+/** Engelske titler, slået op på antal træninger */
+export const LEVELS_EN: Record<number, { title: string; text: string }> = {
+  1: { title: "Wetsuit rookie", text: "First training done. Welcome to the pack!" },
+  5: { title: "Pool pirate", text: "You've found your way to the club five times. It's a habit now." },
+  10: { title: "Chain greaser", text: "Ten trainings. The machine is running." },
+  25: { title: "Transition regular", text: "You know the way from wetsuit to bike shoes blindfolded." },
+  50: { title: "Lactic acid master", text: "Fifty trainings. Your legs protest, you do it anyway." },
+  75: { title: "Brick bully", text: "Bike and run in one go is just Tuesday for you." },
+  100: { title: "Iron ambassador", text: "A hundred trainings. You ARE the club." },
+  150: { title: "Asphalt aristocrat", text: "The road knows your name." },
+  200: { title: "Triathlon legend", text: "They tell stories about you in the changing room." },
+  300: { title: "Club furniture", text: "We're considering writing you into the bylaws." },
+};
+export const levelText = (l: Level, loc: Locale) => (loc === "en" ? LEVELS_EN[l.at] : l);
 
 export type Rank = { count: number; level: Level | null; next: Level | null; toNext: number; pct: number };
 
@@ -47,7 +63,8 @@ export function longestStreak(done: Done[]): number {
   return best;
 }
 
-export function trophies(done: Done[]): Trophy[] {
+export function trophies(done: Done[], loc: Locale = "da"): Trophy[] {
+  const en = loc === "en";
   const by = (d: Discipline) => done.filter((x) => x.discipline === d).length;
   const swim = by("SWIM"), bike = by("BIKE"), run = by("RUN");
   const early = done.filter((d) => hourDk(d.at) < 7).length;
@@ -58,16 +75,18 @@ export function trophies(done: Done[]): Trophy[] {
   for (const d of done) weeks.set(weekNo(d.at), (weeks.get(weekNo(d.at)) ?? new Set()).add(d.discipline));
   const triWeek = [...weeks.values()].some((s) => s.has("SWIM") && s.has("BIKE") && s.has("RUN"));
   const t = (key: string, title: string, text: string, have: number, need: number, unit: string): Trophy => ({
-    key, title, text, earned: have >= need, progress: `${Math.min(have, need)} af ${need} ${unit}`,
+    key, title, text, earned: have >= need, progress: `${Math.min(have, need)} ${en ? "of" : "af"} ${need} ${unit}`,
   });
   return [
-    t("klor", "Klorhoved", "10 svømmetræninger", swim, 10, "svøm"),
-    t("hjul", "Hjulsuger", "10 cykeltræninger", bike, 10, "cykel"),
-    t("asfalt", "Asfaltæder", "10 løbetræninger", run, 10, "løb"),
-    { key: "tri", title: "Triatlet på papiret", text: "Svøm, cykel og løb i samme uge", earned: triWeek, progress: triWeek ? "Klaret" : "Mangler en uge med alle tre" },
-    t("streak", "Ustoppelig", "Træning 6 uger i træk", streak, 6, "uger"),
-    t("morgen", "Morgenfrisk", "5 træninger før kl. 7", early, 5, "morgener"),
-    t("vinter", "Vinterbader", "10 træninger i december, januar eller februar", winter, 10, "vintertræninger"),
-    t("vaert", "Turleder", "Stå for 3 ture under Træn sammen", hosted, 3, "ture"),
+    en ? t("klor", "Chlorine head", "10 swim trainings", swim, 10, "swims") : t("klor", "Klorhoved", "10 svømmetræninger", swim, 10, "svøm"),
+    en ? t("hjul", "Wheel sucker", "10 bike trainings", bike, 10, "rides") : t("hjul", "Hjulsuger", "10 cykeltræninger", bike, 10, "cykel"),
+    en ? t("asfalt", "Asphalt eater", "10 run trainings", run, 10, "runs") : t("asfalt", "Asfaltæder", "10 løbetræninger", run, 10, "løb"),
+    en
+      ? { key: "tri", title: "Triathlete on paper", text: "Swim, bike and run in the same week", earned: triWeek, progress: triWeek ? "Done" : "Needs a week with all three" }
+      : { key: "tri", title: "Triatlet på papiret", text: "Svøm, cykel og løb i samme uge", earned: triWeek, progress: triWeek ? "Klaret" : "Mangler en uge med alle tre" },
+    en ? t("streak", "Unstoppable", "Training 6 weeks in a row", streak, 6, "weeks") : t("streak", "Ustoppelig", "Træning 6 uger i træk", streak, 6, "uger"),
+    en ? t("morgen", "Early bird", "5 trainings before 7 am", early, 5, "mornings") : t("morgen", "Morgenfrisk", "5 træninger før kl. 7", early, 5, "morgener"),
+    en ? t("vinter", "Winter bather", "10 trainings in December, January or February", winter, 10, "winter trainings") : t("vinter", "Vinterbader", "10 træninger i december, januar eller februar", winter, 10, "vintertræninger"),
+    en ? t("vaert", "Session leader", "Host 3 sessions in Train together", hosted, 3, "sessions") : t("vaert", "Turleder", "Stå for 3 ture under Træn sammen", hosted, 3, "ture"),
   ];
 }

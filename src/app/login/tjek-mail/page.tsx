@@ -1,11 +1,17 @@
-export const metadata = { title: "Tjek din mail" };
+import { tr } from "@/lib/i18n";
 
-export default function CheckEmail() {
+export async function generateMetadata() {
+  const t = await tr();
+  return { title: t("Tjek din mail", "Check your email") };
+}
+
+export default async function CheckEmail() {
+  const t = await tr();
   return (
     <>
-      <h1>Tjek din mail</h1>
-      <p>Vi har sendt dig et link. Klik på det for at logge ind. Linket virker i 24 timer.</p>
-      <p className="muted">Kan du ikke finde mailen, så kig i spam-mappen.</p>
+      <h1>{t("Tjek din mail", "Check your email")}</h1>
+      <p>{t("Vi har sendt dig et link. Klik på det for at logge ind. Linket virker i 24 timer.", "We've sent you a link. Click it to log in. The link works for 24 hours.")}</p>
+      <p className="muted">{t("Kan du ikke finde mailen, så kig i spam-mappen.", "Can't find the email? Check your spam folder.")}</p>
     </>
   );
 }

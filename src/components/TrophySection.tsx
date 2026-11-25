@@ -1,9 +1,12 @@
 import { prisma } from "@/lib/db";
 import { isOn } from "@/lib/features";
-import { LEVELS, rank, trophies, type Done } from "@/lib/trophies";
+import { LEVELS, levelText, rank, trophies, type Done } from "@/lib/trophies";
+import { translator, type Locale } from "@/lib/i18n-core";
 
 // Din titel og dine mærker på Min side. Bygger kun på klubtræninger og Træn sammen-ture, og vises kun for dig selv.
-export async function TrophySection({ userId }: { userId: string }) {
+export async function TrophySection({ userId, loc = "da" }: { userId: string; loc?: Locale }) {
+  const t = translator(loc);
+  const many = (n: number) => (loc === "en" ? (n === 1 ? "training" : "trainings") : n === 1 ? "træning" : "træninger");
   if (!(await isOn("maerker"))) return null;
   const now = new Date();
   const [signups, joined, hosted] = await Promise.all([
@@ -20,43 +23,44 @@ export async function TrophySection({ userId }: { userId: string }) {
     ...hosted.map((h) => ({ at: h.startsAt, discipline: h.discipline, host: true })),
   ];
   const r = rank(done.length);
-  const list = trophies(done);
-  const earned = list.filter((t) => t.earned).length;
+  const list = trophies(done, loc);
+  const lv = r.level ? levelText(r.level, loc) : null;
+  const earned = list.filter((x) => x.earned).length;
   return (
     <section className="card trophy-card" style={{ marginTop: 18 }}>
       <div className="trophy-head">
         <Medal level={r.level ? LEVELS.indexOf(r.level) + 1 : 0} />
         <div>
-          <p className="eyebrow" style={{ margin: 0 }}>Din titel</p>
-          <h2 style={{ margin: "2px 0 4px" }}>{r.level?.title ?? "Klar til start"}</h2>
-          <p className="muted" style={{ margin: 0 }}>{r.level?.text ?? "Tag med til din første træning, og få din første titel."}</p>
+          <p className="eyebrow" style={{ margin: 0 }}>{t("Din titel", "Your title")}</p>
+          <h2 style={{ margin: "2px 0 4px" }}>{lv?.title ?? t("Klar til start", "Ready to start")}</h2>
+          <p className="muted" style={{ margin: 0 }}>{lv?.text ?? t("Tag med til din første træning, og få din første titel.", "Join your first training and get your first title.")}</p>
         </div>
       </div>
       <p className="trophy-count">
-        <b>{r.count}</b> {r.count === 1 ? "træning" : "træninger"} med klubben
-        {r.next && <span className="muted"> · {r.toNext} til <b>{r.next.title}</b></span>}
+        <b>{r.count}</b> {many(r.count)} {t("med klubben", "with the club")}
+        {r.next && <span className="muted"> · {r.toNext} {t("til", "to")} <b>{levelText(r.next, loc).title}</b></span>}
       </p>
-      {r.next && <div className="meter" role="progressbar" aria-valuenow={r.pct} aria-valuemin={0} aria-valuemax={100} aria-label={`Fremgang mod ${r.next.title}`}><i style={{ width: `${r.pct}%` }} /></div>}
-      <h3 className="trophy-sub">Mærker <span className="muted">{earned} af {list.length}</span></h3>
+      {r.next && <div className="meter" role="progressbar" aria-valuenow={r.pct} aria-valuemin={0} aria-valuemax={100} aria-label={`${t("Fremgang mod", "Progress to")} ${levelText(r.next, loc).title}`}><i style={{ width: `${r.pct}%` }} /></div>}
+      <h3 className="trophy-sub">{t("Mærker", "Badges")} <span className="muted">{earned} {t("af", "of")} {list.length}</span></h3>
       <ul className="trophy-grid">
-        {list.map((t) => (
-          <li key={t.key} className={t.earned ? "earned" : ""} title={t.text}>
-            <span className="trophy-icon" aria-hidden="true">{t.earned ? "★" : "☆"}</span>
-            <strong>{t.title}</strong>
-            <span className="muted">{t.text}</span>
-            <span className="trophy-progress">{t.earned ? "Klaret" : t.progress}</span>
+        {list.map((x) => (
+          <li key={x.key} className={x.earned ? "earned" : ""} title={x.text}>
+            <span className="trophy-icon" aria-hidden="true">{x.earned ? "★" : "☆"}</span>
+            <strong>{x.title}</strong>
+            <span className="muted">{x.text}</span>
+            <span className="trophy-progress">{x.earned ? t("Klaret", "Done") : x.progress}</span>
           </li>
         ))}
       </ul>
       <details className="trophy-all">
-        <summary>Se alle titler</summary>
+        <summary>{t("Se alle titler", "See all titles")}</summary>
         <ol>
           {LEVELS.map((l) => (
-            <li key={l.at} className={r.count >= l.at ? "earned" : ""}><b>{l.title}</b> <span className="muted">{l.at} {l.at === 1 ? "træning" : "træninger"}</span></li>
+            <li key={l.at} className={r.count >= l.at ? "earned" : ""}><b>{levelText(l, loc).title}</b> <span className="muted">{l.at} {many(l.at)}</span></li>
           ))}
         </ol>
       </details>
-      <p className="muted small" style={{ marginBottom: 0 }}>Tæller klubtræninger, du var tilmeldt, og ture under Træn sammen. Kun du kan se dine mærker.</p>
+      <p className="muted small" style={{ marginBottom: 0 }}>{t("Tæller klubtræninger, du var tilmeldt, og ture under Træn sammen. Kun du kan se dine mærker.", "Counts club trainings you signed up for and Train together sessions. Only you can see your badges.")}</p>
     </section>
   );
 }
