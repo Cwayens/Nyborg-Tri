@@ -2,7 +2,6 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { AthleteGroup } from "@prisma/client";
 import { requireAdmin } from "@/auth";
-import { AdminNav } from "@/components/AdminNav";
 import { prisma } from "@/lib/db";
 import { slug, str } from "@/lib/form-rows";
 import { NOT_CHILD } from "@/lib/child-safety";
@@ -122,7 +121,6 @@ export default async function Teams({ searchParams }: { searchParams: Promise<{ 
   return (
     <>
       <h1>Hold</h1>
-      <AdminNav />
       {sp.gemt && <p className="notice">Gemt.</p>}
       {sp.fejl && <p className="status-warn">{sp.fejl}</p>}
       <p className="muted">

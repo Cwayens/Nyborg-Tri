@@ -1,5 +1,4 @@
 import { requireAdmin } from "@/auth";
-import { AdminNav } from "@/components/AdminNav";
 import { prisma } from "@/lib/db";
 import { addSponsor, deleteSponsor, moveSponsor, updateSponsor } from "./actions";
 
@@ -12,7 +11,6 @@ export default async function AdminSponsors({ searchParams }: { searchParams: Pr
   return (
     <>
       <h1>Sponsorer</h1>
-      <AdminNav />
       <p className="muted">Sponsorerne kører i en bjælke på forsiden i denne rækkefølge. Skjulte sponsorer vises ikke.</p>
       {sp.fejl && <p className="status-warn">{sp.fejl}</p>}
       {sp.gemt && <p className="notice">Gemt.</p>}

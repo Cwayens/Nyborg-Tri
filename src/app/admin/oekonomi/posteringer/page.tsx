@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { requireTreasurer } from "@/lib/staff";
-import { AdminNav } from "@/components/AdminNav";
 import { prisma } from "@/lib/db";
 import { dato, krOre as kr } from "@/lib/format";
 import { CATEGORY, categoriesOf, oreToInput } from "@/lib/finance";
@@ -41,7 +40,6 @@ export default async function Entries({ searchParams }: Props) {
   return (
     <>
       <h1>Posteringer</h1>
-      <AdminNav />
       <FinanceNav active="/posteringer" year={year} />
       {sp.fejl && <p className="status-warn">{sp.fejl}</p>}
       {sp.gemt && <p className="notice">Posteringen er gemt.</p>}

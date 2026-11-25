@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { requireTreasurer } from "@/lib/staff";
-import { AdminNav } from "@/components/AdminNav";
 import { dato, kr } from "@/lib/format";
 import { arrears } from "@/lib/finance-db";
 import { FinanceNav } from "../FinanceNav";
@@ -19,7 +18,6 @@ export default async function Arrears({ searchParams }: { searchParams: Promise<
   return (
     <>
       <h1>Restancer</h1>
-      <AdminNav />
       <FinanceNav active="/restancer" year={year} />
       {sp.sendt && <p className="notice">Påmindelsen er sendt til {sp.sendt}.</p>}
       {sp.ikkesendt && <p className="status-warn">Mailen til {sp.ikkesendt} kunne ikke sendes. Prøv igen senere.</p>}

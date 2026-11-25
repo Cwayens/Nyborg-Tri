@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { requireAdmin } from "@/auth";
-import { AdminNav } from "@/components/AdminNav";
 import { AthletePhoto } from "@/components/AthleteCard";
 import { prisma } from "@/lib/db";
 import { dato } from "@/lib/format";
@@ -20,7 +19,6 @@ export default async function AdminAthletes({ searchParams }: { searchParams: Pr
   return (
     <>
       <h1>Atleter</h1>
-      <AdminNav />
       <p className="muted">
         Fremhæv atleter fra Elite på den offentlige side <Link href="/atleter">/atleter</Link>. En profil vises først, når atleten selv har givet samtykke
         under Min profil → Min atletprofil. Fremhævede atleter vises også på forsiden.

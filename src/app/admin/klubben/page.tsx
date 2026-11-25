@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { requireAdmin } from "@/auth";
-import { AdminNav } from "@/components/AdminNav";
 import { ENV_CLUB, CLUB } from "@/lib/club";
 import { DISCIPLINE_LABEL } from "@/lib/roles";
 import { getAbout, getClubOverrides, getHome, getPlaces, getPrivacy, getRoutes } from "@/lib/site";
@@ -32,7 +31,6 @@ export default async function ClubAdmin({ searchParams }: Props) {
   return (
     <>
       <h1>Klubben</h1>
-      <AdminNav />
       <p className="muted" style={{ maxWidth: 720 }}>
         Her retter du klubbens navn, logo, farver og teksterne på hjemmesiden. Ændringerne ses med det samme. Tekst kan have <b>**fed**</b> og
         links som <code>[se kalenderen](/traening)</code>.

@@ -2,7 +2,6 @@ import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/auth";
-import { AdminNav } from "@/components/AdminNav";
 import { prisma } from "@/lib/db";
 import { CLUB, ENV_CLUB } from "@/lib/club";
 import { SITE_KEYS, saveSite } from "@/lib/site";
@@ -68,7 +67,6 @@ export default async function Onboarding({ searchParams }: { searchParams: Promi
   return (
     <>
       <h1>Kom i gang</h1>
-      <AdminNav />
       {sp.ryddet && <p className="notice">Eksempelindholdet er ryddet. Skriv nu jeres egne tekster under <Link href="/admin/klubben?del=forside">Klubben</Link>.</p>}
       <p className="muted" style={{ maxWidth: 680 }}>Her er alt, der skal på plads, før klubben tager systemet i brug. I kan tage det i den rækkefølge, I vil.</p>
       <div className="meter big" role="progressbar" aria-valuenow={doneCount} aria-valuemin={0} aria-valuemax={steps.length} aria-label="Fremgang" style={{ maxWidth: 680 }}>

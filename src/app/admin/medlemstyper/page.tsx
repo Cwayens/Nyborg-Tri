@@ -1,7 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireTreasurer } from "@/lib/staff";
-import { AdminNav } from "@/components/AdminNav";
 import { prisma } from "@/lib/db";
 import { slug, str } from "@/lib/form-rows";
 
@@ -64,7 +63,6 @@ export default async function MembershipTypes({ searchParams }: { searchParams: 
   return (
     <>
       <h1>Medlemstyper og priser</h1>
-      <AdminNav />
       {sp.gemt && <p className="notice">Gemt. Priserne ses med det samme på forsiden og ved indmeldelse.</p>}
       {sp.fejl && <p className="status-warn">{sp.fejl}</p>}
       <p className="muted">Prisen er for et år. Skjulte typer kan ikke vælges ved indmeldelse, men medlemmer, der har dem, beholder dem.</p>

@@ -1,5 +1,4 @@
 import { requireAdmin } from "@/auth";
-import { AdminNav } from "@/components/AdminNav";
 import { prisma } from "@/lib/db";
 import { initials } from "@/components/Icons";
 import { addContact, deleteContact, moveContact, toggleHandled, updateContact } from "./actions";
@@ -20,7 +19,6 @@ export default async function AdminContact({ searchParams }: { searchParams: Pro
   return (
     <>
       <h1>Kontakt</h1>
-      <AdminNav />
       {sp.fejl && <p className="status-warn">{sp.fejl}</p>}
       {sp.gemt && <p className="notice">Gemt.</p>}
 

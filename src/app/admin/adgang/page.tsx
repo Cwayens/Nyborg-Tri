@@ -1,7 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/auth";
-import { AdminNav } from "@/components/AdminNav";
 import { TRIAL_DAYS, generateCode, grantMembership } from "@/lib/access";
 import { prisma } from "@/lib/db";
 import { dato } from "@/lib/format";
@@ -70,82 +69,98 @@ export default async function AdminAccess({ searchParams }: { searchParams: Prom
   return (
     <>
       <h1>Prøveperioder og koder</h1>
-      <AdminNav />
+      <p className="muted" style={{ marginTop: -8 }}>Godkend nye, der vil prøve at træne med, og lav engangskoder til fx sponsorer og æresmedlemmer.</p>
 
-      <h2>Ansøgninger om prøveperiode ({pending.length} afventer)</h2>
-      {pending.length === 0 && <p className="muted">Ingen ansøgninger afventer.</p>}
-      {pending.map((r) => (
-        <div key={r.id} className="card" style={{ marginBottom: 12 }}>
-          <strong>{r.user.name ?? r.user.email}</strong> · {r.user.email} · {r.user.phone ?? ""}
-          <br /><span className="muted">Søgt {dato(r.createdAt)}</span>
-          {r.message && <p>{r.message}</p>}
-          <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
-            <form action={decideTrial}>
-              <input type="hidden" name="id" value={r.id} />
-              <input type="hidden" name="decision" value="approve" />
-              <button className="button small approve" type="submit">Godkend {TRIAL_DAYS} dage</button>
-            </form>
-            <form action={decideTrial}>
-              <input type="hidden" name="id" value={r.id} />
-              <input type="hidden" name="decision" value="reject" />
-              <button className="button small secondary" type="submit">Afvis</button>
-            </form>
+      <section className="admin-section">
+        <header>
+          <h2>Ansøgninger om prøveperiode <span className={`count-badge${pending.length ? "" : " zero"}`}>{pending.length}</span></h2>
+          <p>Godkendte får {TRIAL_DAYS} dages adgang</p>
+        </header>
+        {pending.length === 0 && <p className="empty">Ingen ansøgninger afventer.</p>}
+        {pending.map((r) => (
+          <div key={r.id} className="admin-row">
+            <div>
+              <strong>{r.user.name ?? r.user.email}</strong>
+              <div className="muted" style={{ fontSize: "0.9rem" }}>{r.user.email}{r.user.phone ? ` · ${r.user.phone}` : ""} · søgt {dato(r.createdAt)}</div>
+              {r.message && <p style={{ margin: "8px 0 0" }}>“{r.message}”</p>}
+            </div>
+            <div className="actions">
+              <form action={decideTrial}>
+                <input type="hidden" name="id" value={r.id} />
+                <input type="hidden" name="decision" value="approve" />
+                <button className="button small approve" type="submit">Godkend</button>
+              </form>
+              <form action={decideTrial}>
+                <input type="hidden" name="id" value={r.id} />
+                <input type="hidden" name="decision" value="reject" />
+                <button className="button small ghost" type="submit">Afvis</button>
+              </form>
+            </div>
           </div>
-        </div>
-      ))}
-      {decided.length > 0 && (
-        <details>
-          <summary>Tidligere ansøgninger ({decided.length})</summary>
-          <ul>
-            {decided.map((r) => (
-              <li key={r.id}>
-                {r.user.name ?? r.user.email}: {r.status === "APPROVED" ? "godkendt" : "afvist"}
-                {r.decidedAt ? ` ${dato(r.decidedAt)}` : ""}{r.decidedBy ? ` af ${r.decidedBy.name ?? r.decidedBy.email}` : ""}
-              </li>
-            ))}
-          </ul>
-        </details>
-      )}
+        ))}
+        {decided.length > 0 && (
+          <details className="history">
+            <summary>Tidligere ansøgninger ({decided.length})</summary>
+            <ul>
+              {decided.map((r) => (
+                <li key={r.id}>
+                  {r.user.name ?? r.user.email}: {r.status === "APPROVED" ? "godkendt" : "afvist"}
+                  {r.decidedAt ? ` ${dato(r.decidedAt)}` : ""}{r.decidedBy ? ` af ${r.decidedBy.name ?? r.decidedBy.email}` : ""}
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
+      </section>
 
-      <h2 id="koder">Engangskoder</h2>
-      {oprettet && <p className="notice">{oprettet} {oprettet === "1" ? "kode er" : "koder er"} oprettet. Del dem med de personer, der skal have adgang.</p>}
-      <form action={createCodes} className="card inline-form" style={{ gap: 12, marginBottom: 16 }}>
-        <label>Antal<input type="number" name="count" defaultValue={1} min={1} max={50} style={{ width: 80 }} /></label>
-        <label>
-          Medlemstype
-          <select name="typeId">
-            {types.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-          </select>
-        </label>
-        <label>Dage<input type="number" name="days" defaultValue={365} min={1} max={730} style={{ width: 90 }} /></label>
-        <label>Note<input name="note" placeholder="fx Sponsor 2027" /></label>
-        <button className="button" type="submit" style={{ alignSelf: "end" }}>Opret koder</button>
-      </form>
-      <div className="table-scroll">
-        <table className="list">
-          <thead><tr><th>Kode</th><th>Giver</th><th>Note</th><th>Status</th><th /></tr></thead>
-          <tbody>
-            {codes.map((c) => (
-              <tr key={c.id}>
-                <td><code>{c.code}</code></td>
-                <td>{c.type.name}, {c.days} dage</td>
-                <td>{c.note ?? ""}</td>
-                <td className={c.usedBy ? "muted" : "status-ok"}>
-                  {c.usedBy ? `Brugt af ${c.usedBy.name ?? c.usedBy.email} ${c.usedAt ? dato(c.usedAt) : ""}` : "Ubrugt"}
-                </td>
-                <td>
-                  {!c.usedBy && (
-                    <form action={deleteCode}>
-                      <input type="hidden" name="id" value={c.id} />
-                      <button className="button small secondary" type="submit">Slet</button>
-                    </form>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <section className="admin-section" id="koder">
+        <header>
+          <h2>Engangskoder</h2>
+          <p>{codes.filter((c) => !c.usedBy).length} ubrugte · {codes.filter((c) => c.usedBy).length} brugte</p>
+        </header>
+        {oprettet && <p className="notice" style={{ margin: "16px 20px 0" }}>{oprettet} {oprettet === "1" ? "kode er" : "koder er"} oprettet. Del dem med de personer, der skal have adgang.</p>}
+        <form action={createCodes} className="admin-toolbar">
+          <label>Antal<input type="number" name="count" defaultValue={1} min={1} max={50} /></label>
+          <label>
+            Medlemstype
+            <select name="typeId">
+              {types.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
+          </label>
+          <label>Dage<input type="number" name="days" defaultValue={365} min={1} max={730} /></label>
+          <label>Note<input name="note" placeholder="fx Sponsor 2027" /></label>
+          <button className="button" type="submit">Opret koder</button>
+        </form>
+        {codes.length === 0 ? <p className="empty">Ingen koder endnu.</p> : (
+          <div className="table-scroll">
+            <table className="list">
+              <thead><tr><th>Kode</th><th>Giver</th><th>Note</th><th>Status</th><th /></tr></thead>
+              <tbody>
+                {codes.map((c) => (
+                  <tr key={c.id}>
+                    <td><code>{c.code}</code></td>
+                    <td>{c.type.name}, {c.days} dage</td>
+                    <td>{c.note ?? ""}</td>
+                    <td>
+                      {c.usedBy
+                        ? <span className="muted">Brugt af {c.usedBy.name ?? c.usedBy.email}{c.usedAt ? ` ${dato(c.usedAt)}` : ""}</span>
+                        : <span className="status-pill ok">Ubrugt</span>}
+                    </td>
+                    <td style={{ textAlign: "right" }}>
+                      {!c.usedBy && (
+                        <form action={deleteCode}>
+                          <input type="hidden" name="id" value={c.id} />
+                          <button className="button small ghost" type="submit">Slet</button>
+                        </form>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
     </>
   );
 }

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { requireTreasurer } from "@/lib/staff";
-import { AdminNav } from "@/components/AdminNav";
 import { kr } from "@/lib/format";
 import { yearOverview, arrears } from "@/lib/finance-db";
 import type { Row } from "@/lib/finance";
@@ -21,7 +20,6 @@ export default async function Finance({ searchParams }: { searchParams: Promise<
   return (
     <>
       <h1>Økonomi</h1>
-      <AdminNav />
       <FinanceNav active="" year={year} />
       <YearPicker year={year} path="" />
 

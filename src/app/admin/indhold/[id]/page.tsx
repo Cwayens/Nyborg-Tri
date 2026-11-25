@@ -1,7 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/auth";
-import { AdminNav } from "@/components/AdminNav";
 import { prisma } from "@/lib/db";
 import { readImage } from "@/lib/upload";
 import { postImages, videoEmbed } from "@/lib/news";
@@ -66,7 +65,6 @@ export default async function EditContent({ params, searchParams }: Props) {
   return (
     <>
       <h1>{isNew ? (isPost ? "Ny nyhed" : "Ny side") : `Rediger: ${item!.title}`}</h1>
-      <AdminNav />
       {sp.fejl && <p className="status-warn">{sp.fejl}</p>}
       <form action={save} className="stack" style={{ maxWidth: "100%" }} encType="multipart/form-data">
         <label>Titel<input name="title" defaultValue={item?.title ?? ""} required /></label>

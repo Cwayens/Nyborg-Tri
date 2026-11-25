@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { requireAdmin } from "@/auth";
-import { AdminNav } from "@/components/AdminNav";
 import { prisma } from "@/lib/db";
 import { FIELD_LABEL, type ImportField, type ImportRow } from "@/lib/member-import";
 import { matchTeam } from "@/lib/teams";
@@ -25,7 +24,6 @@ export default async function ImportMembers({ searchParams }: Props) {
   return (
     <>
       <h1>Importér medlemmer</h1>
-      <AdminNav />
       {sp.fejl && <p className="status-warn">{sp.fejl}</p>}
       {sp.oprettet && (
         <p className="notice">

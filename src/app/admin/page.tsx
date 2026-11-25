@@ -4,7 +4,6 @@ import { DUTIES, DUTY_LABEL } from "@/lib/staff";
 import { requireAdmin } from "@/auth";
 import { ROLE_LABEL, ROLES } from "@/lib/roles";
 import { getTeams } from "@/lib/visibility";
-import { AdminNav } from "@/components/AdminNav";
 import { prisma } from "@/lib/db";
 import { dato } from "@/lib/format";
 
@@ -63,7 +62,6 @@ export default async function AdminMembers({ searchParams }: { searchParams: Pro
   return (
     <>
       <h1>Medlemmer</h1>
-      <AdminNav />
       <div className="grid" style={{ marginBottom: 24 }}>
         <div className="card"><strong style={{ fontSize: "2rem" }}>{active.length}</strong><br />aktive medlemmer</div>
         {Object.entries(byType).map(([k, v]) => (
@@ -71,9 +69,9 @@ export default async function AdminMembers({ searchParams }: { searchParams: Pro
         ))}
       </div>
       <p className="muted">Brugertyper: {Object.entries(typeCounts).map(([k, v]) => `${k}: ${v}`).join(" · ")}</p>
-      <p style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+      <p className="filters">
         {[["aktive", "Aktive"], ["udloeber", "Udløber inden 30 dage"], ["udloebet", "Udløbet"], ["ADMIN", "Admins"], ["TRAINER", "Trænere"], ["holdledere", "Holdledere"], ["TREASURER", "Kasserere"], ["VOLUNTEER", "Frivillige"], ...teams.map((t) => [t.id, t.label]), ["alle", "Alle brugere"]].map(([k, l]) => (
-          <a key={k} href={`/admin?vis=${k}`} style={{ fontWeight: vis === k ? 700 : 400 }}>{l}</a>
+          <a key={k} href={`/admin?vis=${k}`} className={vis === k ? "active" : undefined} aria-current={vis === k ? "page" : undefined}>{l}</a>
         ))}
       </p>
       <div className="table-scroll">

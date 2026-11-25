@@ -1,5 +1,4 @@
 import { requireTeamStaff } from "@/lib/staff";
-import { AdminNav } from "@/components/AdminNav";
 import { prisma } from "@/lib/db";
 import { audienceLabel, audiencesFor, recipients } from "@/lib/bulkmail";
 import { sendGroupMail } from "./actions";
@@ -21,7 +20,6 @@ export default async function MailPage({ searchParams }: Props) {
   return (
     <>
       <h1>Mail til medlemmer</h1>
-      {user.role === "ADMIN" && <AdminNav />}
       <p className="muted">
         Skriv til et hold, alle medlemmer eller trænerne. Hver modtager får sin egen mail, så ingen kan se de andres adresser. Mails til børn sendes
         til deres forælder eller værge.

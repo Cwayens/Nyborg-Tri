@@ -1,39 +1,32 @@
 import { featuresOff } from "@/lib/features";
-import Link from "next/link";
+import { auth } from "@/auth";
 import { staffOf } from "@/lib/staff";
+import { AdminMenu, type MenuGroup } from "./AdminMenu";
+
+/**
+ * Menuen i administrationen, grupperet efter emne. Vises af admin/layout.tsx.
+ * Admin ser alt. Kassereren ser kun sin del (økonomi, betalinger og medlemstyper). Andre ser ingen menu.
+ */
+export async function adminMenuGroups(): Promise<MenuGroup[] | null> {
+  const me = await staffOf((await auth())?.user?.id);
+  if (!me) return null;
+  if (me.role !== "ADMIN") {
+    if (!me.duties.includes("TREASURER")) return null;
+    return [
+      { label: "Økonomi", items: [["/admin/oekonomi", "Økonomi"], ["/admin/betalinger", "Betalinger"], ["/admin/medlemstyper", "Medlemstyper"]] },
+    ];
+  }
+  const off = await featuresOff();
+  const on = (key: Parameters<typeof off.has>[0], item: [string, string]) => (off.has(key) ? [] : [item]);
+  return [
+    { label: "Medlemmer", items: [["/admin", "Medlemmer"], ["/admin/adgang", "Prøveperioder og koder"], ["/admin/hold", "Hold"], ["/admin/import", "Importér"]] },
+    { label: "Økonomi", items: [["/admin/oekonomi", "Økonomi"], ["/admin/betalinger", "Betalinger"], ["/admin/medlemstyper", "Medlemstyper"]] },
+    { label: "Indhold", items: [["/admin/indhold", "Nyheder og sider"], ["/admin/klubben", "Klubben"], ...on("sponsorer", ["/admin/sponsorer", "Sponsorer"]), ...on("atleter", ["/admin/atleter", "Atleter"]), ["/admin/kontakt", "Kontakt"], ...on("mail", ["/admin/mail", "Mail"])] },
+    { label: "Indstillinger", items: [["/admin/kom-i-gang", "Kom i gang"], ["/admin/funktioner", "Funktioner"], ["/admin/drift", "Drift"]] },
+  ];
+}
 
 export async function AdminNav() {
-  const off = await featuresOff();
-  const { auth } = await import("@/auth");
-  const me = await staffOf((await auth())?.user?.id);
-  // Kassereren ser kun sin del af administrationen
-  if (me && me.role !== "ADMIN") return (
-    <p style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-      <Link href="/admin/oekonomi">Økonomi</Link>
-      <Link href="/admin/betalinger">Betalinger</Link>
-      <Link href="/admin/medlemstyper">Medlemstyper</Link>
-      <a href="/admin/medlemmer.csv">Hent medlemsliste (CSV)</a>
-    </p>
-  );
-  return (
-    <p style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-      <Link href="/admin/kom-i-gang">Kom i gang</Link>
-      <Link href="/admin">Medlemmer</Link>
-      <Link href="/admin/import">Importér</Link>
-      <Link href="/admin/hold">Hold</Link>
-      <Link href="/admin/medlemstyper">Medlemstyper</Link>
-      <Link href="/admin/oekonomi">Økonomi</Link>
-      <Link href="/admin/betalinger">Betalinger</Link>
-      <Link href="/admin/adgang">Prøveperioder og koder</Link>
-      <Link href="/admin/klubben">Klubben</Link>
-      <Link href="/admin/indhold">Nyheder og sider</Link>
-      {!off.has("sponsorer") && <Link href="/admin/sponsorer">Sponsorer</Link>}
-      {!off.has("atleter") && <Link href="/admin/atleter">Atleter</Link>}
-      <Link href="/admin/kontakt">Kontakt</Link>
-      {!off.has("mail") && <Link href="/admin/mail">Mail</Link>}
-      <Link href="/admin/funktioner">Funktioner</Link>
-      <Link href="/admin/drift">Drift</Link>
-      <a href="/admin/medlemmer.csv">Hent medlemsliste (CSV)</a>
-    </p>
-  );
+  const groups = await adminMenuGroups();
+  return groups ? <AdminMenu groups={groups} /> : null;
 }

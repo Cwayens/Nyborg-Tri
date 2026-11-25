@@ -1,6 +1,5 @@
 import { revalidatePath } from "next/cache";
 import { requireTreasurer } from "@/lib/staff";
-import { AdminNav } from "@/components/AdminNav";
 import { prisma } from "@/lib/db";
 import { syncPayment } from "@/lib/accounting";
 import { dato, kr } from "@/lib/format";
@@ -29,7 +28,6 @@ export default async function AdminPayments() {
   return (
     <>
       <h1>Betalinger</h1>
-      <AdminNav />
       <p>Seneste {payments.length} betalinger, i alt {kr(total)}.</p>
       <div className="table-scroll">
         <table className="list">

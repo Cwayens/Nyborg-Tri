@@ -1,5 +1,4 @@
 import { requireTreasurer } from "@/lib/staff";
-import { AdminNav } from "@/components/AdminNav";
 import { prisma } from "@/lib/db";
 import { kr } from "@/lib/format";
 import { categoriesOf, oreToInput, type Kind } from "@/lib/finance";
@@ -18,7 +17,6 @@ export default async function Budget({ searchParams }: { searchParams: Promise<{
   return (
     <>
       <h1>Budget</h1>
-      <AdminNav />
       <FinanceNav active="/budget" year={year} />
       <YearPicker year={year} path="/budget" />
       {sp.fejl && <p className="status-warn">{sp.fejl}</p>}
