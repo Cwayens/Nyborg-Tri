@@ -9,6 +9,9 @@ Sæt `[x]`, når et punkt er klaret.
 - [ ] **Første administrator**: sæt `ADMIN_EMAIL` til kassererens/formandens mail og redeploy, eller sæt rollen i Admin bagefter.
 - [ ] Gennemgå hvem der har adgang til Vercel, GitHub, databasen og Stripe (mindst 2 fra bestyrelsen, så klubben ikke afhænger af én person).
 - [ ] **Slå testbrugere fra**: fjern `DEMO_MODE` i Vercel, redeploy, og slet testdata med `npm run db:demo -- --slet` (fjerner alle brugere på @demo.nyborgtri.dk og deres træninger, aktiviteter og koder).
+- [ ] **2-trins-login** (to-faktor) på Vercel, GitHub, Neon, Stripe og mailudbyderen for alle med adgang. Den, der har adgang til én af dem, kan læse alle medlemmers data.
+- [ ] Sæt **`AUTH_URL`** til sidens rigtige adresse (fx `https://nyborgtri.dk`), så links i mails og betalinger altid peger på klubbens domæne.
+- [ ] **Opgrader afhængigheder** (Prisma 7, Next.js 16, Zod 4, @vercel/blob 2). `npm audit` viser kendte, mindre alvorlige huller, som kræver større opgraderinger. Planlæg det efter go-live, og kør `npm audit` hver måned.
 - [ ] **Vercel-plan**: Hobby-planen er kun til ikke-kommerciel brug. Tjek om klubben (med betalinger) skal på Pro, eller om en anden hosting passer bedre.
 
 ## Login-mails

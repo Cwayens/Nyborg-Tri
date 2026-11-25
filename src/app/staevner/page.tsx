@@ -1,6 +1,6 @@
 import { NOT_CHILD } from "@/lib/child-safety";
 import Link from "next/link";
-import { requireUser } from "@/auth";
+import { requireMember } from "@/auth";
 import { prisma } from "@/lib/db";
 import { requireFeature } from "@/lib/features";
 import { hasRole } from "@/lib/roles";
@@ -11,7 +11,7 @@ import { createRace, deleteRace, leaveRace, saveEntry, toggleTent } from "./acti
 export const metadata = { title: "Stævner og samkørsel" };
 
 export default async function Races({ searchParams }: { searchParams: Promise<{ ny?: string; fejl?: string }> }) {
-  const user = await requireUser("/staevner");
+  const user = await requireMember("/staevner");
   await requireFeature("staevner");
   const { ny, fejl } = await searchParams;
   const trainer = hasRole(user.role, "TRAINER");

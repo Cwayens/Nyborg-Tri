@@ -164,7 +164,7 @@ export async function handleWebhookEvent(e: { object_type: string; aspect_type: 
   const externalId = String(e.object_id);
   if (e.aspect_type === "delete") {
     if (!(await confirmGone(c.id, `/activities/${e.object_id}`))) return;
-    await prisma.activity.deleteMany({ where: { provider: "STRAVA", externalId } });
+    await prisma.activity.deleteMany({ where: { provider: "STRAVA", externalId, userId: c.userId } });
     return;
   }
   const a = await api<StravaActivity>(c.id, `/activities/${e.object_id}`);

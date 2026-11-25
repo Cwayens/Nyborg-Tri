@@ -1,7 +1,7 @@
 import { NOT_CHILD } from "@/lib/child-safety";
 import Link from "next/link";
 import type { BenchmarkTest, Gender } from "@prisma/client";
-import { requireUser } from "@/auth";
+import { requireMember } from "@/auth";
 import { prisma } from "@/lib/db";
 import { LEADERBOARD, TEST_BY_KEY, formatDetail, formatDuration, formatResult, ftpFromTwenty, isLeaderboardTest } from "@/lib/benchmarks";
 import { AGE_GROUPS, GENDER_LABEL, GENDER_PREFIX, ageGroup, formatWkg, wattsPerKg, leaderboardProviders, rankBest, rankImprovement, type AgeGroup, type Ranked } from "@/lib/efforts";
@@ -17,7 +17,7 @@ const TOP_PER_GROUP = 5;
 
 export default async function Leaderboard({ searchParams }: Props) {
   await requireFeature("leaderboard");
-  const sessionUser = await requireUser("/leaderboard");
+  const sessionUser = await requireMember("/leaderboard");
   const sp = await searchParams;
   const me = await prisma.user.findUniqueOrThrow({
     where: { id: sessionUser.id },

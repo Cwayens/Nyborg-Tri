@@ -2,11 +2,13 @@ import { redirect } from "next/navigation";
 import { auth, signIn } from "@/auth";
 import { DEMO_USERS, demoEnabled } from "@/lib/demo";
 import { loginAsDemo } from "./demo";
+import { loginLinkAllowed } from "@/lib/login-limit";
 
 export const metadata = { title: "Log ind" };
 
 function safeCallback(url: string | undefined) {
-  return url && url.startsWith("/") && !url.startsWith("//") ? url : "/min-side";
+  // "/\evil.dk" læses af browsere som "//evil.dk", så omvendte skråstreger afvises også
+  return url && url.startsWith("/") && !url.startsWith("//") && !url.includes("\\") ? url : "/min-side";
 }
 
 export default async function Login({ searchParams }: { searchParams: Promise<{ callbackUrl?: string; fejl?: string }> }) {
@@ -17,6 +19,9 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
   async function login(formData: FormData) {
     "use server";
     const email = String(formData.get("email") ?? "").trim().toLowerCase();
+    if (!(await loginLinkAllowed(email))) {
+      redirect("/login?fejl=" + encodeURIComponent("Der er sendt mange login-links til den mail den seneste time. Tjek din indbakke (og spam), eller prøv igen senere."));
+    }
     await signIn("nodemailer", { email, redirectTo: callbackUrl });
   }
 

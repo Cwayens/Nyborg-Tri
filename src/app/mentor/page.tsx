@@ -1,4 +1,4 @@
-import { requireUser } from "@/auth";
+import { requireMember } from "@/auth";
 import { prisma } from "@/lib/db";
 import { requireFeature } from "@/lib/features";
 import { hasRole } from "@/lib/roles";
@@ -11,7 +11,7 @@ export const metadata = { title: "Mentorordning" };
 const contact = { name: true, email: true, phone: true } as const;
 
 export default async function Mentor({ searchParams }: { searchParams: Promise<{ fejl?: string; ny?: string }> }) {
-  const user = await requireUser("/mentor");
+  const user = await requireMember("/mentor");
   await requireFeature("mentor");
   const { fejl, ny } = await searchParams;
   const [me, mine, mentees, mentorCount] = await Promise.all([

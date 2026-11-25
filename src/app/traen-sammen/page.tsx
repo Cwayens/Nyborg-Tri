@@ -1,6 +1,6 @@
 import { NOT_CHILD } from "@/lib/child-safety";
 import Link from "next/link";
-import { requireUser } from "@/auth";
+import { requireMember } from "@/auth";
 import { canSignUp } from "@/lib/access";
 import { prisma } from "@/lib/db";
 import { DISCIPLINE_LABEL } from "@/lib/roles";
@@ -15,7 +15,7 @@ type Props = { searchParams: Promise<{ ny?: string; fejl?: string; oprettet?: st
 
 export default async function TrainTogether({ searchParams }: Props) {
   await requireFeature("traensammen");
-  const user = await requireUser("/traen-sammen");
+  const user = await requireMember("/traen-sammen");
   const { ny, fejl, oprettet, sport, fra } = await searchParams;
   // Del en træning fra eget program: felterne udfyldes, så man kun mangler tid og sted
   const from = fra && (await isOn("egetprogram")) ? await prisma.plannedWorkout.findFirst({ where: { id: fra, userId: user.id, sharedId: null } }) : null;

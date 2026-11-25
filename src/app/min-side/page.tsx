@@ -57,6 +57,9 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     prisma.post.findMany({ where: { published: true }, orderBy: { publishedAt: "desc" }, take: 3, select: { slug: true, title: true, publishedAt: true } }),
   ]);
   const refs = referencesFrom(benchmarks);
+  // Navne på andre vises kun for aktive medlemmer og trænere (alle kan oprette et login)
+  const seeNames = eligible || hasRole(user.role, "TRAINER");
+  const who = (names: (string | null)[]) => (seeNames ? names : names.map(() => null));
   const bestByTest = new Map<string, (typeof benchmarks)[number]>();
   for (const b of benchmarks) {
     const cur = bestByTest.get(b.test);
@@ -175,7 +178,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                   {t.cancelledAt && <span className="pill warn">Aflyst{t.cancelReason ? `: ${t.cancelReason}` : ""}</span>}
                   <p className="muted">{formatDay(t.startsAt)} kl. {formatTime(t.startsAt)}–{formatTime(t.endsAt)} · {t.location}</p>
                   {isWorkout(t.workout) && <WorkoutView workout={t.workout} discipline={t.discipline} refs={refs} downloadId={joined ? t.id : undefined} />}
-                  <Attendees names={t.signups.map((s) => s.user.name)} />
+                  <Attendees names={who(t.signups.map((s) => s.user.name))} />
                 </div>
                 {eligible && !t.cancelledAt && (
                   <form action={toggleSignup} className="signup">
@@ -208,7 +211,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                 <div className="title">{w.title}</div>
                 <div className="meta">{formatDay(w.startsAt)} kl. {formatTime(w.startsAt)} · {w.location}</div>
               </div>
-              <Attendees names={w.participants.map((p) => p.user.name)} compact />
+              <Attendees names={who(w.participants.map((p) => p.user.name))} compact />
             </Link>
           ))}
         </div>
