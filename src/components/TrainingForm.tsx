@@ -6,9 +6,9 @@ import { isWorkout, toText } from "@/lib/workout";
 import { TESTS } from "@/lib/benchmarks";
 import { isOn } from "@/lib/features";
 
-type Props = { action: (formData: FormData) => Promise<void>; training?: TrainingSession; allowRepeat?: boolean };
+type Props = { action: (formData: FormData) => Promise<void>; training?: TrainingSession; allowRepeat?: boolean; onlyTeams?: string[] };
 
-export async function TrainingForm({ action, training, allowRepeat }: Props) {
+export async function TrainingForm({ action, training, allowRepeat, onlyTeams }: Props) {
   const [tempo, testdage, teams] = await Promise.all([isOn("tempo"), isOn("testdage"), getTeams()]);
   const start = training ? toLocalInput(training.startsAt) : "";
   const end = training ? toLocalInput(training.endsAt) : "";
@@ -29,7 +29,7 @@ export async function TrainingForm({ action, training, allowRepeat }: Props) {
       </div>
       <fieldset>
         <legend>Hold (vælg ét)</legend>
-        {teams.filter((t) => t.active || t.id === training?.teamId).map((t) => (
+        {teams.filter((t) => (t.active || t.id === training?.teamId) && (!onlyTeams || onlyTeams.includes(t.id))).map((t) => (
           <label key={t.id} className="check">
             <input type="radio" name="team" value={t.id} defaultChecked={training?.teamId === t.id} required /> {t.label}
           </label>

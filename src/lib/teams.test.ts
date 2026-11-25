@@ -46,3 +46,11 @@ test("børn og voksne ser aldrig hinandens hold", () => {
   assert.deepEqual(visibleTeams(null, mixed), ["Bredde"]);
   assert.deepEqual(visibleTeams(ath("U17"), mixed, true), ["U17"]);
 });
+
+test("holdledere ser og kan tilmelde sig de hold, de leder", () => {
+  const leader = { role: "ATHLETE" as const, teamId: "Bredde", leads: ["Elite", "Børn"] };
+  assert.deepEqual(visibleTeams(leader, teams), ["Elite", "Bredde"]); // aldrig et børnehold
+  assert.equal(canJoinTeam(leader, "Elite", teams), true);
+  assert.equal(canJoinTeam(leader, "Børn", teams), false);
+  assert.deepEqual(visibleTeams({ role: "ATHLETE", teamId: null, leads: ["Elite"] }, teams), ["Elite", "Bredde"]);
+});

@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
-import type { Role } from "@prisma/client";
+import type { Duty, Role } from "@prisma/client";
+import { DUTIES, DUTY_LABEL } from "@/lib/staff";
 import { requireAdmin } from "@/auth";
 import { ROLE_LABEL, ROLES } from "@/lib/roles";
 import { getTeams } from "@/lib/visibility";
@@ -16,12 +17,15 @@ async function setUserType(formData: FormData) {
   const role = String(formData.get("role")) as Role;
   const teamId = String(formData.get("team") ?? "");
   if (!ROLES.includes(role)) return;
+  const team = teamId ? await prisma.team.findUnique({ where: { id: teamId }, select: { kind: true } }) : null;
+  // Børn kan ikke have ekstra roller (child-safety.ts)
+  const duties = role === "ATHLETE" && team?.kind === "BOERN" ? [] : DUTIES.filter((d) => formData.get(`duty_${d}`) === "on");
   // En admin kan ikke fjerne sin egen admin-adgang ved et uheld
   if (id === admin.id && role !== "ADMIN") return;
   await prisma.user.update({
     where: { id },
     // Holdet bestemmer gruppen (elite/bredde/børn) via databasens trigger
-    data: teamId && (await prisma.team.findUnique({ where: { id: teamId } })) ? { role, teamId } : { role, teamId: null, athleteGroup: null },
+    data: team ? { role, teamId, duties } : { role, teamId: null, athleteGroup: null, duties },
   });
   revalidatePath("/admin");
 }
@@ -36,8 +40,10 @@ export default async function AdminMembers({ searchParams }: { searchParams: Pro
   const teamName = new Map(teams.map((t) => [t.id, t.label]));
   const typeLabel = (u: { role: Role; teamId: string | null }) =>
     u.role === "ATHLETE" ? (u.teamId ? `Atlet – ${teamName.get(u.teamId)}` : "Atlet") : ROLE_LABEL[u.role];
+  const extra = (u: { duties: Duty[]; leads: { name: string }[] }) =>
+    [...u.duties.map((d) => DUTY_LABEL[d]), ...u.leads.map((t) => `Holdleder ${t.name}`)].join(" · ");
   const users = await prisma.user.findMany({
-    include: { memberships: { orderBy: { endDate: "desc" }, take: 1, include: { type: true } } },
+    include: { memberships: { orderBy: { endDate: "desc" }, take: 1, include: { type: true } }, leads: { select: { name: true } } },
     orderBy: { name: "asc" },
   });
   const rows = users.map((u) => ({ u, m: u.memberships[0] ?? null }));
@@ -48,6 +54,8 @@ export default async function AdminMembers({ searchParams }: { searchParams: Pro
     : vis === "udloebet" ? rows.filter((r) => r.m && r.m.endDate <= now)
     : vis === "TRAINER" || vis === "ADMIN" ? rows.filter((r) => r.u.role === vis)
     : teamName.has(vis) ? rows.filter((r) => r.u.teamId === vis)
+    : DUTIES.includes(vis as Duty) ? rows.filter((r) => r.u.duties.includes(vis as Duty))
+    : vis === "holdledere" ? rows.filter((r) => r.u.leads.length > 0)
     : rows;
   const typeCounts = rows.reduce<Record<string, number>>((acc, { u }) => ((acc[typeLabel(u)] = (acc[typeLabel(u)] ?? 0) + 1), acc), {});
   const byType = active.reduce<Record<string, number>>((acc, r) => ((acc[r.m!.type.name] = (acc[r.m!.type.name] ?? 0) + 1), acc), {});
@@ -64,7 +72,7 @@ export default async function AdminMembers({ searchParams }: { searchParams: Pro
       </div>
       <p className="muted">Brugertyper: {Object.entries(typeCounts).map(([k, v]) => `${k}: ${v}`).join(" · ")}</p>
       <p style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-        {[["aktive", "Aktive"], ["udloeber", "Udløber inden 30 dage"], ["udloebet", "Udløbet"], ["ADMIN", "Admins"], ["TRAINER", "Trænere"], ...teams.map((t) => [t.id, t.label]), ["alle", "Alle brugere"]].map(([k, l]) => (
+        {[["aktive", "Aktive"], ["udloeber", "Udløber inden 30 dage"], ["udloebet", "Udløbet"], ["ADMIN", "Admins"], ["TRAINER", "Trænere"], ["holdledere", "Holdledere"], ["TREASURER", "Kasserere"], ["VOLUNTEER", "Frivillige"], ...teams.map((t) => [t.id, t.label]), ["alle", "Alle brugere"]].map(([k, l]) => (
           <a key={k} href={`/admin?vis=${k}`} style={{ fontWeight: vis === k ? 700 : 400 }}>{l}</a>
         ))}
       </p>
@@ -74,7 +82,7 @@ export default async function AdminMembers({ searchParams }: { searchParams: Pro
           <tbody>
             {filtered.map(({ u, m }) => (
               <tr key={u.id}>
-                <td>{u.name ?? "–"}<br /><span className="muted">{typeLabel(u)}</span></td>
+                <td>{u.name ?? "–"}<br /><span className="muted">{typeLabel(u)}{extra(u) && ` · ${extra(u)}`}</span></td>
                 <td>{u.email}</td>
                 <td>{u.phone ?? ""}</td>
                 <td>{m?.type.name ?? "–"}{m?.source === "TRIAL" ? " (prøve)" : m?.source === "CODE" ? " (kode)" : ""}</td>
@@ -89,6 +97,9 @@ export default async function AdminMembers({ searchParams }: { searchParams: Pro
                       <option value="">Intet hold</option>
                       {teams.filter((t) => t.active || t.id === u.teamId).map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
                     </select>
+                    {DUTIES.map((d) => (
+                      <label key={d} className="check" style={{ margin: 0 }}><input type="checkbox" name={`duty_${d}`} defaultChecked={u.duties.includes(d)} /> {DUTY_LABEL[d]}</label>
+                    ))}
                     <button className="button small" type="submit">Gem</button>
                   </form>
                 </td>

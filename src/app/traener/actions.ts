@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { requireTrainer } from "@/auth";
+import { canManageTeam, requireTeamStaff, type Staff } from "@/lib/staff";
 import { prisma } from "@/lib/db";
 import { addWeeksLocal, parseLocal } from "@/lib/time";
 import { readProgram, workoutValue } from "@/lib/program-upload";
@@ -25,13 +25,21 @@ const schema = z.object({
 });
 
 
-async function parse(formData: FormData) {
+async function parse(formData: FormData, staff: Staff) {
   const r = schema.safeParse(Object.fromEntries([...formData.entries()].filter(([, v]) => typeof v === "string")));
   if (!r.success) throw new Error(r.error.issues[0].message);
   if (r.data.end <= r.data.start) throw new Error("Sluttid skal være efter starttid");
   const team = await prisma.team.findFirst({ where: { id: r.data.team, active: true }, select: { id: true, kind: true } });
   if (!team) throw new Error("Vælg hvilket hold træningen er for");
+  if (!canManageTeam(staff, team.id)) throw new Error("Du kan kun oprette træninger for dine egne hold");
   return { ...r.data, teamId: team.id, group: team.kind };
+}
+
+/** Træningen, hvis personen må rette den (trænere: alle, holdledere: egne hold). */
+async function own(staff: Staff, id: string) {
+  const t = await prisma.trainingSession.findUniqueOrThrow({ where: { id } });
+  if (!canManageTeam(staff, t.teamId)) redirect("/traener");
+  return t;
 }
 
 function fail(path: string, e: unknown): never {
@@ -39,10 +47,10 @@ function fail(path: string, e: unknown): never {
 }
 
 export async function createTraining(formData: FormData) {
-  const user = await requireTrainer();
+  const user = await requireTeamStaff();
   let d, workout;
   try {
-    d = await parse(formData);
+    d = await parse(formData, user);
     workout = await readProgram(formData, user.id);
   } catch (e) {
     fail("/traener/ny", e);
@@ -70,14 +78,15 @@ export async function createTraining(formData: FormData) {
 }
 
 export async function updateTraining(id: string, formData: FormData) {
-  const user = await requireTrainer();
+  const user = await requireTeamStaff();
   let d, workout;
   try {
-    d = await parse(formData);
+    d = await parse(formData, user);
     workout = await readProgram(formData, user.id);
   } catch (e) {
     fail(`/traener/${id}`, e);
   }
+  await own(user, id);
   await prisma.trainingSession.update({
     where: { id },
     data: {
@@ -93,10 +102,11 @@ export async function updateTraining(id: string, formData: FormData) {
 }
 
 export async function deleteTraining(id: string, formData: FormData) {
-  await requireTrainer();
-  const t = await prisma.trainingSession.findUniqueOrThrow({ where: { id } });
+  const user = await requireTeamStaff();
+  const t = await own(user, id);
   if (formData.get("scope") === "series" && t.seriesId) {
-    await prisma.trainingSession.deleteMany({ where: { seriesId: t.seriesId, startsAt: { gte: t.startsAt } } });
+    // Holdledere sletter kun træninger for deres egne hold i serien
+    await prisma.trainingSession.deleteMany({ where: { seriesId: t.seriesId, startsAt: { gte: t.startsAt }, ...(user.role === "ATHLETE" ? { teamId: { in: user.leads } } : {}) } });
   } else {
     await prisma.trainingSession.delete({ where: { id } });
   }
@@ -105,9 +115,9 @@ export async function deleteTraining(id: string, formData: FormData) {
 }
 
 export async function cancelTraining(id: string, formData: FormData) {
-  await requireTrainer();
+  const user = await requireTeamStaff();
   const reason = String(formData.get("reason") ?? "").trim().slice(0, 200) || null;
-  const t = await prisma.trainingSession.findUniqueOrThrow({ where: { id } });
+  const t = await own(user, id);
   await prisma.trainingSession.update({ where: { id }, data: { cancelledAt: t.cancelledAt ? null : new Date(), cancelReason: t.cancelledAt ? null : reason } });
   revalidatePath("/kalender");
   revalidatePath("/min-side");

@@ -35,7 +35,7 @@ export async function teamNames(): Promise<Map<string, string>> {
 }
 
 export type CalendarViewer = {
-  id: string; role: "ADMIN" | "TRAINER" | "ATHLETE"; athleteGroup: AthleteGroup | null; teamId: string | null; trial: boolean;
+  id: string; role: "ADMIN" | "TRAINER" | "ATHLETE"; athleteGroup: AthleteGroup | null; teamId: string | null; leads: string[]; trial: boolean;
   /** Hold, hvis træninger brugeren må se */
   teams: string[];
 };
@@ -43,10 +43,11 @@ export type CalendarViewer = {
 /** Brugerens rolle, hold og de hold, hvis træninger brugeren må se. null-id = besøgende. */
 export const calendarViewer = cache(async (userId: string | null | undefined): Promise<CalendarViewer | null> => {
   if (!userId) return null;
-  const u = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, role: true, athleteGroup: true, teamId: true, deletedAt: true } });
+  const u = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, role: true, athleteGroup: true, teamId: true, deletedAt: true, leads: { where: { active: true }, select: { id: true } } } });
   if (!u || u.deletedAt) return null;
   const trial = u.role === "ATHLETE" && (await isTrialOnly(u.id));
-  return { id: u.id, role: u.role, athleteGroup: u.athleteGroup, teamId: u.teamId, trial, teams: visibleTeams(u, await getTeams(), trial) };
+  const leads = u.leads.map((t) => t.id);
+  return { id: u.id, role: u.role, athleteGroup: u.athleteGroup, teamId: u.teamId, leads, trial, teams: visibleTeams({ ...u, leads }, await getTeams(), trial) };
 });
 
 /** Hold for en bruger, eller for besøgende. */

@@ -8,10 +8,12 @@ import { AppNav } from "./AppNav";
 import { hiddenHrefs } from "@/lib/features";
 import { Logo, MenuIcon, initials } from "./Icons";
 import { CLUB } from "@/lib/club";
+import { staffOf } from "@/lib/staff";
 
 export async function Header() {
   const session = await auth();
   const user = session?.user;
+  const staff = user ? await staffOf(user.id) : null;
   const expired = user ? await membershipExpired(user.id) : null;
   const hidden = await hiddenHrefs();
   const nav = navigation.filter((i) => !hidden.includes(i.href));
@@ -46,8 +48,8 @@ export async function Header() {
                   <Link href="/aktiviteter">Mine aktiviteter</Link>
                   <Link href="/forbindelser">Ure, apps og kalender</Link>
                   <Link href="/bliv-medlem">Medlemskab og betaling</Link>
-                  {hasRole(user.role, "TRAINER") && <Link href="/traener">Trænerværktøj</Link>}
-                  {user.role === "ADMIN" && <Link href="/admin">Administration</Link>}
+                  {hasRole(user.role, "TRAINER") ? <Link href="/traener">Trænerværktøj</Link> : staff && staff.leads.length > 0 && <Link href="/traener">Holdleder</Link>}
+                  {user.role === "ADMIN" ? <Link href="/admin">Administration</Link> : staff?.duties.includes("TREASURER") && <Link href="/admin/betalinger">Kasserer</Link>}
                   <div className="dropdown-sep" />
                   <Link href="/klubben">Klubinfo og nyheder</Link>
                   <form action={logout}>

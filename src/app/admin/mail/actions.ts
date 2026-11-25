@@ -1,20 +1,20 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { requireTrainer } from "@/auth";
+import { requireTeamStaff } from "@/lib/staff";
 import { prisma } from "@/lib/db";
-import { audiences, mailFooter, recipients, sendBulk, type MailKind } from "@/lib/bulkmail";
+import { audiencesFor, mailFooter, recipients, sendBulk, type MailKind } from "@/lib/bulkmail";
 import { sendMail } from "@/lib/mail";
 import { CLUB } from "@/lib/club";
 
 export async function sendGroupMail(formData: FormData) {
-  const user = await requireTrainer();
+  const user = await requireTeamStaff("/admin/mail");
   const back = (q: string) => redirect(`/admin/mail?${q}`);
   const audience = String(formData.get("audience") ?? "");
   const kind: MailKind = formData.get("kind") === "IMPORTANT" ? "IMPORTANT" : "NEWS";
   const subject = String(formData.get("subject") ?? "").trim().slice(0, 150);
   const body = String(formData.get("body") ?? "").trim().slice(0, 10000);
-  const a = (await audiences()).find((x) => x.value === audience);
+  const a = (await audiencesFor(user)).find((x) => x.value === audience);
   if (!a) back("fejl=" + encodeURIComponent("Vælg modtagere"));
   if (user.role === "TRAINER" && !a!.trainerAllowed) back("fejl=" + encodeURIComponent("Trænere kan kun skrive til et hold eller til trænerne"));
   if (subject.length < 3 || body.length < 10) back("fejl=" + encodeURIComponent("Skriv både emne og besked"));

@@ -3,10 +3,12 @@ import { prisma } from "@/lib/db";
 import { toCsv } from "@/lib/csv";
 import { isoDate } from "@/lib/format";
 import { userTypeLabel } from "@/lib/roles";
+import { DUTY_LABEL, isTreasurer, staffOf } from "@/lib/staff";
 
 export async function GET() {
   const session = await auth();
-  if (session?.user.role !== "ADMIN") return new Response("Forbidden", { status: 403 });
+  // Admin og kasserer
+  if (!isTreasurer(await staffOf(session?.user.id))) return new Response("Forbidden", { status: 403 });
 
   const users = await prisma.user.findMany({
     include: { memberships: { orderBy: { endDate: "desc" }, take: 1, include: { type: true } }, team: { select: { name: true } } },
@@ -17,7 +19,7 @@ export async function GET() {
     users.map((u) => {
       const m = u.memberships[0];
       return {
-        Navn: u.name, Email: u.email, Brugertype: userTypeLabel(u.role, null), Hold: u.team?.name ?? "", Telefon: u.phone, Adresse: u.address, Postnr: u.zip, By: u.city,
+        Navn: u.name, Email: u.email, Brugertype: userTypeLabel(u.role, null), Roller: u.duties.map((d) => DUTY_LABEL[d]).join(", "), Hold: u.team?.name ?? "", Telefon: u.phone, Adresse: u.address, Postnr: u.zip, By: u.city,
         Foedselsdato: u.birthDate ? isoDate(u.birthDate) : "",
         Vaerge: u.guardianName ?? "", VaergeEmail: u.guardianEmail ?? "",
         Medlemstype: m?.type.name ?? "", Start: m ? isoDate(m.startDate) : "", Slut: m ? isoDate(m.endDate) : "",

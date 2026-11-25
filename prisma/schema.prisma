@@ -41,6 +41,8 @@ model User {
   athleteGroup  AthleteGroup? // følger holdets type (se Team)
   teamId        String?
   team          Team?         @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  duties        Duty[]        @default([]) // ekstra roller ud over Role: kasserer og frivillig
+  leads         Team[]        @relation("TeamLeaders") // hold, man er holdleder for
 
   phone     String?
   birthDate DateTime?
@@ -785,7 +787,14 @@ model Team {
   branch    Branch?      @relation(fields: [branchId], references: [id], onDelete: SetNull)
 
   members   User[]
+  leaders   User[]       @relation("TeamLeaders")
   trainings TrainingSession[]
+}
+
+/// Ekstra roller. Holdleder er ikke her, men på holdet (Team.leaders).
+enum Duty {
+  TREASURER // kasserer: betalinger, medlemstyper og medlemsliste
+  VOLUNTEER // frivillig: på listen over frivillige og kan få mail som frivillig
 }
 
 /// Afdeling i et netværk (fx en by). Holdene hører til en afdeling; med kun én afdeling vises den ingen steder.

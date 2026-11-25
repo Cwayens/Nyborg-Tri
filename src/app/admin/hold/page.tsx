@@ -5,6 +5,7 @@ import { requireAdmin } from "@/auth";
 import { AdminNav } from "@/components/AdminNav";
 import { prisma } from "@/lib/db";
 import { slug, str } from "@/lib/form-rows";
+import { NOT_CHILD } from "@/lib/child-safety";
 
 export const metadata = { title: "Admin – hold" };
 
@@ -34,6 +35,12 @@ async function save(fd: FormData) {
   const sees = fd.getAll("sees").map(String).filter((s) => others.some((t) => t.id === s && (t.kind === "BOERN") === (kind === "BOERN")));
   const branchId = str(fd, "branchId");
   const branch = branchId ? await prisma.branch.findUnique({ where: { id: branchId } }) : null;
+  // Holdledere: fjern de afkrydsede, tilføj den valgte. Databasen afviser atleter på børnehold og børn som holdledere.
+  const remove = fd.getAll("removeLeader").map(String);
+  const addLeader = str(fd, "addLeader");
+  const leaderOk = addLeader ? await prisma.user.findFirst({ where: { id: addLeader, deletedAt: null, ...(kind === "BOERN" ? { role: { in: ["TRAINER", "ADMIN"] } } : NOT_CHILD) } }) : null;
+  if (addLeader && !leaderOk) back("fejl=" + encodeURIComponent("Et børnehold kan kun ledes af trænere og admin, og børn kan ikke være holdledere"));
+  await prisma.team.update({ where: { id }, data: { leaders: { disconnect: remove.map((u) => ({ id: u })), ...(leaderOk ? { connect: { id: leaderOk.id } } : {}) } } });
   await prisma.team.update({ where: { id }, data: { ...(fd.has("branchId") ? { branchId: branch?.id ?? null } : {}), name, kind, sees, public: kind !== "BOERN" && fd.get("public") === "on", active, sortOrder: Number(str(fd, "sortOrder")) || 0 } });
   revalidatePath("/", "layout");
   back("gemt=1");
@@ -109,7 +116,9 @@ export default async function Teams({ searchParams }: { searchParams: Promise<{ 
   await requireAdmin();
   const sp = await searchParams;
   const branches = await prisma.branch.findMany({ orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }], include: { _count: { select: { teams: true } } } });
-  const teams = await prisma.team.findMany({ orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }], include: { _count: { select: { members: true, trainings: true } } } });
+  const teams = await prisma.team.findMany({ orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }], include: { _count: { select: { members: true, trainings: true } }, leaders: { select: { id: true, name: true, email: true } } } });
+  // Mulige holdledere: voksne medlemmer (ikke børn). Børnehold: kun trænere og admin.
+  const adults = await prisma.user.findMany({ where: { deletedAt: null, ...NOT_CHILD }, select: { id: true, name: true, email: true, role: true }, orderBy: { name: "asc" } });
   return (
     <>
       <h1>Hold</h1>
@@ -149,6 +158,21 @@ export default async function Teams({ searchParams }: { searchParams: Promise<{ 
                 </fieldset>
               )}
               {t.kind !== "BOERN" && <label className="check"><input type="checkbox" name="public" defaultChecked={t.public} /><span>Åbent hold: besøgende og prøvemedlemmer kan se holdets træninger (kun tid og sted)</span></label>}
+              <fieldset>
+                <legend>Holdledere</legend>
+                <p className="muted" style={{ margin: "0 0 6px" }}>
+                  {t.kind === "BOERN" ? "Børnehold ledes kun af trænere og admin." : "En holdleder opretter og retter træninger og skriver mail til holdet, men kun for dette hold."}
+                </p>
+                {t.leaders.map((l) => (
+                  <label key={l.id} className="check"><input type="checkbox" name="removeLeader" value={l.id} /> Fjern {l.name ?? l.email}</label>
+                ))}
+                <label>Tilføj holdleder
+                  <select name="addLeader" defaultValue="">
+                    <option value="">Vælg medlem</option>
+                    {adults.filter((u) => !t.leaders.some((l) => l.id === u.id) && (t.kind !== "BOERN" || u.role !== "ATHLETE")).map((u) => <option key={u.id} value={u.id}>{u.name ?? u.email}</option>)}
+                  </select>
+                </label>
+              </fieldset>
               <label className="check"><input type="checkbox" name="active" defaultChecked={t.active} /><span>Aktivt (skjulte hold kan ikke vælges til nye træninger og medlemmer)</span></label>
               <p className="muted" style={{ margin: 0 }}>{KIND_LABEL[t.kind]} · {t._count.members} medlemmer · {t._count.trainings} træninger</p>
             </form>

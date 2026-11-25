@@ -63,6 +63,15 @@ Den første afdeling får de eksisterende hold. Hvert hold hører til en afdelin
 besøgende kan filtrere kalenderen på afdeling, trænere kan filtrere deres liste, og admin kan sende mail til en hel afdeling.
 Med kun én afdeling vises afdelinger ingen steder.
 
+## 3b. Roller
+
+Ud over atlet, træner og admin:
+
+- **Holdleder** (sættes på holdet under Admin → Hold): opretter og retter træninger og skriver mail, men kun for sine egne hold.
+  Børnehold ledes kun af trænere og admin, og børn kan ikke være holdledere (håndhæves også i databasen).
+- **Kasserer** (sættes på medlemmet under Admin → Medlemmer): betalinger, medlemstyper og medlemslisten (CSV), uden resten af administrationen.
+- **Frivillig** (sættes på medlemmet): står på listen over frivillige, og admin kan sende mail til alle frivillige.
+
 ## 4. Funktioner
 
 Admin kan slå 18 funktioner til og fra under Admin → Funktioner. En ny klub kan starte med få og tænde flere senere.

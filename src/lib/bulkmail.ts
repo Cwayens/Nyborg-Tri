@@ -8,7 +8,7 @@ import { CLUB } from "@/lib/club";
 
 // Mail til hold og medlemmer. Børn under 18 får mailen gennem deres forælder/værge.
 
-export type Audience = "ALL" | "TRIAL" | "TRAINERS" | `TEAM:${string}` | `BRANCH:${string}` | `GROUP:${AthleteGroup}`;
+export type Audience = "ALL" | "TRIAL" | "TRAINERS" | "VOLUNTEERS" | `TEAM:${string}` | `BRANCH:${string}` | `GROUP:${AthleteGroup}`;
 export type MailKind = "NEWS" | "IMPORTANT";
 type AudienceOption = { value: Audience; label: string; trainerAllowed: boolean };
 
@@ -21,7 +21,16 @@ export async function audiences(): Promise<AudienceOption[]> {
     ...teams.filter((t) => t.active).map((t): AudienceOption => ({ value: `TEAM:${t.id}`, label: `Holdet ${t.label}${t.kind === "BOERN" ? " (sendes til forældre)" : ""}`, trainerAllowed: true })),
     { value: "TRIAL", label: "Medlemmer på prøve", trainerAllowed: false },
     { value: "TRAINERS", label: "Trænere og bestyrelse", trainerAllowed: true },
+    { value: "VOLUNTEERS", label: "Frivillige", trainerAllowed: false },
   ];
+}
+
+/** Modtagergrupper, personen må skrive til: admin alle, trænere hold og trænere, holdledere kun egne hold. */
+export async function audiencesFor(s: { role: string; leads: string[] }): Promise<AudienceOption[]> {
+  const all = await audiences();
+  if (s.role === "ADMIN") return all;
+  if (s.role === "TRAINER") return all.filter((a) => a.trainerAllowed);
+  return all.filter((a) => a.value.startsWith("TEAM:") && s.leads.includes(a.value.slice(5)));
 }
 
 /** Navn til mailloggen; ældre mails kan være sendt til en gruppe. */
@@ -33,6 +42,7 @@ export async function audienceLabel(v: string): Promise<string> {
 function where(audience: Audience, kind: MailKind, now: Date): Prisma.UserWhereInput {
   const active: Prisma.UserWhereInput = { memberships: { some: { endDate: { gt: now } } } };
   const base: Prisma.UserWhereInput = { deletedAt: null, ...(kind === "NEWS" ? { newsMail: true } : {}) };
+  if (audience === "VOLUNTEERS") return { ...base, duties: { has: "VOLUNTEER" } };
   if (audience === "TRAINERS") return { ...base, role: { in: ["TRAINER", "ADMIN"] } };
   if (audience === "TRIAL") return { ...base, memberships: { some: { endDate: { gt: now }, source: "TRIAL" } } };
   if (audience === "ALL") return { ...base, ...active };

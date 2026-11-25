@@ -12,7 +12,7 @@ export function teamLabel(t: { name: string; branchId?: string | null }, branche
   const b = branches.length > 1 && t.branchId ? branches.find((x) => x.id === t.branchId) : null;
   return b ? `${t.name} (${b.name})` : t.name;
 }
-type Viewer = { role: Role; teamId: string | null };
+type Viewer = { role: Role; teamId: string | null; leads?: string[] };
 
 /**
  * Hvilke holds træninger må man se? Admin og trænere ser alle hold. Et medlem ser sit eget hold og de hold,
@@ -24,8 +24,10 @@ export function visibleTeams(user: Viewer | null, teams: TeamLite[], trial = fal
   if (!user) return open;
   if (hasRole(user.role, "TRAINER")) return teams.map((t) => t.id);
   const own = teams.find((t) => t.id === user.teamId);
-  if (trial || !own) return own?.kind === "BOERN" ? [own.id] : open;
-  const ids = new Set([own.id, ...own.sees]);
+  // Holdledere ser også de (voksen)hold, de leder
+  const led = own?.kind === "BOERN" ? [] : teams.filter((t) => user.leads?.includes(t.id) && t.kind !== "BOERN").map((t) => t.id);
+  if (trial || !own) return own?.kind === "BOERN" ? [own.id] : teams.filter((t) => open.includes(t.id) || led.includes(t.id)).map((t) => t.id);
+  const ids = new Set([own.id, ...own.sees, ...led]);
   return teams.filter((t) => ids.has(t.id) && sameSide(t, own)).map((t) => t.id);
 }
 
@@ -35,6 +37,7 @@ export const sameSide = (a: { kind: AthleteGroup }, b: { kind: AthleteGroup }) =
 /** Atleter kan kun tilmelde sig eget holds træninger (og kun dem, de må se). Trænere og admins kan tilmelde sig alle. */
 export function canJoinTeam(user: Viewer, teamId: string | null, teams: TeamLite[], trial = false): boolean {
   if (hasRole(user.role, "TRAINER")) return true;
+  if (teamId && user.leads?.includes(teamId) && visibleTeams(user, teams, trial).includes(teamId)) return true;
   return !!teamId && user.teamId === teamId && visibleTeams(user, teams, trial).includes(teamId);
 }
 

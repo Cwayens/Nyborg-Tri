@@ -1,21 +1,22 @@
 import Link from "next/link";
 import { getBranches, teamNames } from "@/lib/visibility";
-import { requireTrainer } from "@/auth";
+import { requireTeamStaff } from "@/lib/staff";
 import { prisma } from "@/lib/db";
-import { DISCIPLINE_LABEL } from "@/lib/roles";
+import { DISCIPLINE_LABEL, hasRole } from "@/lib/roles";
 import { formatDay, formatTime } from "@/lib/time";
 import { featuresOff } from "@/lib/features";
 
 export const metadata = { title: "Træner" };
 
 export default async function TrainerHome({ searchParams }: { searchParams: Promise<{ gemt?: string; slettet?: string; afdeling?: string }> }) {
-  const user = await requireTrainer();
+  const user = await requireTeamStaff();
+  const trainer = hasRole(user.role, "TRAINER"); // ellers holdleder: kun egne hold
   const { gemt, slettet, afdeling } = await searchParams;
   const off = await featuresOff();
   const [names, branches] = await Promise.all([teamNames(), getBranches()]);
   const branch = branches.find((b) => b.id === afdeling) ?? null;
   const sessions = await prisma.trainingSession.findMany({
-    where: { startsAt: { gte: new Date() }, ...(branch ? { team: { branchId: branch.id } } : {}) },
+    where: { startsAt: { gte: new Date() }, ...(trainer ? {} : { teamId: { in: user.leads } }), ...(branch ? { team: { branchId: branch.id } } : {}) },
     include: { createdBy: { select: { id: true, name: true } }, _count: { select: { signups: true } } },
     orderBy: { startsAt: "asc" },
     take: 100,
@@ -24,11 +25,11 @@ export default async function TrainerHome({ searchParams }: { searchParams: Prom
     <>
       {gemt && <p className="notice">Træningen er gemt og vises i kalenderen.</p>}
       {slettet && <p className="notice">Træningen er slettet.</p>}
-      <h1>Træninger</h1>
+      <h1>{trainer ? "Træninger" : "Mine holds træninger"}</h1>
       <p style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
         <Link className="button" href="/traener/ny">Opret træning</Link>
         <Link className="button secondary" href="/kalender?gruppe=alle">Se kalenderen</Link>
-        {!off.has("tests") && <Link className="button ghost" href="/traener/tests">Testresultater</Link>}
+        {trainer && !off.has("tests") && <Link className="button ghost" href="/traener/tests">Testresultater</Link>}
         {!off.has("mail") && <Link className="button ghost" href="/admin/mail">Mail til holdet</Link>}
       </p>
       {branches.length > 1 && <p className="filters">

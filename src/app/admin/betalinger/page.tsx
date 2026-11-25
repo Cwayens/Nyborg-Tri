@@ -1,5 +1,5 @@
 import { revalidatePath } from "next/cache";
-import { requireAdmin } from "@/auth";
+import { requireTreasurer } from "@/lib/staff";
 import { AdminNav } from "@/components/AdminNav";
 import { prisma } from "@/lib/db";
 import { syncPayment } from "@/lib/accounting";
@@ -10,7 +10,7 @@ export const metadata = { title: "Admin – betalinger" };
 const LABEL = { NOT_SENT: "Ikke sendt", SENT: "Bogført", FAILED: "Fejl", SKIPPED: "Ingen integration" } as const;
 
 export default async function AdminPayments() {
-  await requireAdmin();
+  await requireTreasurer();
   const payments = await prisma.payment.findMany({
     where: { status: { in: ["PAID", "REFUNDED"] } },
     include: { user: true },
@@ -20,7 +20,7 @@ export default async function AdminPayments() {
 
   async function resync(formData: FormData) {
     "use server";
-    await requireAdmin();
+    await requireTreasurer();
     await syncPayment(String(formData.get("id")));
     revalidatePath("/admin/betalinger");
   }
