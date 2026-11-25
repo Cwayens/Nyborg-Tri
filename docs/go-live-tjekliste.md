@@ -126,7 +126,7 @@ Alle otte, og 10 af de øvrige funktioner (Træn sammen, programmer til uret, Mi
 - [ ] Test import af en rigtig kalenderfil (.ics) fra TrainingPeaks og Garmin Connect. Formatet er testet med eksempelfiler.
 - [ ] Senere: automatisk synkronisering fra TrainingPeaks kræver deres API (partneraftale), se Integrationer.
 - [ ] Bekræft kalenderreglerne: besøgende ser kun bredde-træninger, og elite kan se men ikke tilmelde sig bredde.
-- [ ] Ugens tip er slået fra som standard. Kan slås til under Admin → Funktioner.
+- [ ] Ugens tip og Find en makker er slået fra som standard. Kan slås til under Admin → Funktioner.
 
 ## Andre klubber (senere)
 

@@ -17,7 +17,7 @@ export const FEATURES = {
   maerker: { group: "Fællesskab", label: "Mærker og titler", text: "Medlemmer får sjove titler og mærker efter, hvor mange træninger de har været med til. Vises kun for medlemmet selv." },
   chat: { group: "Fællesskab", href: "/chat", label: "Chat", text: "Gruppechat for holdene og hele klubben." },
   tempo: { group: "Bredden", label: "Tempogrupper", text: "Trænere kan dele en klubtræning i tempogrupper, og man vælger gruppe ved tilmelding." },
-  makker: { group: "Bredden", href: "/makker", label: "Find en makker", text: "Medlemmer udfylder en makkerprofil og finder andre på samme niveau og tidspunkt." },
+  makker: { group: "Bredden", href: "/makker", label: "Find en makker", text: "Medlemmer udfylder en makkerprofil og finder andre på samme niveau og tidspunkt.", defaultOff: true },
   begynder: { group: "Bredden", href: "/begynder", label: "Begynderforløb", text: "10 uger \"Fra 0 til første triatlon\" med programmer til uret og en stævnetjekliste." },
   mentor: { group: "Bredden", href: "/mentor", label: "Mentorordning", text: "Erfarne medlemmer melder sig som mentor, og nye kan få tildelt en." },
   tips: { group: "Bredden", href: "/tips", label: "Ugens tip", text: "Trænere lægger korte tips og videoer ud om teknik og træning.", defaultOff: true },
