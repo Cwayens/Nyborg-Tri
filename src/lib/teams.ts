@@ -4,7 +4,14 @@ import { hasRole } from "./roles";
 // Klubbens egne hold. Hvert hold har en type (elite, bredde eller børn), som styrer børnebeskyttelse, chatrum m.m.
 // Hvem der ser hvad, styres af holdet: man ser sit eget hold og de hold, holdet er sat til at se.
 
-export type TeamLite = { id: string; name: string; kind: AthleteGroup; sees: string[]; public: boolean; active: boolean };
+export type TeamLite = { id: string; name: string; kind: AthleteGroup; sees: string[]; public: boolean; active: boolean; branchId?: string | null; label?: string };
+export type BranchLite = { id: string; name: string; city: string | null };
+
+/** Holdnavn til visning. Har klubben flere afdelinger, står afdelingen efter, fx "U17 (Svendborg)". */
+export function teamLabel(t: { name: string; branchId?: string | null }, branches: BranchLite[]): string {
+  const b = branches.length > 1 && t.branchId ? branches.find((x) => x.id === t.branchId) : null;
+  return b ? `${t.name} (${b.name})` : t.name;
+}
 type Viewer = { role: Role; teamId: string | null };
 
 /**

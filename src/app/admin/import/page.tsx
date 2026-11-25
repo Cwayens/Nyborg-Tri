@@ -74,7 +74,7 @@ export default async function ImportMembers({ searchParams }: Props) {
               <tbody>
                 {ok.slice(0, 200).map((r) => (
                   <tr key={r.line}>
-                    <td>{r.name}</td><td>{r.email}</td><td>{teamOf(r)?.name ?? "–"}</td><td>{r.type ?? "–"}</td><td>{r.paidUntil ?? "–"}</td>
+                    <td>{r.name}</td><td>{r.email}</td><td>{teamOf(r)?.label ?? "–"}</td><td>{r.type ?? "–"}</td><td>{r.paidUntil ?? "–"}</td>
                     <td>{known.has(r.email) ? <span className="pill">Findes</span> : <span className="pill ok">Ny</span>}</td>
                   </tr>
                 ))}

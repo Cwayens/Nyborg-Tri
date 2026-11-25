@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getBranches, teamNames } from "@/lib/visibility";
 import { requireTrainer } from "@/auth";
 import { prisma } from "@/lib/db";
 import { DISCIPLINE_LABEL } from "@/lib/roles";
@@ -7,13 +8,15 @@ import { featuresOff } from "@/lib/features";
 
 export const metadata = { title: "Træner" };
 
-export default async function TrainerHome({ searchParams }: { searchParams: Promise<{ gemt?: string; slettet?: string }> }) {
+export default async function TrainerHome({ searchParams }: { searchParams: Promise<{ gemt?: string; slettet?: string; afdeling?: string }> }) {
   const user = await requireTrainer();
-  const { gemt, slettet } = await searchParams;
+  const { gemt, slettet, afdeling } = await searchParams;
   const off = await featuresOff();
+  const [names, branches] = await Promise.all([teamNames(), getBranches()]);
+  const branch = branches.find((b) => b.id === afdeling) ?? null;
   const sessions = await prisma.trainingSession.findMany({
-    where: { startsAt: { gte: new Date() } },
-    include: { createdBy: { select: { id: true, name: true } }, team: { select: { name: true } }, _count: { select: { signups: true } } },
+    where: { startsAt: { gte: new Date() }, ...(branch ? { team: { branchId: branch.id } } : {}) },
+    include: { createdBy: { select: { id: true, name: true } }, _count: { select: { signups: true } } },
     orderBy: { startsAt: "asc" },
     take: 100,
   });
@@ -28,6 +31,11 @@ export default async function TrainerHome({ searchParams }: { searchParams: Prom
         {!off.has("tests") && <Link className="button ghost" href="/traener/tests">Testresultater</Link>}
         {!off.has("mail") && <Link className="button ghost" href="/admin/mail">Mail til holdet</Link>}
       </p>
+      {branches.length > 1 && <p className="filters">
+        <span className="muted">Afdeling:</span>
+        <Link href="/traener" className={!branch ? "active" : undefined}>Alle</Link>
+        {branches.map((b) => <Link key={b.id} href={`/traener?afdeling=${b.id}`} className={branch?.id === b.id ? "active" : undefined}>{b.name}</Link>)}
+      </p>}
       <div className="table-scroll">
         <table className="list">
           <thead><tr><th>Dag</th><th>Tid</th><th>Træning</th><th>Hold</th><th>Træner</th><th>Tilmeldte</th><th /></tr></thead>
@@ -37,7 +45,7 @@ export default async function TrainerHome({ searchParams }: { searchParams: Prom
                 <td>{formatDay(s.startsAt)}</td>
                 <td>{formatTime(s.startsAt)}–{formatTime(s.endsAt)}</td>
                 <td>{s.cancelledAt && <span className="pill warn">Aflyst</span>} {DISCIPLINE_LABEL[s.discipline]}: {s.title}<br /><span className="muted">{s.location}</span></td>
-                <td>{s.team?.name ?? "–"}</td>
+                <td>{names.get(s.teamId ?? "") ?? "–"}</td>
                 <td>{s.createdBy.id === user.id ? "Dig" : s.createdBy.name}</td>
                 <td>{s._count.signups}</td>
                 <td><Link href={`/traener/${s.id}`}>Ret / deltagere</Link></td>

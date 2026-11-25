@@ -26,7 +26,9 @@ export const metadata = { title: "Overblik" };
 export default async function Dashboard({ searchParams }: { searchParams: Promise<{ betaling?: string; kode?: string }> }) {
   const { betaling, kode } = await searchParams;
   const sessionUser = await requireUser();
-  const user = await prisma.user.findUniqueOrThrow({ where: { id: sessionUser.id }, include: { wearableConnections: { select: { provider: true } }, team: { select: { name: true } } } });
+  const user = await prisma.user.findUniqueOrThrow({ where: { id: sessionUser.id }, include: { wearableConnections: { select: { provider: true } }, team: { select: { name: true, branch: { select: { name: true } } } } } });
+  // Med flere afdelinger står afdelingen efter holdnavnet
+  const teamName = user.team ? (user.team.branch && (await prisma.branch.count()) > 1 ? `${user.team.name} (${user.team.branch.name})` : user.team.name) : "";
   // Nye brugere skriver først deres navn, så andre kan se hvem der kommer
   if (!user.name) redirect("/profil?velkommen=1");
   const now = new Date();
@@ -79,7 +81,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         <div>
           <h1 style={{ marginBottom: 4 }}>Hej{firstName ? ` ${firstName}` : ""} 👋</h1>
           <p className="muted" style={{ margin: 0 }}>
-            {user.team ? `Hold: ${user.team.name}` : "Intet hold endnu"} ·{" "}
+            {user.team ? `Hold: ${teamName}` : "Intet hold endnu"} ·{" "}
             {membership ? <>Medlem til {dato(membership.endDate)}</> : <Link href="/bliv-medlem">Bliv medlem</Link>}
             {today > 0 && <> · {today} klubtræning{today > 1 ? "er" : ""} i dag</>}
           </p>
@@ -161,7 +163,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
       {user.team && (
         <>
           <div className="section-head">
-            <h2>{user.team.name}: de næste 7 dage</h2>
+            <h2>{teamName}: de næste 7 dage</h2>
             <Link href="/kalender">Se alle</Link>
           </div>
           {groupTrainings.length === 0 ? <div className="card empty">Ingen træninger for dit hold den næste uge.</div> : groupTrainings.map((t) => {

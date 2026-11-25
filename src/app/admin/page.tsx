@@ -33,7 +33,7 @@ export default async function AdminMembers({ searchParams }: { searchParams: Pro
   const soon = new Date(now.getTime() + 30 * 24 * 3600 * 1000);
 
   const teams = await getTeams();
-  const teamName = new Map(teams.map((t) => [t.id, t.name]));
+  const teamName = new Map(teams.map((t) => [t.id, t.label]));
   const typeLabel = (u: { role: Role; teamId: string | null }) =>
     u.role === "ATHLETE" ? (u.teamId ? `Atlet – ${teamName.get(u.teamId)}` : "Atlet") : ROLE_LABEL[u.role];
   const users = await prisma.user.findMany({
@@ -64,7 +64,7 @@ export default async function AdminMembers({ searchParams }: { searchParams: Pro
       </div>
       <p className="muted">Brugertyper: {Object.entries(typeCounts).map(([k, v]) => `${k}: ${v}`).join(" · ")}</p>
       <p style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-        {[["aktive", "Aktive"], ["udloeber", "Udløber inden 30 dage"], ["udloebet", "Udløbet"], ["ADMIN", "Admins"], ["TRAINER", "Trænere"], ...teams.map((t) => [t.id, t.name]), ["alle", "Alle brugere"]].map(([k, l]) => (
+        {[["aktive", "Aktive"], ["udloeber", "Udløber inden 30 dage"], ["udloebet", "Udløbet"], ["ADMIN", "Admins"], ["TRAINER", "Trænere"], ...teams.map((t) => [t.id, t.label]), ["alle", "Alle brugere"]].map(([k, l]) => (
           <a key={k} href={`/admin?vis=${k}`} style={{ fontWeight: vis === k ? 700 : 400 }}>{l}</a>
         ))}
       </p>
@@ -87,7 +87,7 @@ export default async function AdminMembers({ searchParams }: { searchParams: Pro
                     </select>
                     <select name="team" defaultValue={u.teamId ?? ""} aria-label="Hold">
                       <option value="">Intet hold</option>
-                      {teams.filter((t) => t.active || t.id === u.teamId).map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                      {teams.filter((t) => t.active || t.id === u.teamId).map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
                     </select>
                     <button className="button small" type="submit">Gem</button>
                   </form>

@@ -31,7 +31,7 @@ export async function TrainingForm({ action, training, allowRepeat }: Props) {
         <legend>Hold (vælg ét)</legend>
         {teams.filter((t) => t.active || t.id === training?.teamId).map((t) => (
           <label key={t.id} className="check">
-            <input type="radio" name="team" value={t.id} defaultChecked={training?.teamId === t.id} required /> {t.name}
+            <input type="radio" name="team" value={t.id} defaultChecked={training?.teamId === t.id} required /> {t.label}
           </label>
         ))}
       </fieldset>

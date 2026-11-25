@@ -56,6 +56,13 @@ Under **Admin → Hold** opretter klubben sine egne hold (fx U13, U17, Motion, E
 konkurrencehold kan få atletprofiler. Et medlem ser sit eget holds træninger og de hold, holdet er sat til at se.
 Trænere og admins ser alt. Besøgende og prøvemedlemmer ser de åbne hold. En ny installation starter med Elite, Bredde og Børn.
 
+Børnesikkerhed: børnehold og voksenhold kan aldrig se hinanden, og børnehold kan ikke være åbne for besøgende.
+
+**Afdelinger (netværk):** Er I flere byer eller klubber i ét netværk, opretter I afdelinger nederst på Admin → Hold.
+Den første afdeling får de eksisterende hold. Hvert hold hører til en afdeling (eller hele netværket). Medlemmer og
+besøgende kan filtrere kalenderen på afdeling, trænere kan filtrere deres liste, og admin kan sende mail til en hel afdeling.
+Med kun én afdeling vises afdelinger ingen steder.
+
 ## 4. Funktioner
 
 Admin kan slå 18 funktioner til og fra under Admin → Funktioner. En ny klub kan starte med få og tænde flere senere.

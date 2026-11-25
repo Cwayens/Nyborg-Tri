@@ -11,11 +11,11 @@ import { TEST_BY_KEY } from "@/lib/benchmarks";
 import { WorkoutView } from "@/components/WorkoutView";
 import { isWorkout, referencesFrom } from "@/lib/workout";
 import { FROM_WEARABLE } from "@/lib/benchmarks";
-import { calendarViewer, getTeams, teamsFor } from "@/lib/visibility";
+import { calendarViewer, getBranches, getTeams, teamsFor } from "@/lib/visibility";
 import { canJoinTeam } from "@/lib/teams";
 import { deletePlanned } from "@/app/kalender/mit-program/actions";
 
-export type CalendarParams = { gruppe?: string; maaned?: string; dag?: string };
+export type CalendarParams = { gruppe?: string; maaned?: string; dag?: string; afdeling?: string };
 
 const WEEKDAYS = ["Man", "Tir", "Ons", "Tor", "Fre", "Lør", "Søn"];
 const MONTHS = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
@@ -31,9 +31,11 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
   const viewer = await calendarViewer(session?.user.id);
   const own = viewer?.teamId ?? null;
   // Hvilke hold man må se (eget hold og dem, holdet ser; se visibleTeams). Besøgende ser de åbne hold.
-  const allTeams = await getTeams();
-  const allowed = await teamsFor(viewer?.id);
-  const teamName = new Map(allTeams.map((t) => [t.id, t.name]));
+  const [allTeams, branches] = await Promise.all([getTeams(), getBranches()]);
+  // Netværk med flere afdelinger: vælg afdeling (?afdeling=), så man kun ser dens hold. Hold uden afdeling vises altid.
+  const branch = branches.length > 1 ? branches.find((b) => b.id === sp.afdeling) ?? null : null;
+  const allowed = (await teamsFor(viewer?.id)).filter((id) => !branch || [branch.id, null, undefined].includes(allTeams.find((t) => t.id === id)?.branchId));
+  const teamName = new Map(allTeams.map((t) => [t.id, branch ? t.name : t.label]));
   // Som standard eget hold; "alle" viser alt, man må se. ?gruppe= tager både hold-id og gammel gruppe (fx ELITE)
   const pick = sp.gruppe === "alle" ? null : sp.gruppe ? (allTeams.find((t) => t.id === sp.gruppe) ?? allTeams.find((t) => t.kind === sp.gruppe && allowed.includes(t.id)))?.id ?? null : own;
   const group: string | null = pick && allowed.includes(pick) && allowed.length > 1 ? pick : null;
@@ -85,7 +87,7 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
   const selectedList = days.get(selected) ?? [];
   const selectedOwn = ownDays.get(selected) ?? [];
 
-  const gq = `gruppe=${group ?? "alle"}`;
+  const gq = `gruppe=${group ?? "alle"}${branch ? `&afdeling=${branch.id}` : ""}`;
   const url = (month: string, day?: string) => `${base}?${gq}&maaned=${month}${day ? `&dag=${day}` : ""}`;
   const cells: (string | null)[] = [
     ...Array.from({ length: firstWeekday }, () => null),
@@ -112,11 +114,18 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
           </span>
         </div>
       )}
+      {branches.length > 1 && <p className="filters">
+        <span className="muted">Afdeling:</span>
+        <Link href={`${base}?gruppe=alle&maaned=${monthKey}`} className={!branch ? "active" : undefined}>Alle</Link>
+        {branches.map((b) => (
+          <Link key={b.id} href={`${base}?gruppe=alle&afdeling=${b.id}&maaned=${monthKey}`} className={branch?.id === b.id ? "active" : undefined}>{b.name}</Link>
+        ))}
+      </p>}
       {allowed.length > 1 && <p className="filters">
         <span className="muted">Vis:</span>
-        <Link href={`${base}?gruppe=alle&maaned=${monthKey}`} className={group === null ? "active" : undefined}>Alle</Link>
+        <Link href={`${base}?gruppe=alle&maaned=${monthKey}${branch ? `&afdeling=${branch.id}` : ""}`} className={group === null ? "active" : undefined}>Alle</Link>
         {allowed.map((g) => (
-          <Link key={g} href={`${base}?gruppe=${g}&maaned=${monthKey}`} className={group === g ? "active" : undefined}>
+          <Link key={g} href={`${base}?gruppe=${g}&maaned=${monthKey}${branch ? `&afdeling=${branch.id}` : ""}`} className={group === g ? "active" : undefined}>
             {teamName.get(g)}{own === g ? " (mit hold)" : ""}
           </Link>
         ))}

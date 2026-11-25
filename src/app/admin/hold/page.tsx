@@ -32,7 +32,9 @@ async function save(fd: FormData) {
   // Børnesikkerhed: børnehold ser kun børnehold, voksenhold kun voksenhold, og børnehold er aldrig åbne
   const others = await prisma.team.findMany({ where: { id: { not: id } }, select: { id: true, kind: true } });
   const sees = fd.getAll("sees").map(String).filter((s) => others.some((t) => t.id === s && (t.kind === "BOERN") === (kind === "BOERN")));
-  await prisma.team.update({ where: { id }, data: { name, kind, sees, public: kind !== "BOERN" && fd.get("public") === "on", active, sortOrder: Number(str(fd, "sortOrder")) || 0 } });
+  const branchId = str(fd, "branchId");
+  const branch = branchId ? await prisma.branch.findUnique({ where: { id: branchId } }) : null;
+  await prisma.team.update({ where: { id }, data: { ...(fd.has("branchId") ? { branchId: branch?.id ?? null } : {}), name, kind, sees, public: kind !== "BOERN" && fd.get("public") === "on", active, sortOrder: Number(str(fd, "sortOrder")) || 0 } });
   revalidatePath("/", "layout");
   back("gemt=1");
 }
@@ -45,7 +47,8 @@ async function add(fd: FormData) {
   let id = `hold-${slug(name) || "nyt"}`;
   if (await prisma.team.findUnique({ where: { id } })) id = `${id}-${Date.now().toString(36).slice(-4)}`;
   const max = await prisma.team.aggregate({ _max: { sortOrder: true } });
-  await prisma.team.create({ data: { id, name, kind: kindOf(fd), sortOrder: (max._max.sortOrder ?? 0) + 1 } });
+  const branch = str(fd, "branchId") ? await prisma.branch.findUnique({ where: { id: str(fd, "branchId") } }) : null;
+  await prisma.team.create({ data: { id, name, kind: kindOf(fd), branchId: branch?.id ?? null, sortOrder: (max._max.sortOrder ?? 0) + 1 } });
   revalidatePath("/", "layout");
   back("gemt=1");
 }
@@ -66,9 +69,46 @@ async function remove(fd: FormData) {
   back("gemt=1");
 }
 
+// ---------- Afdelinger (netværk med flere byer eller klubber) ----------
+
+async function saveBranch(fd: FormData) {
+  "use server";
+  await requireAdmin();
+  const name = str(fd, "name", 40);
+  if (!name) back("fejl=" + encodeURIComponent("Skriv afdelingens navn"));
+  await prisma.branch.update({ where: { id: str(fd, "id") }, data: { name, city: str(fd, "city", 60) || null, sortOrder: Number(str(fd, "sortOrder")) || 0 } });
+  revalidatePath("/", "layout");
+  back("gemt=1");
+}
+
+async function addBranch(fd: FormData) {
+  "use server";
+  await requireAdmin();
+  const name = str(fd, "name", 40);
+  if (!name) back("fejl=" + encodeURIComponent("Skriv afdelingens navn"));
+  const max = await prisma.branch.aggregate({ _max: { sortOrder: true } });
+  const b = await prisma.branch.create({ data: { name, city: str(fd, "city", 60) || null, sortOrder: (max._max.sortOrder ?? 0) + 1 } });
+  // Den første afdeling får klubbens eksisterende hold
+  if ((await prisma.branch.count()) === 1) await prisma.team.updateMany({ where: { branchId: null }, data: { branchId: b.id } });
+  revalidatePath("/", "layout");
+  back("gemt=1");
+}
+
+async function removeBranch(fd: FormData) {
+  "use server";
+  await requireAdmin();
+  const b = await prisma.branch.findUnique({ where: { id: str(fd, "id") }, include: { _count: { select: { teams: true } } } });
+  if (!b) return;
+  if (b._count.teams && (await prisma.branch.count()) > 1) back("fejl=" + encodeURIComponent(`${b.name} har hold. Flyt dem til en anden afdeling først.`));
+  await prisma.branch.delete({ where: { id: b.id } });
+  revalidatePath("/", "layout");
+  back("gemt=1");
+}
+
 export default async function Teams({ searchParams }: { searchParams: Promise<{ gemt?: string; fejl?: string }> }) {
   await requireAdmin();
   const sp = await searchParams;
+  const branches = await prisma.branch.findMany({ orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }], include: { _count: { select: { teams: true } } } });
   const teams = await prisma.team.findMany({ orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }], include: { _count: { select: { members: true, trainings: true } } } });
   return (
     <>
@@ -92,6 +132,12 @@ export default async function Teams({ searchParams }: { searchParams: Promise<{ 
                     {KINDS.map((k) => <option key={k.v} value={k.v} title={k.hint}>{k.label}</option>)}
                   </select>
                 </label>
+                {branches.length > 0 && <label>Afdeling
+                  <select name="branchId" defaultValue={t.branchId ?? ""}>
+                    <option value="">Hele netværket</option>
+                    {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+                  </select>
+                </label>}
                 <label>Rækkefølge<input name="sortOrder" type="number" defaultValue={t.sortOrder} /></label>
               </div>
               {teams.some((o) => o.id !== t.id && (o.kind === "BOERN") === (t.kind === "BOERN")) && (
@@ -119,6 +165,12 @@ export default async function Teams({ searchParams }: { searchParams: Promise<{ 
         <h2 className="h3" style={{ margin: 0 }}>Nyt hold</h2>
         <div className="row">
           <label>Navn<input name="name" maxLength={40} placeholder="fx U17" required /></label>
+          {branches.length > 0 && <label>Afdeling
+            <select name="branchId" defaultValue={branches[0].id}>
+              <option value="">Hele netværket</option>
+              {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+            </select>
+          </label>}
           <label>Type
             <select name="kind" defaultValue="BREDDE">
               {KINDS.map((k) => <option key={k.v} value={k.v} title={k.hint}>{k.label}</option>)}
@@ -126,6 +178,38 @@ export default async function Teams({ searchParams }: { searchParams: Promise<{ 
           </label>
         </div>
         <div><button className="button" type="submit">Opret hold</button></div>
+      </form>
+
+      <h2 style={{ marginTop: 40 }}>Afdelinger</h2>
+      <p className="muted">
+        Er I et netværk med flere byer eller klubber, kan hver afdeling have sine egne hold. Medlemmerne kan filtrere kalenderen på afdeling,
+        og I kan sende mail til en hel afdeling. Med kun én afdeling (eller ingen) vises afdelinger ingen steder.
+      </p>
+      <div className="stack">
+        {branches.map((b) => (
+          <div key={b.id} className="card admin-form" style={{ display: "flex", gap: 10, alignItems: "end", flexWrap: "wrap" }}>
+            <form action={saveBranch} className="row" style={{ flex: 1, alignItems: "end" }}>
+              <input type="hidden" name="id" value={b.id} />
+              <label>Navn<input name="name" defaultValue={b.name} maxLength={40} required /></label>
+              <label>By<input name="city" defaultValue={b.city ?? ""} maxLength={60} /></label>
+              <label>Rækkefølge<input name="sortOrder" type="number" defaultValue={b.sortOrder} /></label>
+              <div><button className="button small" type="submit">Gem</button></div>
+            </form>
+            <span className="muted">{b._count.teams} hold</span>
+            {(!b._count.teams || branches.length === 1) && (
+              <form action={removeBranch}><input type="hidden" name="id" value={b.id} /><button className="button small ghost" type="submit">Slet</button></form>
+            )}
+          </div>
+        ))}
+      </div>
+      <form action={addBranch} className="card stack admin-form" style={{ marginTop: 16 }}>
+        <h3 style={{ margin: 0 }}>Ny afdeling</h3>
+        <div className="row">
+          <label>Navn<input name="name" maxLength={40} placeholder="fx Svendborg" required /></label>
+          <label>By<input name="city" maxLength={60} /></label>
+        </div>
+        {branches.length === 0 && <p className="muted" style={{ margin: 0 }}>Den første afdeling får klubbens nuværende hold. Opret derefter den næste.</p>}
+        <div><button className="button" type="submit">Opret afdeling</button></div>
       </form>
     </>
   );

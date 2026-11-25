@@ -1,7 +1,7 @@
 import { cache } from "react";
 import type { AthleteGroup } from "@prisma/client";
 import { prisma } from "./db";
-import { canJoinTeam, visibleTeams, type TeamLite } from "./teams";
+import { canJoinTeam, teamLabel, visibleTeams, type BranchLite, type TeamLite } from "./teams";
 
 // Kalenderens synlighedsregler slået op i databasen, så de gælder på serveren uanset hvad sessionen siger.
 
@@ -16,13 +16,22 @@ export async function isTrialOnly(userId: string): Promise<boolean> {
 }
 
 /** Klubbens hold i sorteret rækkefølge (én gang pr. forespørgsel). */
-export const getTeams = cache(async (): Promise<TeamLite[]> =>
-  prisma.team.findMany({ orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }], select: { id: true, name: true, kind: true, sees: true, public: true, active: true } }),
+export const getTeams = cache(async (): Promise<(TeamLite & { label: string })[]> => {
+  const [teams, branches] = await Promise.all([
+    prisma.team.findMany({ orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }], select: { id: true, name: true, kind: true, sees: true, public: true, active: true, branchId: true } }),
+    getBranches(),
+  ]);
+  return teams.map((t) => ({ ...t, label: teamLabel(t, branches) }));
+});
+
+/** Afdelinger i netværket (tom liste = én klub uden afdelinger). */
+export const getBranches = cache(async (): Promise<BranchLite[]> =>
+  prisma.branch.findMany({ orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }], select: { id: true, name: true, city: true } }).catch(() => []),
 );
 
-/** Holdnavne til visning, slået op på id. */
+/** Holdnavne til visning (med afdeling, hvis der er flere), slået op på id. */
 export async function teamNames(): Promise<Map<string, string>> {
-  return new Map((await getTeams()).map((t) => [t.id, t.name]));
+  return new Map((await getTeams()).map((t) => [t.id, t.label]));
 }
 
 export type CalendarViewer = {

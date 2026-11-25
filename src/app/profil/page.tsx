@@ -50,7 +50,9 @@ async function saveProfile(formData: FormData) {
 export default async function Profile({ searchParams }: { searchParams: Promise<{ fejl?: string; gemt?: string; velkommen?: string }> }) {
   const sessionUser = await requireUser("/profil");
   const { fejl, gemt, velkommen } = await searchParams;
-  const user = await prisma.user.findUniqueOrThrow({ where: { id: sessionUser.id }, include: { athleteProfile: { select: { id: true } }, team: { select: { name: true } } } });
+  const user = await prisma.user.findUniqueOrThrow({ where: { id: sessionUser.id }, include: { athleteProfile: { select: { id: true } }, team: { select: { name: true, branch: { select: { name: true } } } } } });
+  // Med flere afdelinger står afdelingen efter holdnavnet
+  const teamName = user.team ? (user.team.branch && (await prisma.branch.count()) > 1 ? `${user.team.name} (${user.team.branch.name})` : user.team.name) : "";
   const off = await featuresOff();
   return (
     <>
@@ -95,7 +97,7 @@ export default async function Profile({ searchParams }: { searchParams: Promise<
           </label>
         )}
         <p className="muted" style={{ margin: 0 }}>
-          E-mail: {user.email} · Brugertype: {user.role === "ATHLETE" && user.team ? `Atlet – ${user.team.name}` : userTypeLabel(user.role, null)}
+          E-mail: {user.email} · Brugertype: {user.role === "ATHLETE" && user.team ? `Atlet – ${teamName}` : userTypeLabel(user.role, null)}
           {!user.teamId && user.role === "ATHLETE" && " (en admin tildeler dit hold)"}
         </p>
         <button className="button" type="submit" style={{ justifySelf: "start" }}>{velkommen ? "Kom i gang" : "Gem"}</button>
