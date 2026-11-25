@@ -1,7 +1,6 @@
-import { requireTrainer } from "@/auth";
-import { AdminNav } from "@/components/AdminNav";
+import { requireTeamStaff } from "@/lib/staff";
 import { prisma } from "@/lib/db";
-import { AUDIENCES, recipients } from "@/lib/bulkmail";
+import { audienceLabel, audiencesFor, recipients } from "@/lib/bulkmail";
 import { sendGroupMail } from "./actions";
 import { requireFeature } from "@/lib/features";
 
@@ -12,16 +11,15 @@ type Props = { searchParams: Promise<{ fejl?: string; test?: string; sendt?: str
 
 export default async function MailPage({ searchParams }: Props) {
   await requireFeature("mail");
-  const user = await requireTrainer();
+  const user = await requireTeamStaff("/admin/mail");
   const sp = await searchParams;
-  const allowed = AUDIENCES.filter((a) => user.role === "ADMIN" || a.trainerAllowed);
+  const allowed = await audiencesFor(user);
   const counts = await Promise.all(allowed.map(async (a) => [(await recipients(a.value, "IMPORTANT")).length, (await recipients(a.value, "NEWS")).length] as const));
-  const log = await prisma.mailLog.findMany({ orderBy: { createdAt: "desc" }, take: 20 });
-  const label = (v: string) => AUDIENCES.find((a) => a.value === v)?.label ?? v;
+  const log = await prisma.mailLog.findMany({ where: user.role === "ATHLETE" ? { audience: { in: allowed.map((a) => a.value) } } : {}, orderBy: { createdAt: "desc" }, take: 20 });
+  const labels = new Map(await Promise.all([...new Set(log.map((m) => m.audience))].map(async (v) => [v, await audienceLabel(v)] as const)));
   return (
     <>
       <h1>Mail til medlemmer</h1>
-      {user.role === "ADMIN" && <AdminNav />}
       <p className="muted">
         Skriv til et hold, alle medlemmer eller trænerne. Hver modtager får sin egen mail, så ingen kan se de andres adresser. Mails til børn sendes
         til deres forælder eller værge.
@@ -66,7 +64,7 @@ export default async function MailPage({ searchParams }: Props) {
                 <tr key={m.id}>
                   <td>{m.createdAt.toLocaleString("da-DK", { dateStyle: "short", timeStyle: "short", timeZone: "Europe/Copenhagen" })}</td>
                   <td>{m.subject}{m.kind === "IMPORTANT" && <span className="pill" style={{ marginLeft: 6 }}>Vigtig</span>}</td>
-                  <td>{label(m.audience)}</td>
+                  <td>{labels.get(m.audience)}</td>
                   <td>{m.recipients}{m.failed > 0 && <span className="status-warn-text"> ({m.failed} fejlede)</span>}</td>
                   <td>{m.sentByName}</td>
                 </tr>

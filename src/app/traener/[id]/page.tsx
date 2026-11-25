@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { requireTrainer } from "@/auth";
+import { canManageTeam, requireTeamStaff } from "@/lib/staff";
+import { hasRole } from "@/lib/roles";
 import { prisma } from "@/lib/db";
 import { TrainingForm } from "@/components/TrainingForm";
 import { cancelTraining, createTraining, deleteTraining, updateTraining } from "../actions";
@@ -9,7 +10,9 @@ export const metadata = { title: "Træning" };
 type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ fejl?: string }> };
 
 export default async function EditTraining({ params, searchParams }: Props) {
-  await requireTrainer();
+  const staff = await requireTeamStaff();
+  // Holdledere vælger kun mellem deres egne hold
+  const onlyTeams = hasRole(staff.role, "TRAINER") ? undefined : staff.leads;
   const { id } = await params;
   const { fejl } = await searchParams;
   if (id === "ny") {
@@ -17,7 +20,7 @@ export default async function EditTraining({ params, searchParams }: Props) {
       <>
         <h1>Opret træning</h1>
         {fejl && <p className="status-warn">{fejl}</p>}
-        <TrainingForm action={createTraining} allowRepeat />
+        <TrainingForm action={createTraining} allowRepeat onlyTeams={onlyTeams} />
       </>
     );
   }
@@ -25,7 +28,7 @@ export default async function EditTraining({ params, searchParams }: Props) {
     where: { id },
     include: { signups: { include: { user: { select: { name: true, email: true, phone: true } } }, orderBy: { createdAt: "asc" } } },
   });
-  if (!training) notFound();
+  if (!training || !canManageTeam(staff, training.teamId)) notFound();
   return (
     <>
       <h1>Ret træning</h1>
@@ -42,7 +45,7 @@ export default async function EditTraining({ params, searchParams }: Props) {
         )}
       </section>
       {fejl && <p className="status-warn">{fejl}</p>}
-      <TrainingForm action={updateTraining.bind(null, id)} training={training} />
+      <TrainingForm action={updateTraining.bind(null, id)} training={training} onlyTeams={onlyTeams} />
       <section className="card" style={{ marginTop: 32 }}>
         <h2 style={{ marginTop: 0 }}>{training.cancelledAt ? "Træningen er aflyst" : "Aflys træning"}</h2>
         <p className="muted">

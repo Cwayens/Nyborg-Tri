@@ -77,3 +77,12 @@ export function initials(name: string | null | undefined): string {
   const parts = name.trim().split(/\s+/);
   return ((parts[0]?.[0] ?? "") + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase();
 }
+export const CardIcon = ({ size = 20 }: P) => (
+  <svg {...base(size)}><rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20M6 15h4" /></svg>
+);
+export const ChevronIcon = ({ size = 18 }: P) => (
+  <svg {...base(size)}><path d="m9 6 6 6-6 6" /></svg>
+);
+export const PlayIcon = ({ size = 16 }: P) => (
+  <svg {...base(size)}><path d="M7 4v16l13-8z" /></svg>
+);

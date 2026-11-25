@@ -2,6 +2,7 @@ import { NOT_CHILD } from "@/lib/child-safety";
 import type { AthleteGroup, Discipline } from "@prisma/client";
 import { prisma } from "./db";
 import { CLUB_SHAREABLE, startOfWeek, sumBySport } from "./activities";
+import { isoWeek } from "./time";
 import type { WeekData } from "@/components/WeekChart";
 
 export async function personalWeeks(userId: string, n = 8): Promise<WeekData[]> {
@@ -11,7 +12,7 @@ export async function personalWeeks(userId: string, n = 8): Promise<WeekData[]> 
   const weeks: WeekData[] = Array.from({ length: n }, (_, i) => {
     const d = new Date(start);
     d.setDate(d.getDate() + 7 * i);
-    return { label: i === n - 1 ? "Nu" : `${d.getDate()}/${d.getMonth() + 1}`, from: d, bySport: {}, meters: {}, count: {} };
+    return { label: String(isoWeek(d)), from: d, bySport: {}, meters: {}, count: {} };
   });
   for (const a of acts) {
     const i = Math.floor((startOfWeek(a.startAt).getTime() - start.getTime()) / (7 * 24 * 3600 * 1000));

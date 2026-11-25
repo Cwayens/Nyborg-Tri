@@ -1,6 +1,7 @@
 import type { Discipline } from "@prisma/client";
 import { DisciplineIcon, PinIcon, initials } from "./Icons";
-import { DISCIPLINE_LABEL } from "@/lib/roles";
+import { disciplineLabel } from "@/lib/roles";
+import { translator, type Locale } from "@/lib/i18n-core";
 import { formatDay, formatTime } from "@/lib/time";
 import { cancelWorkout, toggleJoin } from "@/app/traen-sammen/actions";
 import { WorkoutView as ProgramView } from "./WorkoutView";
@@ -12,7 +13,8 @@ export type WorkoutView = {
   workout?: unknown; host: { name: string | null }; participants: { user: { id: string; name: string | null } }[];
 };
 
-export function WorkoutCard({ w, userId, canJoin, refs }: { w: WorkoutView; userId: string; canJoin: boolean; refs?: References | null }) {
+export function WorkoutCard({ w, userId, canJoin, refs, loc = "da" }: { w: WorkoutView; userId: string; canJoin: boolean; refs?: References | null; loc?: Locale }) {
+  const t = translator(loc);
   const joined = w.participants.some((p) => p.user.id === userId);
   const full = !!w.maxPeople && w.participants.length >= w.maxPeople;
   const isHost = w.hostId === userId;
@@ -20,11 +22,11 @@ export function WorkoutCard({ w, userId, canJoin, refs }: { w: WorkoutView; user
     <article className={`card training disc disc-${w.discipline}`}>
       <DisciplineIcon discipline={w.discipline} />
       <div>
-        <span className="disc-label">{DISCIPLINE_LABEL[w.discipline]}{w.level ? ` · ${w.level}` : ""}{isWorkout(w.workout) ? " · Med program" : ""}</span>
+        <span className="disc-label">{disciplineLabel(w.discipline, loc)}{w.level ? ` · ${w.level}` : ""}{isWorkout(w.workout) ? t(" · Med program", " · With workout") : ""}</span>
         <h3>{w.title}</h3>
         <p className="muted">
-          {formatDay(w.startsAt)} kl. {formatTime(w.startsAt)} · {w.durationMin} min
-          <br /><PinIcon /> {w.location} · Slået op af {isHost ? "dig" : w.host.name ?? "et medlem"}
+          {formatDay(w.startsAt, loc)} {t("kl.", "at")} {formatTime(w.startsAt, loc)} · {w.durationMin} min
+          <br /><PinIcon /> {w.location} · {t("Slået op af", "Posted by")} {isHost ? t("dig", "you") : w.host.name ?? t("et medlem", "a member")}
         </p>
         {w.description && <p style={{ whiteSpace: "pre-line" }}>{w.description}</p>}
         {isWorkout(w.workout) && (
@@ -35,18 +37,18 @@ export function WorkoutCard({ w, userId, canJoin, refs }: { w: WorkoutView; user
             {w.participants.slice(0, 6).map((p) => <span key={p.user.id} className="avatar" title={p.user.name ?? ""}>{initials(p.user.name)}</span>)}
           </span>
           <span className="muted" style={{ fontSize: "0.9rem" }}>
-            {w.participants.length}{w.maxPeople ? ` af ${w.maxPeople}` : ""} med: {w.participants.map((p) => p.user.name ?? "?").join(", ")}
+            {w.participants.length}{w.maxPeople ? ` ${t("af", "of")} ${w.maxPeople}` : ""} {t("med", "going")}: {w.participants.map((p) => p.user.name ?? "?").join(", ")}
           </span>
         </div>
       </div>
       <div className="signup">
         {isHost ? (
-          <form action={cancelWorkout}><input type="hidden" name="id" value={w.id} /><button className="button ghost small" type="submit">Aflys</button></form>
+          <form action={cancelWorkout}><input type="hidden" name="id" value={w.id} /><button className="button ghost small" type="submit">{t("Aflys", "Cancel")}</button></form>
         ) : joined ? (
-          <form action={toggleJoin}><input type="hidden" name="id" value={w.id} /><button className="button secondary small" type="submit">✓ Med · Afmeld</button></form>
+          <form action={toggleJoin}><input type="hidden" name="id" value={w.id} /><button className="button secondary small" type="submit">{t("✓ Med · Afmeld", "✓ Going · Leave")}</button></form>
         ) : canJoin && !full ? (
-          <form action={toggleJoin}><input type="hidden" name="id" value={w.id} /><button className="button small" type="submit">Jeg er med</button></form>
-        ) : full ? <span className="pill">Fuld</span> : null}
+          <form action={toggleJoin}><input type="hidden" name="id" value={w.id} /><button className="button small" type="submit">{t("Jeg er med", "I'm in")}</button></form>
+        ) : full ? <span className="pill">{t("Fuld", "Full")}</span> : null}
       </div>
     </article>
   );

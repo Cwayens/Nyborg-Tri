@@ -1,7 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireAdmin } from "@/auth";
-import { AdminNav } from "@/components/AdminNav";
+import { requireTreasurer } from "@/lib/staff";
 import { prisma } from "@/lib/db";
 import { slug, str } from "@/lib/form-rows";
 
@@ -18,7 +17,7 @@ const price = (fd: FormData) => {
 
 async function save(fd: FormData) {
   "use server";
-  await requireAdmin();
+  await requireTreasurer();
   const id = str(fd, "id");
   const p = price(fd);
   const name = str(fd, "name", 60);
@@ -33,7 +32,7 @@ async function save(fd: FormData) {
 
 async function add(fd: FormData) {
   "use server";
-  await requireAdmin();
+  await requireTreasurer();
   const name = str(fd, "name", 60);
   const p = price(fd);
   if (!name || p === null) redirect("/admin/medlemstyper?fejl=" + encodeURIComponent("Skriv navn og pris i kroner"));
@@ -47,7 +46,7 @@ async function add(fd: FormData) {
 
 async function remove(fd: FormData) {
   "use server";
-  await requireAdmin();
+  await requireTreasurer();
   const t = await prisma.membershipType.findUnique({ where: { id: str(fd, "id") }, include: { _count: { select: { memberships: true, accessCodes: true } } } });
   if (!t || SPECIAL[t.code]) return;
   // Er typen brugt, skjules den i stedet, så historikken bevares
@@ -58,13 +57,12 @@ async function remove(fd: FormData) {
 }
 
 export default async function MembershipTypes({ searchParams }: { searchParams: Promise<{ gemt?: string; fejl?: string }> }) {
-  await requireAdmin();
+  await requireTreasurer();
   const sp = await searchParams;
   const types = await prisma.membershipType.findMany({ orderBy: { sortOrder: "asc" }, include: { _count: { select: { memberships: true } } } });
   return (
     <>
       <h1>Medlemstyper og priser</h1>
-      <AdminNav />
       {sp.gemt && <p className="notice">Gemt. Priserne ses med det samme på forsiden og ved indmeldelse.</p>}
       {sp.fejl && <p className="status-warn">{sp.fejl}</p>}
       <p className="muted">Prisen er for et år. Skjulte typer kan ikke vælges ved indmeldelse, men medlemmer, der har dem, beholder dem.</p>

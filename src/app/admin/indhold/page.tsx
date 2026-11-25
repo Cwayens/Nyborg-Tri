@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { requireAdmin } from "@/auth";
-import { AdminNav } from "@/components/AdminNav";
 import { prisma } from "@/lib/db";
 import { dato } from "@/lib/format";
 
@@ -15,7 +14,6 @@ export default async function AdminContent() {
   return (
     <>
       <h1>Indhold</h1>
-      <AdminNav />
       <p style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
         <Link className="button" href="/admin/indhold/ny?type=post">Skriv nyhed</Link>
         <Link className="button secondary" href="/admin/indhold/ny?type=page">Ny side</Link>

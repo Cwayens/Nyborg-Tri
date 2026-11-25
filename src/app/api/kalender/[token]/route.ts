@@ -3,22 +3,22 @@ import { baseUrl } from "@/lib/url";
 import { buildIcs, type IcsEvent } from "@/lib/ics";
 import { DISCIPLINE_LABEL } from "@/lib/roles";
 import { CLUB } from "@/lib/club";
-import { groupsFor } from "@/lib/visibility";
+import { teamsFor } from "@/lib/visibility";
 import { isChild } from "@/lib/child-safety";
 
-// Personligt kalender-abonnement: dine tilmeldte træninger, din gruppes træninger og Træn sammen-ture.
+// Personligt kalender-abonnement: dine tilmeldte træninger, dit holds træninger og Træn sammen-ture.
 export async function GET(_req: Request, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const user = await prisma.user.findUnique({ where: { calendarToken: token.replace(/\.ics$/, "") } });
   if (!user) return new Response("Not found", { status: 404 });
   const from = new Date(Date.now() - 14 * 24 * 3600 * 1000);
   const base = await baseUrl();
-  const groups = await groupsFor(user.id);
-  const ownGroup = user.athleteGroup && groups.includes(user.athleteGroup) ? user.athleteGroup : null;
+  const teams = await teamsFor(user.id);
+  const ownTeam = user.teamId && teams.includes(user.teamId) ? user.teamId : null;
 
   const [trainings, workouts] = await Promise.all([
     prisma.trainingSession.findMany({
-      where: { startsAt: { gte: from }, group: { in: groups }, OR: [{ signups: { some: { userId: user.id } } }, ...(ownGroup ? [{ group: ownGroup }] : [])] },
+      where: { startsAt: { gte: from }, teamId: { in: teams }, OR: [{ signups: { some: { userId: user.id } } }, ...(ownTeam ? [{ teamId: ownTeam }] : [])] },
       include: { signups: { where: { userId: user.id }, select: { id: true } } },
     }),
     // Børn har ikke Træn sammen (child-safety.ts)

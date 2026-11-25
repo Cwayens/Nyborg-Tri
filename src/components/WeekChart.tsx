@@ -1,5 +1,6 @@
 import type { Discipline } from "@prisma/client";
-import { DISCIPLINE_LABEL } from "@/lib/roles";
+import { disciplineLabel } from "@/lib/roles";
+import { INTL, translator, type Locale } from "@/lib/i18n-core";
 import { DisciplineIcon } from "./Icons";
 
 // Træning pr. disciplin: én række pr. sport med timer denne uge, snit for de forrige uger og små søjler pr. uge.
@@ -13,24 +14,26 @@ export type WeekData = {
 };
 
 const ORDER: Discipline[] = ["SWIM", "BIKE", "RUN", "STRENGTH", "OTHER"];
-const DAYS = ["søn", "man", "tir", "ons", "tor", "fre", "lør"];
+const DAYS = { da: ["søn", "man", "tir", "ons", "tor", "fre", "lør"], en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] };
 
-const h = (sec: number) => (sec / 3600).toLocaleString("da-DK", { maximumFractionDigits: 1, minimumFractionDigits: sec > 0 && sec < 36000 ? 1 : 0 });
+const h = (sec: number, loc: Locale = "da") => (sec / 3600).toLocaleString(INTL[loc], { maximumFractionDigits: 1, minimumFractionDigits: sec > 0 && sec < 36000 ? 1 : 0 });
 
-function km(m: number, s: Discipline): string | null {
+function km(m: number, s: Discipline, loc: Locale): string | null {
   if (!m || s === "STRENGTH") return null;
-  if (s === "SWIM") return `${Math.round(m).toLocaleString("da-DK")} m`;
-  return `${(m / 1000).toLocaleString("da-DK", { maximumFractionDigits: 1 })} km`;
+  if (s === "SWIM") return `${Math.round(m).toLocaleString(INTL[loc])} m`;
+  return `${(m / 1000).toLocaleString(INTL[loc], { maximumFractionDigits: 1 })} km`;
 }
 
-function weekName(w: WeekData, current: boolean): string {
-  if (current) return "Denne uge";
+function weekName(w: WeekData, current: boolean, loc: Locale): string {
   const end = new Date(w.from);
   end.setDate(end.getDate() + 6);
-  return `Uge ${w.from.getDate()}/${w.from.getMonth() + 1}–${end.getDate()}/${end.getMonth() + 1}`;
+  const range = `${w.from.getDate()}/${w.from.getMonth() + 1}–${end.getDate()}/${end.getMonth() + 1}`;
+  return `${current ? (loc === "en" ? "This week" : "Denne uge") : `${loc === "en" ? "Week" : "Uge"} ${w.label}`} · ${range}`;
 }
 
-export function WeekChart({ weeks, now = new Date() }: { weeks: WeekData[]; now?: Date }) {
+export function WeekChart({ weeks, now = new Date(), loc = "da" }: { weeks: WeekData[]; now?: Date; loc?: Locale }) {
+  const t = translator(loc);
+  const u = loc === "en" ? "h" : "t";
   const used = ORDER.filter((s) => weeks.some((w) => w.bySport[s]));
   if (used.length === 0) return null;
   const past = weeks.slice(0, -1);
@@ -39,37 +42,37 @@ export function WeekChart({ weeks, now = new Date() }: { weeks: WeekData[]; now?
   const max = Math.max(1, ...weeks.flatMap((w) => used.map((s) => w.bySport[s] ?? 0)));
   const total = (w: WeekData) => used.reduce((t, s) => t + (w.bySport[s] ?? 0), 0);
   const totalAvg = past.reduce((t, w) => t + total(w), 0) / Math.max(1, past.length);
-  const today = DAYS[now.getDay()];
+  const today = DAYS[loc][now.getDay()];
 
   return (
     <div className="tb">
       <div className="tb-head muted">
-        <span>Disciplin</span>
-        <span className="tb-num">Denne uge</span>
-        <span className="tb-num">Snit</span>
-        <span className="tb-weeks">{weeks.map((w, i) => <small key={w.label} className={i === 0 || i === weeks.length - 1 ? "edge" : undefined}>{i === weeks.length - 1 ? "Nu" : w.label}</small>)}</span>
+        <span>{t("Disciplin", "Discipline")}</span>
+        <span className="tb-num">{t("Denne uge", "This week")}</span>
+        <span className="tb-num">{t("Snit", "Avg")}</span>
+        <span className="tb-weeks">{weeks.map((w, i) => <small key={w.label} className={i === 0 || i === weeks.length - 1 ? "edge" : undefined}>{i === weeks.length - 1 ? t("Nu", "Now") : i === 0 ? <><span className="wk-prefix">{t("Uge", "Wk")} </span>{w.label}</> : w.label}</small>)}</span>
       </div>
       <ul className="tb-rows">
         {used.map((s) => {
           const a = avg(s);
           return (
             <li key={s} className={`disc disc-${s}`}>
-              <span className="tb-name"><DisciplineIcon discipline={s} size={16} />{DISCIPLINE_LABEL[s]}</span>
-              <span className="tb-num"><b>{h(cur.bySport[s] ?? 0)}</b> t</span>
-              <span className="tb-num muted">{h(a)} t</span>
-              <span className="tb-weeks" role="img" aria-label={`${DISCIPLINE_LABEL[s]}: ${weeks.map((w, i) => `${weekName(w, i === weeks.length - 1)} ${h(w.bySport[s] ?? 0)} timer`).join(", ")}`}>
+              <span className="tb-name"><DisciplineIcon discipline={s} size={16} />{disciplineLabel(s, loc)}</span>
+              <span className="tb-num"><b>{h(cur.bySport[s] ?? 0, loc)}</b> {u}</span>
+              <span className="tb-num muted">{h(a, loc)} {u}</span>
+              <span className="tb-weeks" role="img" aria-label={`${disciplineLabel(s, loc)}: ${weeks.map((w, i) => `${weekName(w, i === weeks.length - 1, loc)} ${h(w.bySport[s] ?? 0, loc)} ${t("timer", "hours")}`).join(", ")}`}>
                 {weeks.map((w, i) => {
                   const sec = w.bySport[s] ?? 0;
                   const isCur = i === weeks.length - 1;
-                  const dist = km(w.meters[s] ?? 0, s);
+                  const dist = km(w.meters[s] ?? 0, s, loc);
                   const n = w.count[s] ?? 0;
                   return (
                     <span key={w.label} className={`tb-bar${isCur ? " cur" : ""}`} tabIndex={0}>
                       <i style={{ height: sec ? `max(3px, ${(sec / max) * 100}%)` : 0 }} />
                       <span className="tb-tip" role="tooltip">
-                        <b>{weekName(w, isCur)}</b>
-                        {DISCIPLINE_LABEL[s]}: {h(sec)} t{dist ? ` · ${dist}` : ""}
-                        <br />{n} {n === 1 ? "træning" : "træninger"}{isCur ? ` (til og med ${today})` : ""}
+                        <b>{weekName(w, isCur, loc)}</b>
+                        {disciplineLabel(s, loc)}: {h(sec, loc)} {u}{dist ? ` · ${dist}` : ""}
+                        <br />{n} {loc === "en" ? (n === 1 ? "session" : "sessions") : n === 1 ? "træning" : "træninger"}{isCur ? (loc === "en" ? ` (up to ${today})` : ` (til og med ${today})`) : ""}
                       </span>
                     </span>
                   );
@@ -80,10 +83,10 @@ export function WeekChart({ weeks, now = new Date() }: { weeks: WeekData[]; now?
         })}
       </ul>
       <div className="tb-total">
-        <span>I alt</span>
-        <span className="tb-num"><b>{h(total(cur))}</b> t</span>
-        <span className="tb-num muted">{h(totalAvg)} t</span>
-        <span className="muted tb-note">Snit for de {past.length} forrige uger. Ugen er i gang, så &quot;Nu&quot; er ikke færdig endnu.</span>
+        <span>{t("I alt", "Total")}</span>
+        <span className="tb-num"><b>{h(total(cur), loc)}</b> {u}</span>
+        <span className="tb-num muted">{h(totalAvg, loc)} {u}</span>
+        <span className="muted tb-note">{t(`Snit for de ${past.length} forrige uger. Ugen er i gang, så "Nu" er ikke færdig endnu.`, `Average of the previous ${past.length} weeks. The week is still running, so "Now" isn't finished yet.`)}</span>
       </div>
     </div>
   );

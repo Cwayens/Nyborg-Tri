@@ -32,6 +32,7 @@ export async function exportUserData(userId: string) {
       raceEntries: { select: { distance: true, ride: true, seats: true, rideFrom: true, race: { select: { name: true, date: true } } } },
       tips: { select: { title: true, publishedAt: true } },
       plannedWorkouts: { select: { day: true, time: true, title: true, discipline: true, durationMin: true, description: true, source: true } },
+      postReactions: { select: { emoji: true, createdAt: true, post: { select: { title: true } } } },
     },
   });
   const contact = await prisma.contactMessage.findMany({ where: { email: user.email }, select: { topic: true, message: true, createdAt: true } });

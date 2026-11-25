@@ -2,22 +2,26 @@ import Link from "next/link";
 import { CLUB } from "@/lib/club";
 import { getPrivacy } from "@/lib/site";
 import { Inline } from "@/components/Inline";
+import { getLocale } from "@/lib/i18n";
 
 export async function generateMetadata() {
+  if ((await getLocale()) === "en") return { title: "Privacy policy", description: `How ${CLUB.name} handles your personal data.` };
   return { title: "Privatlivspolitik", description: `Sådan behandler ${CLUB.name} dine personoplysninger: hvad vi gemmer, hvorfor, hvor længe og dine rettigheder.` };
 }
 
 // Gennemgås af bestyrelsen før lancering (se docs/go-live-tjekliste.md). Opdater datoen ved ændringer.
-const UPDATED = "24. november 2026";
+const UPDATED = "25. november 2026";
 
 const DATA: [string, string, string, string][] = [
   ["Medlemskab", "Navn, mail, telefon, fødselsdato, adresse og medlemstype", "For at kunne have dig som medlem og opkræve kontingent (aftale)", "Indtil du sletter din profil. Bestyrelsen rydder op i tidligere medlemmer én gang om året"],
   ["Forælder eller værge", "Navn og mail på forælder til medlemmer under 18 år", "Betalingslink, kvitteringer og vigtige beskeder (aftale)", "Som medlemmet"],
   ["Betalinger", "Beløb, dato, medlemstype og betalingsreference. Kortoplysninger gemmes kun hos Stripe, aldrig hos os", "Bogføringsloven (retlig forpligtelse)", "5 år efter regnskabsårets udløb"],
+  ["Regnskab", "Klubbens posteringer og bilag. Kassereren ser, hvem der mangler at betale eller forny, og kan sende en påmindelse", "Bogføringsloven og opkrævning af kontingent (retlig forpligtelse og aftale)", "5 år efter regnskabsårets udløb"],
   ["Træning", "Tilmeldinger til træninger og Træn sammen-ture", "Så trænerne ved, hvem der kommer (legitim interesse)", "Som medlemmet"],
   ["Data fra dit ur", "Træninger fra Strava eller andre forbundne tjenester: sport, tid, distance, puls og watt, samt bedste præstationer udregnet heraf", "Kun hvis du selv forbinder dit ur (samtykke)", "Indtil du afbryder forbindelsen eller sletter din profil"],
   ["Vægt", "Din vægt, hvis du skriver den", "Til at udregne FTP i watt pr. kg (samtykke). Andre ser kun W/kg, aldrig vægten", "Indtil du fjerner den"],
   ["Leaderboard og klubstatistik", "Navn, aldersgruppe, klasse og bedste præstationer eller træningstimer", "Kun hvis du selv slår det til (samtykke)", "Indtil du slår det fra"],
+  ["Reaktioner på nyheder", "Hvilke emojis du har trykket på. Andre ser kun antallet, ikke hvem", "Fællesskab i klubben (legitim interesse)", "Indtil du fjerner dem eller sletter din profil"],
   ["Chat", "Dine beskeder i klubbens chat", "Kommunikation i klubben (legitim interesse). Børns chat kan læses af trænere", "Indtil du sletter dem eller din profil"],
   ["Atletprofil", "Billede, tekst, resultater og sponsorer på den offentlige atletside", "Kun med dit samtykke, som du kan trække tilbage", "Indtil du trækker samtykket tilbage"],
   ["Kontaktformular", "Navn, mail, telefon og din besked", "For at kunne svare dig (legitim interesse)", "1 år"],
@@ -29,8 +33,16 @@ const DATA: [string, string, string, string][] = [
 
 export default async function Privacy() {
   const extra = (await getPrivacy()).extra;
+  const en = (await getLocale()) === "en";
   return (
-    <article className="policy">
+    <article className="policy" lang="da">
+      {en && (
+        <p className="notice" lang="en">
+          Our privacy policy is written in Danish, and the Danish text is the one that applies. In short: we only store what we need to run the
+          club, we never sell your data, your watch data is only shown to you, and you can download or delete your data under My profile.
+          Questions? Write to <a href={`mailto:${CLUB.email}`}>{CLUB.email}</a>.
+        </p>
+      )}
       <p className="about-kicker">Senest opdateret {UPDATED}</p>
       <h1>Privatlivspolitik</h1>
       <p className="lead">
@@ -71,7 +83,7 @@ export default async function Privacy() {
       <h2 id="cookies">Cookies</h2>
       <p>
         Vi bruger kun én nødvendig cookie, som holder dig logget ind. Vi bruger ingen statistik- eller reklamecookies, og derfor beder vi dig
-        heller ikke om samtykke til cookies. Kortet på siden med ruter hentes fra OpenStreetMap, som derfor ser din IP-adresse, når du åbner kortet.
+        heller ikke om samtykke til cookies. Kortet på siden med ruter hentes fra OpenStreetMap, som derfor ser din IP-adresse, når du åbner kortet. Videoer i nyheder afspilles fra YouTube (uden cookies) eller Vimeo, men først når du trykker på dem.
       </p>
 
       <h2 id="boern">Børn og unge</h2>

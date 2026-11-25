@@ -118,3 +118,71 @@ export function blankAbout(clubName: string): AboutContent {
     image: "", facts: [], timeline: [], archive: { ...DEFAULT_ABOUT.archive, show: false }, partners: [], gallery: [],
   };
 }
+
+// ---------- Engelsk standardindhold (bruges, når siden vises på engelsk, og klubben ikke selv har skrevet teksten) ----------
+
+export const DEFAULT_HOME_EN: HomeContent = {
+  ...DEFAULT_HOME,
+  heroTitle: "Swim, bike and run with us on East Funen",
+  heroLead: "Whether you're aiming to finish your first sprint or chasing a new record, you train better with others.",
+  heroAlt: "Club members in wetsuits ready for open water",
+  proof: [
+    { value: "approx. 100", label: "members" },
+    { value: "3", label: "teams: Open, Elite and Kids" },
+    { value: "Every week", label: "group swims, rides and runs" },
+  ],
+  teamsTitle: "Find your team",
+  teamsLead: "Everyone trains with people at their own level. You can always switch teams later.",
+  teams: [
+    { ...DEFAULT_HOME.teams[0], label: "Open", title: "Fitness or first-timer", text: "Train at your own pace with others who want to have fun too. You don't need to swim front crawl or own a road bike to start.", alt: "Members on a group ride" },
+    { ...DEFAULT_HOME.teams[1], label: "Elite", title: "You want to race", text: "Structured training with coaches, tests and shared goals for the season's races, from sprint to Ironman.", alt: "Club athletes at a time trial" },
+    { ...DEFAULT_HOME.teams[2], label: "Kids", title: "Kids and youth", text: "Play, technique and friendship in the water, on the bike and on foot. And there's Nyborg MiniTri every summer.", alt: "Spectators cheering a triathlete at the beach finish" },
+  ],
+  moreTitle: "More than training",
+  more: [
+    "Open water in the Great Belt, Saturday runs on the ramparts and group rides",
+    "The club's own races: NyborgTri Cup and Nyborg MiniTri",
+    "Find someone to train with, also outside the regular sessions",
+    "See your test results for 5 and 10 km, FTP and swimming, and follow your progress",
+  ],
+  athletesLead: "The club's elite athletes compete for podiums at the Danish championships and Ironman. Follow them through the season.",
+  faq: [
+    { q: "Do I need to be fit to start?", a: "No. The open group is for all levels, and the coaches help you get started with the discipline you're least comfortable with." },
+    { q: "What should I bring the first time?", a: "Running shoes, swimwear and a good mood. If you don't have a bike, you can borrow one from the club." },
+    { q: "How do the 14 free days work?", a: "You create a profile and apply for a trial. Once it's approved, you can sign up for all your team's trainings for 14 days without paying." },
+  ],
+  ctaTitle: "Ready for your first session?",
+};
+
+export const DEFAULT_ABOUT_EN: AboutContent = {
+  ...DEFAULT_ABOUT,
+  title: "Triathlon in Nyborg since 2010",
+  lead: "Nyborg Triathlon Klub is for everyone who wants to swim, bike and run. Young and old, beginners and experienced. You're welcome to train with us before you decide.",
+  facts: [
+    { value: "2010", label: "founded 2 September" },
+    { value: "3", label: "disciplines, every week" },
+    { value: "4-18-4", label: "the club's race in August" },
+    { value: "DTriF", label: "member of the Danish federation" },
+  ],
+  timeline: [
+    { ...DEFAULT_ABOUT.timeline[0], title: "A triathlon squad in the swimming club", text: "Nyborg Swimming Club starts a triathlon swim squad alongside the annual Nyborg Minitri. It becomes the regular meeting place for the town's triathletes." },
+    { ...DEFAULT_ABOUT.timeline[1], year: "2010", title: "The club is founded on 2 September", text: "The swim squad closes, and the triathletes found their own club instead: Nyborg Triathlon Klub, NyborgTri. Rolf Kjærby becomes the first chair and Michael Christensen vice chair." },
+    { ...DEFAULT_ABOUT.timeline[2], year: "Nov. 2010", title: "18 members and regular training", text: "After two months the club has 18 members. Swimming on Thursdays, cycling on Sundays and running on Mondays, all together." },
+    { ...DEFAULT_ABOUT.timeline[3], year: "Every August", title: "The NyborgTri 4-18-4 race", text: "Every year the club organises NyborgTri 4-18-4 (formerly Nyborg Minitri), a race for both new and experienced triathletes." },
+    { ...DEFAULT_ABOUT.timeline[4], year: "All year", title: "NyborgTri Cup and club championship", text: "A cup with several rounds through the year. The one with the most points becomes club champion in the women's, men's, girls' and boys' classes. [See NyborgTri Cup](/nyborgtri-cup-2027)" },
+    { ...DEFAULT_ABOUT.timeline[5], year: "Today", title: "Room for everyone", text: "Kids, youth, fitness athletes and elite train every week in swim, bike and run. See the [training calendar](/traening) or meet [the club's athletes](/atleter)." },
+  ],
+  archive: { ...DEFAULT_ABOUT.archive, title: "\"Swim, run and bike in a new club\"", text: "The local paper Nyborg wrote about the new club on 16 November 2010, two and a half months after it was founded." },
+  partners: [
+    { ...DEFAULT_ABOUT.partners[0], name: "Danish Triathlon Federation", what: "NyborgTri is a member of DTriF, so you can get a licence and race in Danish events." },
+    { ...DEFAULT_ABOUT.partners[1], name: "Sports clubs in Nyborg", what: "NyborgTri works with the town's other clubs on lanes, pool time and events." },
+  ],
+  gallery: [
+    { src: "/billeder/open-water.jpg", alt: "Open water swimming" },
+    { src: "/billeder/cykeltur.jpg", alt: "Group ride" },
+    { src: "/billeder/maalgang.jpg", alt: "Finish at a race" },
+    { src: "/billeder/enkeltstart.jpg", alt: "Time trial on the bike" },
+  ],
+  ctaTitle: "Come and try it",
+  ctaText: "Train with us for free for 14 days. You don't need to be fit or have expensive gear to start.",
+};

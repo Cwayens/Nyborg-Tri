@@ -5,6 +5,8 @@ export const CHANNELS = ["RUN", "BIKE", "SWIM", "SOCIAL"] as const satisfies rea
 export const CHANNEL_LABEL: Record<ChatChannel, string> = { RUN: "Løb", BIKE: "Cykling", SWIM: "Svøm", SOCIAL: "Social" };
 export const ROOMS = ["VOKSNE", "BOERN"] as const satisfies readonly ChatRoom[];
 export const ROOM_LABEL: Record<ChatRoom, string> = { VOKSNE: "Elite og Bredde", BOERN: "Børn" };
+export const CHANNEL_LABEL_EN: Record<ChatChannel, string> = { RUN: "Run", BIKE: "Bike", SWIM: "Swim", SOCIAL: "Social" };
+export const ROOM_LABEL_EN: Record<ChatRoom, string> = { VOKSNE: "Elite and Open", BOERN: "Kids" };
 
 export function isChannel(v: unknown): v is ChatChannel {
   return typeof v === "string" && (CHANNELS as readonly string[]).includes(v);

@@ -1,3 +1,6 @@
+import { Suspense } from "react";
+import { getLocale, translator } from "@/lib/i18n";
+import { LangSwitch } from "@/components/LangSwitch";
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { Header } from "@/components/Header";
@@ -27,13 +30,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   await refreshClub();
   const hidden = await hiddenHrefs();
   const css = clubCss();
+  const loc = await getLocale();
+  const t = translator(loc);
   return (
-    <html lang="da">
+    <html lang={loc}>
       {css && <head><style dangerouslySetInnerHTML={{ __html: css }} /></head>}
       <body>
-        <a href="#indhold" className="skip">Spring til indhold</a>
+        <a href="#indhold" className="skip">{t("Spring til indhold", "Skip to content")}</a>
         {demoEnabled() && (
-          <div className="demo-banner">Testversion med testbrugere · <Link href="/login">Skift bruger</Link></div>
+          <div className="demo-banner">{t("Testversion med testbrugere", "Test version with test users")} · <Link href="/login">{t("Skift bruger", "Switch user")}</Link></div>
         )}
         <Header />
         <MenuCloser />
@@ -44,11 +49,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <strong>{CLUB.name}</strong>
               <br />{CLUB.cvr && <>CVR {CLUB.cvr} · </>}{CLUB.email && <a href={`mailto:${CLUB.email}`}>{CLUB.email}</a>}
             </div>
-            <div>
-              <Link href="/om">Om klubben</Link> · {!hidden.includes("/ruter") && <><Link href="/ruter">Ruter</Link> · </>}{!hidden.includes("/sponsorer") && <><Link href="/sponsorer">Sponsorer</Link> · </>}
-              {CLUB.facebook && <><a href={CLUB.facebook}>Facebook</a> · </>}<Link href="/om/kontakt">Kontakt</Link> ·{" "}
-              <Link href="/privatlivspolitik">Privatlivspolitik</Link>
-            </div>
+            <nav className="footer-links" aria-label={t("Om klubben", "About the club")}>
+              <Link href="/om">{t("Om klubben", "About")}</Link>
+              {!hidden.includes("/ruter") && <Link href="/ruter">{t("Ruter", "Routes")}</Link>}
+              {!hidden.includes("/sponsorer") && <Link href="/sponsorer">{t("Sponsorer", "Sponsors")}</Link>}
+              {CLUB.facebook && <a href={CLUB.facebook}>Facebook</a>}
+              <Link href="/om/kontakt">{t("Kontakt", "Contact")}</Link>
+              <Link href="/privatlivspolitik">{t("Privatlivspolitik", "Privacy policy")}</Link>
+              <Suspense fallback={null}><LangSwitch current={loc} /></Suspense>
+            </nav>
           </div>
         </footer>
       </body>

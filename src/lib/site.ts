@@ -3,12 +3,17 @@ import type { Discipline, Prisma } from "@prisma/client";
 import { prisma } from "./db";
 import { PLACES, applyClubOverrides, type ClubOverrides, type Place } from "./club";
 import { ROUTES, type Route } from "./routes";
-import { DEFAULT_ABOUT, DEFAULT_HOME, DEFAULT_PRIVACY, type AboutContent, type HomeContent, type PrivacyContent } from "@/data/site-default";
+import type { Locale } from "./i18n-core";
+import { DEFAULT_ABOUT, DEFAULT_ABOUT_EN, DEFAULT_HOME, DEFAULT_HOME_EN, DEFAULT_PRIVACY, type AboutContent, type HomeContent, type PrivacyContent } from "@/data/site-default";
 
 // Klubbens eget indhold, som admin retter under Admin → Klubben: oplysninger, farver, forside, Om klubben,
 // træningssteder, ruter og privatlivspolitik. Gemmes i Setting-tabellen; det der ikke er gemt, tager standarden.
 
-export const SITE_KEYS = { club: "site_club", home: "site_home", about: "site_about", privacy: "site_privacy", places: "site_places", routes: "site_routes" } as const;
+export const SITE_KEYS = {
+  club: "site_club", home: "site_home", about: "site_about", privacy: "site_privacy", places: "site_places", routes: "site_routes",
+  // Engelske udgaver af teksterne (valgfrie)
+  home_en: "site_home_en", about_en: "site_about_en", privacy_en: "site_privacy_en",
+} as const;
 type Key = keyof typeof SITE_KEYS;
 
 const obj = (v: unknown) => (v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : null);
@@ -48,14 +53,24 @@ export async function refreshClub(force = false): Promise<void> {
 export async function getClubOverrides(): Promise<ClubOverrides> {
   return (obj((await load()).get("club")) ?? {}) as ClubOverrides;
 }
-export async function getHome(): Promise<HomeContent> {
-  return overlay(DEFAULT_HOME, (await load()).get("home"));
+/**
+ * Tekst på det valgte sprog. Engelsk: klubbens engelske tekst, ellers klubbens danske tekst (hvis den har skrevet sin egen),
+ * ellers den engelske standard. Felter, der mangler på engelsk, tager den danske tekst.
+ */
+async function localized<T extends object>(key: "home" | "about" | "privacy", da: T, en: T, loc: Locale): Promise<T> {
+  const { get } = await load();
+  const saved = get(key);
+  if (loc !== "en") return overlay(da, saved);
+  return overlay(saved ? overlay(da, saved) : en, get(`${key}_en`));
 }
-export async function getAbout(): Promise<AboutContent> {
-  return overlay(DEFAULT_ABOUT, (await load()).get("about"));
+export async function getHome(loc: Locale = "da"): Promise<HomeContent> {
+  return localized("home", DEFAULT_HOME, DEFAULT_HOME_EN, loc);
 }
-export async function getPrivacy(): Promise<PrivacyContent> {
-  return overlay(DEFAULT_PRIVACY, (await load()).get("privacy"));
+export async function getAbout(loc: Locale = "da"): Promise<AboutContent> {
+  return localized("about", DEFAULT_ABOUT, DEFAULT_ABOUT_EN, loc);
+}
+export async function getPrivacy(loc: Locale = "da"): Promise<PrivacyContent> {
+  return localized("privacy", DEFAULT_PRIVACY, DEFAULT_PRIVACY, loc);
 }
 
 const isPlace = (p: unknown): p is Place => {
