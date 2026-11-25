@@ -28,8 +28,11 @@ async function save(fd: FormData) {
   const all = await prisma.team.findMany({ select: { id: true, active: true } });
   const active = fd.get("active") === "on";
   if (!active && all.filter((t) => t.active && t.id !== id).length === 0) back("fejl=" + encodeURIComponent("Der skal være mindst ét aktivt hold"));
-  const sees = fd.getAll("sees").map(String).filter((s) => s !== id && all.some((t) => t.id === s));
-  await prisma.team.update({ where: { id }, data: { name, kind: kindOf(fd), sees, public: fd.get("public") === "on", active, sortOrder: Number(str(fd, "sortOrder")) || 0 } });
+  const kind = kindOf(fd);
+  // Børnesikkerhed: børnehold ser kun børnehold, voksenhold kun voksenhold, og børnehold er aldrig åbne
+  const others = await prisma.team.findMany({ where: { id: { not: id } }, select: { id: true, kind: true } });
+  const sees = fd.getAll("sees").map(String).filter((s) => others.some((t) => t.id === s && (t.kind === "BOERN") === (kind === "BOERN")));
+  await prisma.team.update({ where: { id }, data: { name, kind, sees, public: kind !== "BOERN" && fd.get("public") === "on", active, sortOrder: Number(str(fd, "sortOrder")) || 0 } });
   revalidatePath("/", "layout");
   back("gemt=1");
 }
@@ -91,15 +94,15 @@ export default async function Teams({ searchParams }: { searchParams: Promise<{ 
                 </label>
                 <label>Rækkefølge<input name="sortOrder" type="number" defaultValue={t.sortOrder} /></label>
               </div>
-              {teams.length > 1 && (
+              {teams.some((o) => o.id !== t.id && (o.kind === "BOERN") === (t.kind === "BOERN")) && (
                 <fieldset>
                   <legend>Ser også træninger for</legend>
-                  {teams.filter((o) => o.id !== t.id).map((o) => (
+                  {teams.filter((o) => o.id !== t.id && (o.kind === "BOERN") === (t.kind === "BOERN")).map((o) => (
                     <label key={o.id} className="check"><input type="checkbox" name="sees" value={o.id} defaultChecked={t.sees.includes(o.id)} /> {o.name}</label>
                   ))}
                 </fieldset>
               )}
-              <label className="check"><input type="checkbox" name="public" defaultChecked={t.public} /><span>Åbent hold: besøgende og prøvemedlemmer kan se holdets træninger (kun tid og sted)</span></label>
+              {t.kind !== "BOERN" && <label className="check"><input type="checkbox" name="public" defaultChecked={t.public} /><span>Åbent hold: besøgende og prøvemedlemmer kan se holdets træninger (kun tid og sted)</span></label>}
               <label className="check"><input type="checkbox" name="active" defaultChecked={t.active} /><span>Aktivt (skjulte hold kan ikke vælges til nye træninger og medlemmer)</span></label>
               <p className="muted" style={{ margin: 0 }}>{KIND_LABEL[t.kind]} · {t._count.members} medlemmer · {t._count.trainings} træninger</p>
             </form>

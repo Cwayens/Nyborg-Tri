@@ -38,3 +38,11 @@ test("hold findes ud fra tekst", () => {
   assert.equal(matchTeam("bredde ", teams)?.id, "Bredde");
   assert.equal(matchTeam("x", teams), null);
 });
+
+test("børn og voksne ser aldrig hinandens hold", () => {
+  const mixed = [T("Elite", "ELITE", ["U17"]), T("U17", "BOERN", ["Bredde"], true), T("Bredde", "BREDDE", [], true)];
+  assert.deepEqual(visibleTeams(ath("Elite"), mixed), ["Elite"]);
+  assert.deepEqual(visibleTeams(ath("U17"), mixed), ["U17"]);
+  assert.deepEqual(visibleTeams(null, mixed), ["Bredde"]);
+  assert.deepEqual(visibleTeams(ath("U17"), mixed, true), ["U17"]);
+});

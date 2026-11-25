@@ -12,14 +12,18 @@ type Viewer = { role: Role; teamId: string | null };
  * holdet ser. Prøvemedlemmer, medlemmer uden hold og besøgende ser de åbne hold.
  */
 export function visibleTeams(user: Viewer | null, teams: TeamLite[], trial = false): string[] {
-  const open = teams.filter((t) => t.public && t.active).map((t) => t.id);
+  // Børnesikkerhed: børnehold er aldrig åbne, og børn og voksne ser aldrig hinandens hold (kun trænere og admin ser begge)
+  const open = teams.filter((t) => t.public && t.active && t.kind !== "BOERN").map((t) => t.id);
   if (!user) return open;
   if (hasRole(user.role, "TRAINER")) return teams.map((t) => t.id);
   const own = teams.find((t) => t.id === user.teamId);
-  if (trial || !own) return open;
+  if (trial || !own) return own?.kind === "BOERN" ? [own.id] : open;
   const ids = new Set([own.id, ...own.sees]);
-  return teams.filter((t) => ids.has(t.id)).map((t) => t.id);
+  return teams.filter((t) => ids.has(t.id) && sameSide(t, own)).map((t) => t.id);
 }
+
+/** Børnehold og voksenhold kan ikke se hinanden. */
+export const sameSide = (a: { kind: AthleteGroup }, b: { kind: AthleteGroup }) => (a.kind === "BOERN") === (b.kind === "BOERN");
 
 /** Atleter kan kun tilmelde sig eget holds træninger (og kun dem, de må se). Trænere og admins kan tilmelde sig alle. */
 export function canJoinTeam(user: Viewer, teamId: string | null, teams: TeamLite[], trial = false): boolean {
