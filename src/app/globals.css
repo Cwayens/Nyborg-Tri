@@ -953,3 +953,25 @@ form.stack.mail-form { max-width: 760px; }
 .own-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
 .share-from { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--ok-bg); margin: 0 0 6px; }
 .cal-links { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+
+/* Admin → Klubben */
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0 16px; }
+.tabs a { padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--text); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+.tabs a.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+.admin-form { max-width: 920px; }
+.admin-form .row { align-items: flex-end; }
+.admin-form fieldset.rows { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 12px 14px; display: grid; gap: 12px; }
+.admin-form fieldset.rows legend { font-weight: 700; padding: 0 6px; }
+.row-card { display: grid; gap: 10px; padding: 12px; border-radius: var(--radius-sm); background: var(--bg); }
+.row-del { white-space: nowrap; padding-bottom: 10px; }
+.img-field { display: grid; gap: 6px; flex: 1; min-width: 240px; }
+.img-label { font-weight: 600; font-size: 0.9rem; }
+.img-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.img-row img { width: 120px; height: 72px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); background: #fff; }
+.img-empty { width: 120px; height: 72px; display: grid; place-items: center; border-radius: 8px; border: 1px dashed var(--line); color: var(--muted); font-size: 0.8rem; }
+.color-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+.color-field { display: flex !important; flex-direction: row !important; align-items: center; gap: 10px; font-weight: 500; }
+.color-field input[type=color] { width: 44px; height: 36px; padding: 2px; border-radius: 8px; flex: none; }
+.reset-form { margin-top: 18px; }
+.admin-form small.muted, .admin-form .small { font-size: 0.8rem; }
+.admin-form .row:has(> .img-field) { flex-direction: column; align-items: stretch; }

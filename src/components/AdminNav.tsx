@@ -8,7 +8,8 @@ export async function AdminNav() {
       <Link href="/admin">Medlemmer</Link>
       <Link href="/admin/betalinger">Betalinger</Link>
       <Link href="/admin/adgang">Prøveperioder og koder</Link>
-      <Link href="/admin/indhold">Indhold</Link>
+      <Link href="/admin/klubben">Klubben</Link>
+      <Link href="/admin/indhold">Nyheder og sider</Link>
       {!off.has("sponsorer") && <Link href="/admin/sponsorer">Sponsorer</Link>}
       {!off.has("atleter") && <Link href="/admin/atleter">Atleter</Link>}
       <Link href="/admin/kontakt">Kontakt</Link>

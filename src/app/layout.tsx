@@ -6,17 +6,25 @@ import { demoEnabled } from "@/lib/demo";
 import "./globals.css";
 import { hiddenHrefs } from "@/lib/features";
 import { CLUB, clubCss } from "@/lib/club";
+import { refreshClub } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: { default: CLUB.name, template: `%s · ${CLUB.name}` },
-  description: CLUB.tagline,
+export async function generateMetadata(): Promise<Metadata> {
+  await refreshClub();
+  return {
+    title: { default: CLUB.name, template: `%s · ${CLUB.name}` },
+    description: CLUB.tagline,
   icons: { icon: "/icon-192.png", apple: "/apple-icon.png" },
-  appleWebApp: { capable: true, title: CLUB.shortName, statusBarStyle: "black-translucent" },
-};
+    appleWebApp: { capable: true, title: CLUB.shortName, statusBarStyle: "black-translucent" },
+  };
+}
 
-export const viewport: Viewport = { themeColor: CLUB.colors.theme, width: "device-width", initialScale: 1 };
+export async function generateViewport(): Promise<Viewport> {
+  await refreshClub();
+  return { themeColor: CLUB.colors.theme, width: "device-width", initialScale: 1 };
+}
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  await refreshClub();
   const hidden = await hiddenHrefs();
   const css = clubCss();
   return (

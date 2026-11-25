@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
-import { CLUB, PLACES, TOPICS, formatPhone, mapsUrl, telHref } from "@/lib/club";
+import { CLUB, TOPICS, formatPhone, mapsUrl, telHref } from "@/lib/club";
+import { getPlaces } from "@/lib/site";
 import { MailIcon, PhoneIcon, PinIcon, initials } from "@/components/Icons";
 import { sendContact } from "./actions";
 import { isOn } from "@/lib/features";
@@ -12,6 +13,7 @@ type Props = { searchParams: Promise<{ sendt?: string; fejl?: string; emne?: str
 
 export default async function Contact({ searchParams }: Props) {
   const sp = await searchParams;
+  const places = await getPlaces();
   const [people, session] = await Promise.all([
     prisma.contactPerson.findMany({ orderBy: [{ sortOrder: "asc" }, { name: "asc" }] }),
     auth(),
@@ -108,10 +110,10 @@ export default async function Contact({ searchParams }: Props) {
         </aside>
       </div>
 
-      <section>
+      {places.length > 0 && <section>
         <div className="section-head" style={{ margin: "0 0 14px" }}><h2 style={{ margin: 0 }}>Her træner vi</h2>{(await isOn("ruter")) && <Link href="/ruter">Se kort og ruter</Link>}</div>
         <ul className="contact-places">
-          {PLACES.map((p) => (
+          {places.map((p) => (
             <li key={p.id}>
               <a className="card contact-place" href={mapsUrl(p.query)} target="_blank" rel="noopener noreferrer">
                 <span className="contact-icon"><PinIcon size={20} /></span>
@@ -120,7 +122,7 @@ export default async function Contact({ searchParams }: Props) {
             </li>
           ))}
         </ul>
-      </section>
+      </section>}
     </div>
   );
 }

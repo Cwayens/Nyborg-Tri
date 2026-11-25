@@ -751,3 +751,16 @@ model PlannedWorkout {
   @@unique([userId, uid])
   @@index([userId, day])
 }
+
+// Klubbens ruter på kortet. Tom tabel = standardruterne i src/data/ruter.json. Admin kan tilføje ruter fra GPX-filer.
+model ClubRoute {
+  id        String     @id // bruges i adressen /ruter/<id>
+  name      String
+  sport     Discipline
+  tag       String
+  desc      String     @db.Text
+  km        Float
+  pts       Json // [[lat, lng], ...] forenklet til kortet
+  sortOrder Int        @default(0)
+  createdAt DateTime   @default(now())
+}

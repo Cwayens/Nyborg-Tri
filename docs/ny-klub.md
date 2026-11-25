@@ -27,16 +27,19 @@ Klubbens navn, logo, farver og kontaktoplysninger sættes som miljøvariabler, s
 
 Når `CLUB_NAME` er en anden end Nyborg, bruges ingen af Nyborgs kontaktoplysninger som standard.
 
-## 3. Det, der stadig er Nyborg-indhold
+## 3. Klubbens indhold
 
-Disse ting er indhold, ikke indstillinger, og skal skrives om for hver klub, indtil admin selv kan rette dem:
+Admin retter selv det meste under **Admin → Klubben**, uden at koden skal ændres:
 
-- Forsiden og Om klubben (historie, stævner, samarbejdspartnere): `src/app/page.tsx`, `src/app/om/page.tsx`
-- Træningssteder og ruter: `PLACES` i `src/lib/club.ts` og `src/data/ruter.json`
-- Begynderforløbet: `src/data/begynder.ts`
-- Privatlivspolitikken: `src/app/privatlivspolitik/page.tsx`
-- Menupunktet NyborgTri Cup: `src/lib/navigation.ts`
-- Ikoner til telefonen: `public/icon-*.png` og `public/apple-icon.png`
+- Navn, logo, farver og kontaktoplysninger (lægges oven på `CLUB_*`-variablerne)
+- Forsiden: overskrift, tekster, billeder, holdkort, spørgsmål og svar
+- Om klubben: indledning, fakta, historie, arkiv, samarbejdspartnere og billeder
+- Træningssteder (vises på Kontakt og på kortet)
+- Ruter: tilføj fra GPX-filer, ret og slet
+- Ekstra tekst i privatlivspolitikken
+
+Standardindholdet er Nyborgs og står i `src/data/site-default.ts`. Det, der stadig kræver en udvikler:
+begynderforløbet (`src/data/begynder.ts`), menupunktet NyborgTri Cup (`src/lib/navigation.ts`) og telefonikonerne (`public/icon-*.png`).
 
 ## 4. Funktioner
 

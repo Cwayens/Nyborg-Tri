@@ -70,7 +70,35 @@ export function clubFrom(env: Record<string, string | undefined>): ClubConfig {
   };
 }
 
-export const CLUB = clubFrom(process.env);
+/** Klubbens oplysninger fra miljøvariabler (standard). Admin kan rette dem under Admin → Klubben, se applyClubOverrides. */
+export const ENV_CLUB = clubFrom(process.env);
+let current: ClubConfig = ENV_CLUB;
+
+/** Det admin har gemt under Admin → Klubben. Tomme felter og ugyldige farver beholder standarden. */
+export type ClubOverrides = Partial<Omit<ClubConfig, "colors">> & { colors?: Partial<ClubConfig["colors"]> };
+
+export function mergeClub(base: ClubConfig, o: ClubOverrides | null | undefined): ClubConfig {
+  if (!o) return base;
+  const out: ClubConfig = { ...base, colors: { ...base.colors } };
+  for (const [k, v] of Object.entries(o)) {
+    if (k === "colors" || typeof v !== "string" || !v.trim() || !(k in base)) continue;
+    (out as Record<string, unknown>)[k] = k === "domain" ? v.trim().replace(/^https?:\/\//, "").replace(/\/$/, "") : v.trim();
+  }
+  for (const [k, v] of Object.entries(o.colors ?? {})) if (k in out.colors && typeof v === "string" && HEX.test(v.trim())) (out.colors as Record<string, string>)[k] = v.trim();
+  return out;
+}
+
+/** Bruges af src/lib/site.ts, når klubbens oplysninger er læst fra databasen. */
+export function applyClubOverrides(o: ClubOverrides | null | undefined) {
+  current = mergeClub(ENV_CLUB, o);
+}
+
+/** Klubbens oplysninger. Læses altid frisk, så ændringer fra Admin → Klubben slår igennem uden ny udgivelse. */
+export const CLUB: ClubConfig = new Proxy({} as ClubConfig, {
+  get: (_t, k) => (current as Record<string | symbol, unknown>)[k],
+  ownKeys: () => Reflect.ownKeys(current),
+  getOwnPropertyDescriptor: (_t, k) => ({ enumerable: true, configurable: true, value: (current as Record<string | symbol, unknown>)[k] }),
+});
 
 /** CSS, der giver siden klubbens farver. Tom, når farverne er Nyborgs (de står allerede i globals.css). */
 export function clubCss(club: ClubConfig = CLUB): string {
@@ -95,6 +123,7 @@ export const contactInbox = () => process.env.CONTACT_EMAIL || CLUB.email;
 
 // Træningssteder på kortet. Ret her, hvis klubben flytter træning. Koordinater fra OpenStreetMap og den gamle side.
 export type Place = { id: string; name: string; what: string; query: string; lat: number; lng: number; home?: boolean };
+/** Standard-træningssteder (Nyborg). Admin kan rette dem under Admin → Klubben; brug getPlaces() i src/lib/site.ts. */
 export const PLACES: Place[] = [
   { id: "idraetscenter", name: "Nyborg Idræts- og Fritidscenter", what: "Klubbens base: svømning, indoor bike og start på cykel- og løbeture fra P-pladsen", query: "Nyborg Idræts- og Fritidscenter", lat: 55.31176, lng: 10.81017, home: true },
   { id: "idraetsparken", name: "Idrætsparken", what: "Intervalløb på banen", query: "Idrætsparken Nyborg", lat: 55.30993, lng: 10.81308 },

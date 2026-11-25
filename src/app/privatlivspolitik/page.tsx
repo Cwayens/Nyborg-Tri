@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { CLUB } from "@/lib/club";
+import { getPrivacy } from "@/lib/site";
+import { Inline } from "@/components/Inline";
 
-export const metadata = {
-  title: "Privatlivspolitik",
-  description: `Sådan behandler ${CLUB.name} dine personoplysninger: hvad vi gemmer, hvorfor, hvor længe og dine rettigheder.`,
-};
+export async function generateMetadata() {
+  return { title: "Privatlivspolitik", description: `Sådan behandler ${CLUB.name} dine personoplysninger: hvad vi gemmer, hvorfor, hvor længe og dine rettigheder.` };
+}
 
 // Gennemgås af bestyrelsen før lancering (se docs/go-live-tjekliste.md). Opdater datoen ved ændringer.
 const UPDATED = "24. november 2026";
@@ -26,7 +27,8 @@ const DATA: [string, string, string, string][] = [
   ["Begynderforløb, udfordringer og stævner", "Startdato og afkrydsede træninger, deltagelse i udfordringer, stævner, distance og samkørsel (mail vises ved samkørsel)", "Træning og fællesskab i klubben (samtykke)", "Til du melder dig fra eller sletter din profil"],
 ];
 
-export default function Privacy() {
+export default async function Privacy() {
+  const extra = (await getPrivacy()).extra;
   return (
     <article className="policy">
       <p className="about-kicker">Senest opdateret {UPDATED}</p>
@@ -90,6 +92,12 @@ export default function Privacy() {
         Er du utilfreds med, hvordan vi behandler dine oplysninger, kan du klage til Datatilsynet på{" "}
         <a href="https://www.datatilsynet.dk" target="_blank" rel="noopener noreferrer">datatilsynet.dk</a>.
       </p>
+      {extra && (
+        <>
+          <h2 id="klubben">Særligt for {CLUB.name}</h2>
+          {extra.split(/\n{2,}/).map((p, i) => <p key={i} style={{ whiteSpace: "pre-line" }}><Inline text={p} /></p>)}
+        </>
+      )}
     </article>
   );
 }

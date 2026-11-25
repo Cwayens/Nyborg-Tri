@@ -11,45 +11,19 @@ import { VISIBLE_ATHLETE } from "@/lib/athletes";
 import { isOn } from "@/lib/features";
 import { CLUB } from "@/lib/club";
 import { groupsFor } from "@/lib/visibility";
+import { getHome } from "@/lib/site";
+import { Inline } from "@/components/Inline";
 
 // Forsiden er til nye medlemmer: hvad får jeg, passer det til mig, hvad koster det, og hvordan starter jeg.
 // Logoet fører altid hertil; medlemmer, der er logget ind, får en knap til deres overblik i stedet for "Prøv gratis".
 
-const TEAMS = [
-  {
-    group: "BREDDE",
-    title: "Motionist eller nybegynder",
-    text: "Træn i dit eget tempo med andre, der også vil have det sjovt. Du behøver ikke kunne crawle eller eje en racercykel for at starte.",
-    img: "/billeder/cykeltur.jpg",
-    alt: "Medlemmer på fælles cykeltur",
-  },
-  {
-    group: "ELITE",
-    title: "Du vil konkurrere",
-    text: "Struktureret træning med trænere, tests og fælles mål mod sæsonens stævner, fra sprint til ironman.",
-    img: "/billeder/enkeltstart.jpg",
-    alt: "Klubbens atleter ved en enkeltstart",
-  },
-  {
-    group: "BOERN",
-    title: "Børn og unge",
-    text: "Leg, teknik og fællesskab i vand, på cykel og til fods. Og så er der Nyborg MiniTri hver sommer.",
-    img: "/billeder/maalgang.jpg",
-    alt: "Publikum heier på en triatlet ved målgang på stranden",
-  },
-] as const;
-
-const FAQ = [
-  ["Skal jeg være i god form for at starte?", "Nej. Bredde-gruppen er for alle niveauer, og trænerne hjælper dig i gang med den disciplin, du er mindst tryg ved."],
-  ["Hvad skal jeg have med første gang?", "Løbesko, badetøj og godt humør. Mangler du en cykel, kan du låne en af klubbens."],
-  ["Hvordan fungerer de 14 gratis dage?", "Du opretter en profil og søger om prøveperiode. Når den er godkendt, kan du tilmelde dig alle din gruppes træninger i 14 dage uden at betale."],
-  ["Kan jeg følge min træning?", "Ja. Forbind Strava, så tæller dine ture fra Garmin, Wahoo, Coros og andre ure med på din side, sammen med dine testresultater."],
-] as const;
+// Teksterne og billederne rettes under Admin → Klubben → Forside (standard i src/data/site-default.ts).
 
 export default async function Home() {
   const session = await auth();
   const member = !!session?.user;
   const groups = await groupsFor(session?.user.id);
+  const c = await getHome();
 
   const now = new Date();
   const [types, week, featured] = await Promise.all([
@@ -73,37 +47,35 @@ export default async function Home() {
       <section className="lp-hero">
         <div className="lp-hero-inner">
           <p className="eyebrow">{CLUB.name}</p>
-          <h1>Svøm, cykl og løb sammen med os på Østfyn</h1>
-          <p className="lead">
-            Uanset om du skal i mål på din første sprint eller jagter en ny rekord, så træner du bedre sammen med andre.
-          </p>
+          <h1>{c.heroTitle}</h1>
+          <p className="lead"><Inline text={c.heroLead} /></p>
           <div className="hero-actions">
             {member
               ? <Link href="/min-side" className="button big">Gå til mit overblik</Link>
               : <Link href="/bliv-medlem" className="button big">Prøv gratis i 14 dage</Link>}
           </div>
-          <ul className="lp-proof">
-            <li><b>ca. 100</b> medlemmer</li>
-            <li><b>3</b> hold: Bredde, Elite og Børn</li>
-            <li><b>Hver uge</b> fælles svøm, cykel og løb</li>
-          </ul>
+          {c.proof.length > 0 && (
+            <ul className="lp-proof">
+              {c.proof.map((f) => <li key={f.value + f.label}><b>{f.value}</b> {f.label}</li>)}
+            </ul>
+          )}
         </div>
-        <img src="/billeder/faellesskab-strand.jpg" alt="Klubbens medlemmer i våddragt klar til open water" className="lp-hero-img" />
+        {c.heroImage && <img src={c.heroImage} alt={c.heroAlt} className="lp-hero-img" />}
       </section>
 
       <SponsorBar />
 
       <section id="traening" className="lp-section">
-        <h2>Find dit hold</h2>
-        <p className="lp-sub">Alle træner med folk på samme niveau. Du kan altid skifte hold senere.</p>
+        <h2>{c.teamsTitle}</h2>
+        <p className="lp-sub"><Inline text={c.teamsLead} /></p>
         <div className="lp-teams">
-          {TEAMS.map((t) => (
-            <article key={t.group} className="lp-team">
-              <img src={t.img} alt={t.alt} loading="lazy" />
+          {c.teams.map((t) => (
+            <article key={t.title} className="lp-team">
+              {t.img && <img src={t.img} alt={t.alt} loading="lazy" />}
               <div className="lp-team-body">
-                <span className="pill">{GROUP_LABEL[t.group]}</span>
+                {t.label && <span className="pill">{t.label}</span>}
                 <h3>{t.title}</h3>
-                <p>{t.text}</p>
+                <p><Inline text={t.text} /></p>
               </div>
             </article>
           ))}
@@ -127,18 +99,17 @@ export default async function Home() {
         </section>
       )}
 
-      <section className="lp-section lp-split">
-        <img src="/billeder/storebaelt.jpg" alt="Klubbens svømmere i våddragt i Storebælt" loading="lazy" />
-        <div>
-          <h2>Mere end træning</h2>
-          <ul className="lp-checks">
-            <li>Open water i Storebælt, lørdagsløb på Volden og fælles cykelture</li>
-            <li>Klubbens egne stævner: NyborgTri Cup og Nyborg MiniTri</li>
-            <li>Find nogen at træne med, også uden for de faste tider</li>
-            <li>Se dine testresultater for 5 og 10 km, FTP og svøm, og følg din udvikling</li>
-          </ul>
-        </div>
-      </section>
+      {c.more.length > 0 && (
+        <section className={`lp-section${c.moreImage ? " lp-split" : ""}`}>
+          {c.moreImage && <img src={c.moreImage} alt="" loading="lazy" />}
+          <div>
+            <h2>{c.moreTitle}</h2>
+            <ul className="lp-checks">
+              {c.more.map((m) => <li key={m}><Inline text={m} /></li>)}
+            </ul>
+          </div>
+        </section>
+      )}
 
       {featured.length > 0 && (await isOn("atleter")) && (
         <section className="lp-section">
@@ -146,7 +117,7 @@ export default async function Home() {
             <h2>Mød vores atleter</h2>
             <Link href="/atleter">Alle atleter →</Link>
           </div>
-          <p className="lp-sub">Klubbens elite kæmper om placeringer til DM og Ironman. Følg dem gennem sæsonen.</p>
+          <p className="lp-sub"><Inline text={c.athletesLead} /></p>
           <div className="athlete-grid">
             {featured.map((a) => <AthleteCard key={a.id} a={a} />)}
           </div>
@@ -173,19 +144,19 @@ export default async function Home() {
       <section className="lp-section">
         <h2>Godt at vide</h2>
         <div className="lp-faq">
-          {FAQ.map(([q, a]) => (
+          {c.faq.map(({ q, a }) => (
             <details key={q}>
               <summary>{q}</summary>
-              <p>{a}</p>
+              <p><Inline text={a} /></p>
             </details>
           ))}
         </div>
       </section>
 
       <section className="lp-cta">
-        <img src="/billeder/open-water.jpg" alt="" />
+        {c.ctaImage && <img src={c.ctaImage} alt="" />}
         <div>
-          <h2>Klar til første træning?</h2>
+          <h2>{c.ctaTitle}</h2>
           <p>Opret en profil på et minut, og prøv klubben gratis i 14 dage{adult ? `. Derefter ${kr(adult.priceOre)} om året` : ""}.</p>
           <Link href="/bliv-medlem" className="button big">Prøv gratis i 14 dage</Link>
         </div>
