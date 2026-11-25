@@ -6,6 +6,7 @@ import { TEST_BY_KEY } from "@/lib/benchmarks";
 import { dato } from "@/lib/format";
 import { formatDay, formatTime } from "@/lib/time";
 import { ChallengeCard } from "./ChallengeCard";
+import { groupsFor } from "@/lib/visibility";
 
 const WEEK = 7 * 864e5;
 
@@ -17,7 +18,7 @@ export async function GrowSection({ userId, joinedAt }: { userId: string; joined
   const [challenge, tip, testDay, plan, mentorship, race, buddy] = await Promise.all([
     on("udfordringer") ? prisma.challenge.findFirst({ where: { startsAt: { lte: now }, endsAt: { gt: now } }, orderBy: { endsAt: "asc" } }) : null,
     on("tips") ? prisma.tip.findFirst({ orderBy: { publishedAt: "desc" }, select: { title: true, body: true } }) : null,
-    on("testdage") ? prisma.trainingSession.findFirst({ where: { testDay: { not: null }, startsAt: { gt: now }, cancelledAt: null }, orderBy: { startsAt: "asc" } }) : null,
+    on("testdage") ? prisma.trainingSession.findFirst({ where: { testDay: { not: null }, startsAt: { gt: now }, cancelledAt: null, group: { in: await groupsFor(userId) } }, orderBy: { startsAt: "asc" } }) : null,
     on("begynder") ? prisma.beginnerPlan.findUnique({ where: { userId } }) : null,
     on("mentor") ? prisma.mentorship.findUnique({ where: { menteeId: userId }, include: { mentor: { select: { name: true } } } }) : null,
     on("staevner") ? prisma.race.findFirst({ where: { date: { gte: now } }, orderBy: { date: "asc" }, include: { _count: { select: { entries: true } } } }) : null,

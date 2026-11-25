@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { canJoinGroup, hasRole, trainingVisibleFor, userTypeLabel } from "./roles";
+import { canJoinGroup, hasRole, trainingVisibleFor, userTypeLabel, visibleGroups } from "./roles";
 
 test("rettigheder: admin > træner > atlet", () => {
   assert.equal(hasRole("ADMIN", "TRAINER"), true);
@@ -25,4 +25,18 @@ test("atleter kan kun tilmelde sig egen gruppe, trænere alle", () => {
 test("brugertype-navne", () => {
   assert.equal(userTypeLabel("ATHLETE", "ELITE"), "Atlet – Elite");
   assert.equal(userTypeLabel("TRAINER", null), "Træner");
+});
+
+test("kalenderens synlighed", () => {
+  const a = (athleteGroup: "ELITE" | "BREDDE" | "BOERN" | null, role: "ATHLETE" | "TRAINER" | "ADMIN" = "ATHLETE") => ({ role, athleteGroup });
+  assert.deepEqual(visibleGroups(a(null, "ADMIN")), ["ELITE", "BREDDE", "BOERN"]);
+  assert.deepEqual(visibleGroups(a("BREDDE", "TRAINER")), ["ELITE", "BREDDE", "BOERN"]);
+  assert.deepEqual(visibleGroups(a("ELITE")), ["ELITE", "BREDDE"]);
+  assert.deepEqual(visibleGroups(a("BREDDE")), ["BREDDE"]);
+  assert.deepEqual(visibleGroups(a("BOERN")), ["BOERN"]);
+  assert.deepEqual(visibleGroups(a("ELITE"), true), ["BREDDE"]); // prøve
+  assert.deepEqual(visibleGroups(a(null)), ["BREDDE"]);
+  assert.deepEqual(visibleGroups(null), ["BREDDE"]);
+  assert.equal(canJoinGroup(a("ELITE"), "ELITE", true), false);
+  assert.equal(canJoinGroup(a("ELITE"), "BREDDE"), false);
 });

@@ -3,6 +3,7 @@ import { baseUrl } from "@/lib/url";
 import { buildIcs, type IcsEvent } from "@/lib/ics";
 import { DISCIPLINE_LABEL } from "@/lib/roles";
 import { CLUB } from "@/lib/club";
+import { groupsFor } from "@/lib/visibility";
 
 // Personligt kalender-abonnement: dine tilmeldte træninger, din gruppes træninger og Træn sammen-ture.
 export async function GET(_req: Request, { params }: { params: Promise<{ token: string }> }) {
@@ -11,10 +12,12 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
   if (!user) return new Response("Not found", { status: 404 });
   const from = new Date(Date.now() - 14 * 24 * 3600 * 1000);
   const base = await baseUrl();
+  const groups = await groupsFor(user.id);
+  const ownGroup = user.athleteGroup && groups.includes(user.athleteGroup) ? user.athleteGroup : null;
 
   const [trainings, workouts] = await Promise.all([
     prisma.trainingSession.findMany({
-      where: { startsAt: { gte: from }, OR: [{ signups: { some: { userId: user.id } } }, ...(user.athleteGroup ? [{ group: user.athleteGroup }] : [])] },
+      where: { startsAt: { gte: from }, group: { in: groups }, OR: [{ signups: { some: { userId: user.id } } }, ...(ownGroup ? [{ group: ownGroup }] : [])] },
       include: { signups: { where: { userId: user.id }, select: { id: true } } },
     }),
     prisma.groupWorkout.findMany({

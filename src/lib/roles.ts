@@ -33,7 +33,23 @@ export function trainingVisibleFor(trainingGroup: AthleteGroup, filter: AthleteG
   return filter === null || trainingGroup === filter;
 }
 
-/** Atleter kan kun tilmelde sig træninger for egen gruppe. Trænere og admins kan tilmelde sig alle. */
-export function canJoinGroup(user: { role: Role; athleteGroup: AthleteGroup | null }, trainingGroup: AthleteGroup): boolean {
-  return hasRole(user.role, "TRAINER") || user.athleteGroup === trainingGroup;
+type Viewer = { role: Role; athleteGroup: AthleteGroup | null };
+
+/**
+ * Hvilke gruppers træninger må man se i kalenderen? Klubbens regler:
+ * admin og trænere ser alt, elite ser elite og bredde, bredde ser bredde, børn ser børn,
+ * og prøvemedlemmer, medlemmer uden gruppe og besøgende ser kun bredde.
+ */
+export function visibleGroups(user: Viewer | null, trial = false): AthleteGroup[] {
+  if (!user) return ["BREDDE"];
+  if (hasRole(user.role, "TRAINER")) return GROUPS;
+  if (trial) return ["BREDDE"];
+  if (user.athleteGroup === "ELITE") return ["ELITE", "BREDDE"];
+  if (user.athleteGroup === "BOERN") return ["BOERN"];
+  return ["BREDDE"];
+}
+
+/** Atleter kan kun tilmelde sig træninger for egen gruppe (og kun dem, de må se). Trænere og admins kan tilmelde sig alle. */
+export function canJoinGroup(user: Viewer, trainingGroup: AthleteGroup, trial = false): boolean {
+  return hasRole(user.role, "TRAINER") || (user.athleteGroup === trainingGroup && visibleGroups(user, trial).includes(trainingGroup));
 }

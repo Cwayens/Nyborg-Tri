@@ -18,6 +18,7 @@ import { toggleSignup } from "../kalender/actions";
 import { GrowSection } from "@/components/GrowSection";
 import { TrophySection } from "@/components/TrophySection";
 import { featuresOff } from "@/lib/features";
+import { groupsFor } from "@/lib/visibility";
 
 export const metadata = { title: "Overblik" };
 
@@ -35,7 +36,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     currentMembership(user.id),
     canSignUp(user.id),
     prisma.trainingSession.findMany({ where: { startsAt: { gte: now }, signups: { some: { userId: user.id } } }, orderBy: { startsAt: "asc" }, take: 5 }),
-    user.athleteGroup
+    user.athleteGroup && (await groupsFor(user.id)).includes(user.athleteGroup)
       ? prisma.trainingSession.findMany({
           where: { startsAt: { gte: now, lt: in7 }, group: user.athleteGroup },
           include: { signups: { include: { user: { select: { id: true, name: true } } } } }, orderBy: { startsAt: "asc" }, take: 6,
@@ -47,7 +48,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     }),
     personalWeeks(user.id, 6),
     personalTotals(user.id, startOfWeek(now)),
-    prisma.trainingSession.count({ where: { startsAt: { gte: now, lte: endOfToday } } }),
+    prisma.trainingSession.count({ where: { startsAt: { gte: now, lte: endOfToday }, group: { in: await groupsFor(user.id) } } }),
     prisma.benchmarkResult.findMany({ where: { userId: user.id, ...FROM_WEARABLE }, select: { test: true, seconds: true, watts: true } }),
     prisma.post.findMany({ where: { published: true }, orderBy: { publishedAt: "desc" }, take: 3, select: { slug: true, title: true, publishedAt: true } }),
   ]);

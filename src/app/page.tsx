@@ -10,6 +10,7 @@ import { AthleteCard } from "@/components/AthleteCard";
 import { VISIBLE_ATHLETE } from "@/lib/athletes";
 import { isOn } from "@/lib/features";
 import { CLUB } from "@/lib/club";
+import { groupsFor } from "@/lib/visibility";
 
 // Forsiden er til nye medlemmer: hvad får jeg, passer det til mig, hvad koster det, og hvordan starter jeg.
 // Logoet fører altid hertil; medlemmer, der er logget ind, får en knap til deres overblik i stedet for "Prøv gratis".
@@ -46,13 +47,15 @@ const FAQ = [
 ] as const;
 
 export default async function Home() {
-  const member = !!(await auth())?.user;
+  const session = await auth();
+  const member = !!session?.user;
+  const groups = await groupsFor(session?.user.id);
 
   const now = new Date();
   const [types, week, featured] = await Promise.all([
     prisma.membershipType.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
     prisma.trainingSession.findMany({
-      where: { startsAt: { gte: now, lt: new Date(now.getTime() + 7 * 864e5) }, cancelledAt: null },
+      where: { startsAt: { gte: now, lt: new Date(now.getTime() + 7 * 864e5) }, cancelledAt: null, group: { in: groups } },
       orderBy: { startsAt: "asc" },
       select: { id: true, title: true, discipline: true, startsAt: true, group: true, location: true },
     }),

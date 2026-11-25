@@ -12,6 +12,8 @@ import { TEST_BY_KEY } from "@/lib/benchmarks";
 import { WorkoutView } from "@/components/WorkoutView";
 import { isWorkout, referencesFrom } from "@/lib/workout";
 import { FROM_WEARABLE } from "@/lib/benchmarks";
+import { calendarViewer } from "@/lib/visibility";
+import { visibleGroups } from "@/lib/roles";
 
 export type CalendarParams = { gruppe?: string; maaned?: string; dag?: string };
 
@@ -26,10 +28,13 @@ const pad = (n: number) => String(n).padStart(2, "0");
 export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; publicView: boolean }) {
   const session = publicView ? null : await auth();
   const base = publicView ? "/traening" : "/kalender";
-  const own = session?.user.athleteGroup ?? null;
-  // Atleter ser som standard deres egen gruppe; "alle" viser alt
-  const group: AthleteGroup | null =
-    sp.gruppe === "alle" ? null : GROUPS.includes(sp.gruppe as AthleteGroup) ? (sp.gruppe as AthleteGroup) : own;
+  const viewer = await calendarViewer(session?.user.id);
+  const own = viewer?.athleteGroup ?? null;
+  // Hvilke grupper man må se (klubbens regler, se visibleGroups). Besøgende ser kun bredde.
+  const allowed = viewer?.groups ?? visibleGroups(null);
+  // Som standard egen gruppe; "alle" viser alt, man må se
+  const pick = sp.gruppe === "alle" ? null : GROUPS.includes(sp.gruppe as AthleteGroup) ? (sp.gruppe as AthleteGroup) : own;
+  const group: AthleteGroup | null = pick && allowed.includes(pick) && allowed.length > 1 ? pick : null;
 
   // Måned (dansk tid). ?maaned=2026-11
   const todayKey = dayKey(new Date());
@@ -42,7 +47,7 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
 
   const sessions = (
     await prisma.trainingSession.findMany({
-      where: { startsAt: { gte: parseLocal(`${monthKey}-01T00:00`), lt: parseLocal(`${next}-01T00:00`) } },
+      where: { startsAt: { gte: parseLocal(`${monthKey}-01T00:00`), lt: parseLocal(`${next}-01T00:00`) }, group: { in: group ? [group] : allowed } },
       include: {
         createdBy: { select: { name: true } },
         // Besøgende må ikke se, hvem der kommer
@@ -95,15 +100,15 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
           <Link href="/forbindelser" className="muted">Få kalenderen på telefonen →</Link>
         </div>
       )}
-      <p className="filters">
+      {allowed.length > 1 && <p className="filters">
         <span className="muted">Vis:</span>
         <Link href={`${base}?gruppe=alle&maaned=${monthKey}`} className={group === null ? "active" : undefined}>Alle</Link>
-        {GROUPS.map((g) => (
+        {allowed.map((g) => (
           <Link key={g} href={`${base}?gruppe=${g}&maaned=${monthKey}`} className={group === g ? "active" : undefined}>
             {GROUP_LABEL[g]}{own === g ? " (min gruppe)" : ""}
           </Link>
         ))}
-      </p>
+      </p>}
 
       {!eligible && !publicView && (
         <p className="card">
@@ -111,7 +116,7 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
           <Link href="/bliv-medlem">Se mulighederne</Link>
         </p>
       )}
-      {eligible && !own && session!.user.role === "ATHLETE" && (
+      {eligible && !own && viewer?.role === "ATHLETE" && (
         <p className="card">Du er endnu ikke tilknyttet en gruppe (Elite, Bredde eller Børn). Kontakt bestyrelsen, så du kan tilmelde dig træninger.</p>
       )}
 
@@ -194,7 +199,7 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
             {publicView && !s.cancelledAt && s.startsAt > new Date() && (
               <Link href="/bliv-medlem" className="button small secondary signup">Prøv gratis</Link>
             )}
-            {userId && !s.cancelledAt && s.startsAt > new Date() && (s.signups.some((x) => x.user.id === userId) || (eligible && canJoinGroup(session!.user, s.group))) && (
+            {userId && !s.cancelledAt && s.startsAt > new Date() && (s.signups.some((x) => x.user.id === userId) || (eligible && viewer && canJoinGroup(viewer, s.group, viewer.trial))) && (
               <form action={toggleSignup} className="signup">
                 <input type="hidden" name="sessionId" value={s.id} />
                 {s.signups.some((x) => x.user.id === userId) ? (

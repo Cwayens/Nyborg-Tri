@@ -6,6 +6,7 @@ import { slugify } from "@/lib/athletes";
 import { workoutToFit, workoutToZwo } from "@/lib/fit";
 import { KIND_LABEL, isWorkout, parseText, personalTarget, referencesFrom } from "@/lib/workout";
 import { PLAN_SESSIONS } from "@/data/begynder";
+import { groupsFor } from "@/lib/visibility";
 
 // Træningsprogram som fil til uret (.fit) eller Zwift (.zwo), med medlemmets egne watt og tempi.
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -21,7 +22,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     ? { title: `Begynder ${plan.id.replace("u", "uge ").replace("-", " pas ")}`, discipline: plan.discipline, startsAt: new Date(), workout: parseText(plan.program) as unknown }
     : kilde === "tur"
       ? await prisma.groupWorkout.findUnique({ where: { id } })
-      : await prisma.trainingSession.findUnique({ where: { id } });
+      : await prisma.trainingSession.findFirst({ where: { id, group: { in: await groupsFor(session.user.id) } } });
   if (!t || !isWorkout(t.workout)) return new Response("Træningen har intet program", { status: 404 });
 
   const refs = referencesFrom(
