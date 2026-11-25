@@ -10,6 +10,7 @@ import { disciplineLabel, hasRole } from "@/lib/roles";
 import { personalTotals, personalWeeks } from "@/lib/stats";
 import { formatDay, formatTime } from "@/lib/time";
 import { DisciplineIcon, initials } from "@/components/Icons";
+import { NewsStories } from "@/components/NewsStories";
 import { WeekChart } from "@/components/WeekChart";
 import { FROM_WEARABLE, TESTS, formatResult, score } from "@/lib/benchmarks";
 import { WorkoutView } from "@/components/WorkoutView";
@@ -62,7 +63,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     personalTotals(user.id, startOfWeek(now)),
     prisma.trainingSession.count({ where: { startsAt: { gte: now, lte: endOfToday }, teamId: { in: await teamsFor(user.id) } } }),
     prisma.benchmarkResult.findMany({ where: { userId: user.id, ...FROM_WEARABLE }, select: { test: true, seconds: true, watts: true } }),
-    prisma.post.findMany({ where: { published: true }, orderBy: { publishedAt: "desc" }, take: 3, select: { slug: true, title: true, publishedAt: true } }),
+    prisma.post.findMany({ where: { published: true }, orderBy: { publishedAt: "desc" }, take: 8, select: { slug: true, title: true, publishedAt: true, featuredImage: true, images: true, categories: true } }),
   ]);
   const refs = referencesFrom(benchmarks);
   const bestByTest = new Map<string, (typeof benchmarks)[number]>();
@@ -96,6 +97,8 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
           <Link href="/bliv-medlem" className="button small">{t("Forny medlemskab", "Renew membership")}</Link>
         )}
       </div>
+
+      <NewsStories posts={news} loc={loc} />
 
       {(await prisma.athleteProfile.count({ where: { userId: user.id, consentAt: null } })) > 0 && (
         <p className="notice">{t("Klubben vil gerne vise dig på Atleter-siden.", "The club would like to show you on the Athletes page.")} <Link href="/profil/atlet">{t("Se din profil og giv samtykke", "See your profile and give consent")}</Link>.</p>
@@ -224,24 +227,6 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         </>
       )}
 
-      {news.length > 0 && (
-        <>
-          <div className="section-head">
-            <h2>{t("Nyt fra klubben", "News from the club")}</h2>
-            <Link href="/klubben">{t("Klubinfo", "Club info")}</Link>
-          </div>
-          <div className="card">
-            {news.map((n) => (
-              <Link key={n.slug} href={`/nyheder/${n.slug}`} className="item" style={{ color: "inherit", textDecoration: "none" }}>
-                <div className="body">
-                  <div className="title">{n.title}</div>
-                  <div className="meta">{dato(n.publishedAt, loc)}</div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </>
-      )}
 
       {hasRole(user.role, "TRAINER") && <RoleShortcuts t={t} admin={user.role === "ADMIN"} />}
     </>

@@ -87,13 +87,14 @@ model User {
   racesCreated             Race[]
   raceEntries              RaceEntry[]
 
-  shareActivities Boolean   @default(false) // samtykke: vis mine aktiviteter i klubstatistikken
-  leaderboard     Boolean   @default(false) // samtykke: vis mine bedste præstationer på leaderboardet
-  calendarToken   String?   @unique // hemmeligt link til kalender-abonnement
-  newsMail        Boolean   @default(true) // vil have nyheder på mail (vigtige beskeder sendes altid)
-  mentor          Boolean   @default(false) // frivillig mentor for nye medlemmer
+  shareActivities Boolean          @default(false) // samtykke: vis mine aktiviteter i klubstatistikken
+  leaderboard     Boolean          @default(false) // samtykke: vis mine bedste præstationer på leaderboardet
+  calendarToken   String?          @unique // hemmeligt link til kalender-abonnement
+  newsMail        Boolean          @default(true) // vil have nyheder på mail (vigtige beskeder sendes altid)
+  mentor          Boolean          @default(false) // frivillig mentor for nye medlemmer
   deletedAt       DateTime? // kontoen er slettet; rækken er anonymiseret, men betalinger gemmes efter bogføringsloven
   plannedWorkouts PlannedWorkout[]
+  postReactions   PostReaction[]
 }
 
 model Account {
@@ -231,21 +232,38 @@ model Page {
 }
 
 model Post {
-  id            String        @id @default(cuid())
-  slug          String        @unique // samme slug som på den gamle side, så gamle links virker
+  id            String         @id @default(cuid())
+  slug          String         @unique // samme slug som på den gamle side, så gamle links virker
   title         String
   excerpt       String?
-  body          String        @db.Text
-  format        ContentFormat @default(MARKDOWN)
+  body          String         @db.Text
+  format        ContentFormat  @default(MARKDOWN)
   categories    String[]
   featuredImage String?
+  images        String[]       @default([]) // flere billeder, vises som galleri og i historierne
+  video         String? // link til YouTube eller Vimeo; afspilles først, når man trykker
   author        String?
-  published     Boolean       @default(true)
-  publishedAt   DateTime      @default(now())
-  wpId          Int?          @unique
-  updatedAt     DateTime      @updatedAt
+  published     Boolean        @default(true)
+  publishedAt   DateTime       @default(now())
+  wpId          Int?           @unique
+  updatedAt     DateTime       @updatedAt
+  reactions     PostReaction[]
 
   @@index([publishedAt])
+}
+
+/// Emoji-reaktion på en nyhed. Kun antal vises, ikke hvem, og der er ingen kommentarer (børn må kun skrive med børn og trænere).
+model PostReaction {
+  id        String   @id @default(cuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emoji     String
+  createdAt DateTime @default(now())
+
+  @@unique([postId, userId, emoji])
+  @@index([postId])
 }
 
 // ---------- Træningskalender ----------
@@ -787,7 +805,7 @@ model Team {
   branch    Branch?      @relation(fields: [branchId], references: [id], onDelete: SetNull)
 
   members   User[]
-  leaders   User[]       @relation("TeamLeaders")
+  leaders   User[]            @relation("TeamLeaders")
   trainings TrainingSession[]
 }
 

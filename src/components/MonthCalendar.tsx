@@ -4,7 +4,7 @@ import { canSignUp } from "@/lib/access";
 import { prisma } from "@/lib/db";
 import { disciplineLabel } from "@/lib/roles";
 import { getLocale, translator, type T } from "@/lib/i18n";
-import { dayKey, formatDay, formatTime, parseLocal } from "@/lib/time";
+import { dayKey, formatDay, formatTime, isoWeek, parseLocal } from "@/lib/time";
 import { setPaceGroup, toggleSignup } from "@/app/kalender/actions";
 import { isOn } from "@/lib/features";
 import { suggestGroup } from "@/lib/pace";
@@ -156,16 +156,21 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
           {!todayKey.startsWith(monthKey) && <Link href={url(todayKey.slice(0, 7), todayKey)} className="month-today">{t("I dag", "Today")}</Link>}
         </header>
         <div className="month-grid">
+          <div className="month-wd month-wk" aria-hidden="true">{t("Uge", "Wk")}</div>
           {WEEKDAYS[loc].map((d) => <div key={d} className="month-wd" aria-hidden="true">{d}</div>)}
-          {cells.map((key, i) => {
-            if (!key) return <div key={`x${i}`} className="month-cell empty" />;
+          {cells.flatMap((key, i) => {
+            // Ugenummer først i hver række (ISO, som i danske kalendere)
+            const row = cells.slice(i - (i % 7), i - (i % 7) + 7).find(Boolean)!;
+            const wk = i % 7 === 0 ? [<div key={`w${i}`} className="month-wk" aria-hidden="true">{isoWeek(row)}</div>] : [];
+            if (!key) return [...wk, <div key={`x${i}`} className="month-cell empty" />];
             const list = days.get(key) ?? [];
             const ownList = ownDays.get(key) ?? [];
             // Højst tre linjer pr. dag; eget program får mindst én plads
             const clubN = Math.min(list.length, ownList.length ? 2 : 3), ownN = Math.min(ownList.length, 3 - clubN), more = list.length + ownList.length - clubN - ownN;
             const mine = userId ? list.some((s) => s.signups.some((x) => x.user.id === userId)) : false;
             const cls = ["month-cell", key === todayKey && "today", key === selected && "selected", key < todayKey && "past", mine && "mine"].filter(Boolean).join(" ");
-            return (
+            return [
+              ...wk,
               <Link key={key} href={url(monthKey, key)} className={cls} aria-current={key === selected ? "date" : undefined} scroll={false}
                 aria-label={loc === "en"
                   ? `${Number(key.slice(8))} ${MONTHS[m - 1]}: ${list.length ? `${list.length} training${list.length > 1 ? "s" : ""}` : "no trainings"}${ownList.length ? `, ${ownList.length} in your own plan` : ""}`
@@ -186,8 +191,8 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
                   {list.slice(0, 4).map((s) => <i key={s.id} className={`disc disc-${s.discipline}${s.cancelledAt ? " cancelled" : ""}`} />)}
                   {ownList.slice(0, Math.max(0, 4 - list.length)).map((p) => <i key={p.id} className={`own disc disc-${p.discipline}`} />)}
                 </span>
-              </Link>
-            );
+              </Link>,
+            ];
           })}
         </div>
       </section>

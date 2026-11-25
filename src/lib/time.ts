@@ -53,3 +53,11 @@ export function weekdayShort(d: Date, loc: Locale = "da"): string {
   const s = new Intl.DateTimeFormat(INTL[loc], { weekday: "short", timeZone: TZ }).format(d).replace(".", "");
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
+
+/** ISO-ugenummer (uge 1 er ugen med årets første torsdag), som i danske kalendere. Tager "YYYY-MM-DD" eller en dato. */
+export function isoWeek(d: string | Date): number {
+  const [y, m, day] = typeof d === "string" ? d.slice(0, 10).split("-").map(Number) : [d.getFullYear(), d.getMonth() + 1, d.getDate()];
+  const t = new Date(Date.UTC(y, m - 1, day));
+  t.setUTCDate(t.getUTCDate() + 3 - ((t.getUTCDay() + 6) % 7)); // torsdag i samme uge
+  return Math.ceil(((t.getTime() - Date.UTC(t.getUTCFullYear(), 0, 1)) / 86400000 + 1) / 7);
+}

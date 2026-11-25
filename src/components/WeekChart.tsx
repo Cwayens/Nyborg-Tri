@@ -25,10 +25,10 @@ function km(m: number, s: Discipline, loc: Locale): string | null {
 }
 
 function weekName(w: WeekData, current: boolean, loc: Locale): string {
-  if (current) return loc === "en" ? "This week" : "Denne uge";
   const end = new Date(w.from);
   end.setDate(end.getDate() + 6);
-  return `${loc === "en" ? "Week" : "Uge"} ${w.from.getDate()}/${w.from.getMonth() + 1}–${end.getDate()}/${end.getMonth() + 1}`;
+  const range = `${w.from.getDate()}/${w.from.getMonth() + 1}–${end.getDate()}/${end.getMonth() + 1}`;
+  return `${current ? (loc === "en" ? "This week" : "Denne uge") : `${loc === "en" ? "Week" : "Uge"} ${w.label}`} · ${range}`;
 }
 
 export function WeekChart({ weeks, now = new Date(), loc = "da" }: { weeks: WeekData[]; now?: Date; loc?: Locale }) {
@@ -50,7 +50,7 @@ export function WeekChart({ weeks, now = new Date(), loc = "da" }: { weeks: Week
         <span>{t("Disciplin", "Discipline")}</span>
         <span className="tb-num">{t("Denne uge", "This week")}</span>
         <span className="tb-num">{t("Snit", "Avg")}</span>
-        <span className="tb-weeks">{weeks.map((w, i) => <small key={w.label} className={i === 0 || i === weeks.length - 1 ? "edge" : undefined}>{i === weeks.length - 1 ? t("Nu", "Now") : w.label}</small>)}</span>
+        <span className="tb-weeks">{weeks.map((w, i) => <small key={w.label} className={i === 0 || i === weeks.length - 1 ? "edge" : undefined}>{i === weeks.length - 1 ? t("Nu", "Now") : i === 0 ? <><span className="wk-prefix">{t("Uge", "Wk")} </span>{w.label}</> : w.label}</small>)}</span>
       </div>
       <ul className="tb-rows">
         {used.map((s) => {

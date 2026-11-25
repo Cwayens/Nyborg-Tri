@@ -442,7 +442,9 @@ label.check { display: flex; gap: 8px; align-items: center; font-weight: 400; }
 .month-head h2 { margin: 0; font-size: 1.2rem; min-width: 9em; text-align: center; }
 .month-head .button { width: 36px; height: 36px; padding: 0; font-size: 1.3rem; }
 .month-today { margin-left: auto; font-weight: 600; }
-.month-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.month-grid { display: grid; grid-template-columns: 2.2em repeat(7, minmax(0, 1fr)); gap: 4px; }
+.month-wk { font-size: 0.72rem; color: var(--muted); text-align: center; padding-top: 10px; font-variant-numeric: tabular-nums; }
+.month-wd.month-wk { padding-top: 4px; }
 .month-wd { font-size: 0.78rem; font-weight: 700; color: var(--muted); text-align: center; padding: 4px 0; text-transform: uppercase; letter-spacing: 0.04em; }
 .month-cell { min-height: 104px; border: 1px solid var(--line); border-radius: 10px; padding: 6px; display: flex; flex-direction: column; gap: 4px; text-decoration: none; color: var(--text); background: var(--card); overflow: hidden; transition: border-color 0.12s; }
 .month-cell.empty { background: transparent; border-color: transparent; }
@@ -470,6 +472,8 @@ label.check { display: flex; gap: 8px; align-items: center; font-weight: 400; }
   .month { padding: 10px 8px; }
   .month-grid { gap: 3px; }
   .month-wd { font-size: 0.68rem; }
+  .month-grid { grid-template-columns: 1.6em repeat(7, minmax(0, 1fr)); }
+  .month-wk { font-size: 0.64rem; padding-top: 8px; }
 }
 
 /* Udløbet medlemskab: tynd rød bjælke under headeren */
@@ -750,7 +754,7 @@ label.check { display: flex; gap: 8px; align-items: center; font-weight: 400; }
 @media (max-width: 520px) {
   .tb { --cols: minmax(70px, 1fr) 54px 46px minmax(96px, 1.6fr); font-size: 0.85rem; }
   .tb-name .disc-icon { display: none; }
-  .tb-head .tb-weeks small:not(.edge) { visibility: hidden; }
+  .tb-head .wk-prefix { display: none; }
   .tb-total { grid-template-columns: var(--cols); }
   .tb-note { grid-column: 1 / -1; }
 }
@@ -982,3 +986,58 @@ form.admin-form, .admin-form { max-width: 920px; }
 .onboard-num { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; background: var(--bg); border: 1px solid var(--line); }
 .onboard li.done .onboard-num { background: var(--ok-bg); color: var(--ok); border-color: transparent; }
 @media (max-width: 560px) { .onboard li { grid-template-columns: auto 1fr; } .onboard li .button { grid-column: 2; justify-self: start; } }
+
+/* ---------- Nyheder: historier, galleri, video og reaktioner ---------- */
+.story-strip { display: flex; gap: 14px; overflow-x: auto; padding: 4px 2px 12px; margin: 0 0 18px; scroll-snap-type: x proximity; scrollbar-width: none; }
+.story-strip::-webkit-scrollbar { display: none; }
+.story-bubble { flex: none; width: 76px; display: flex; flex-direction: column; align-items: center; gap: 6px; text-decoration: none; color: var(--text); scroll-snap-align: start; }
+.story-ring { width: 68px; height: 68px; border-radius: 50%; padding: 3px; background: var(--line); display: grid; }
+.story-bubble.fresh .story-ring { background: conic-gradient(from 210deg, var(--club-light), var(--accent), var(--bike), var(--club-light)); }
+.story-ring img, .story-ph { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 3px solid var(--bg); display: grid; place-items: center; background: var(--card); font-size: 1.5rem; box-sizing: border-box; }
+.story-label { font-size: 0.74rem; line-height: 1.2; text-align: center; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.story-bubble:hover .story-ring { transform: scale(1.04); }
+.story-bubble:focus-visible { outline: none; }
+.story-bubble:focus-visible .story-ring { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.stories { position: fixed; inset: 0; z-index: 100; background: #0b0f14; overflow-y: auto; scroll-snap-type: y mandatory; overscroll-behavior: contain; color: #fff; }
+.stories-close { position: fixed; top: max(12px, env(safe-area-inset-top)); right: 14px; z-index: 2; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: rgba(0,0,0,0.45); color: #fff; text-decoration: none; font-size: 1.1rem; backdrop-filter: blur(6px); }
+.stories-empty { display: grid; place-items: center; height: 100dvh; margin: 0; }
+.story { position: relative; height: 100dvh; scroll-snap-align: start; scroll-snap-stop: always; max-width: 520px; margin: 0 auto; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; background: #1a222c; }
+.story.no-img { background: linear-gradient(160deg, var(--accent-dark), var(--navy)); justify-content: center; }
+.story-imgs { position: absolute; inset: 0; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+.story-imgs::-webkit-scrollbar { display: none; }
+.story-imgs img { flex: none; width: 100%; height: 100%; object-fit: cover; scroll-snap-align: center; }
+.story-text { position: relative; padding: 90px 20px max(22px, env(safe-area-inset-bottom)); background: linear-gradient(to top, rgba(0,0,0,0.88) 55%, transparent); pointer-events: none; }
+.story.no-img .story-text { background: none; }
+.story-text > * { pointer-events: auto; }
+.story-meta { font-size: 0.78rem; opacity: 0.85; text-transform: uppercase; letter-spacing: 0.04em; }
+.story-text h2 { color: #fff; margin: 6px 0 8px; font-size: 1.6rem; line-height: 1.15; }
+.story-text p { margin: 0 0 12px; opacity: 0.92; }
+.story-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.story-more { color: #fff; font-weight: 700; }
+.story-hint { position: absolute; top: 18px; left: 50%; transform: translateX(-50%); font-size: 0.8rem; background: rgba(0,0,0,0.45); padding: 4px 12px; border-radius: 99px; animation: story-bob 1.6s ease-in-out infinite; }
+@keyframes story-bob { 50% { transform: translate(-50%, -4px); } }
+@media (prefers-reduced-motion: reduce) { .story-hint { animation: none; } }
+@media (min-width: 700px) { .story { border-left: 1px solid #222; border-right: 1px solid #222; } }
+
+.reactions { display: flex; flex-wrap: wrap; gap: 6px; margin: 16px 0 0; }
+.story .reactions { margin: 0; }
+.reactions button { display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; border-radius: 99px; border: 1px solid var(--line); background: var(--card); font: inherit; font-size: 1rem; cursor: pointer; color: var(--text); }
+.reactions button small { font-size: 0.8rem; font-weight: 700; }
+.reactions button.on { border-color: var(--accent); background: var(--ok-bg); }
+.reactions.dark button { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.25); color: #fff; }
+.reactions.dark button.on { background: rgba(143,187,63,0.35); border-color: var(--club-light); }
+
+.video-embed { position: relative; aspect-ratio: 16/9; border-radius: 12px; overflow: hidden; background: #000; margin: 0 0 14px; max-width: 720px; }
+.video-embed iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.video-embed button { position: absolute; inset: 0; width: 100%; border: 0; background: linear-gradient(135deg, var(--navy), #000); color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; cursor: pointer; font: inherit; }
+.video-play { width: 58px; height: 58px; border-radius: 50%; background: var(--accent); display: grid; place-items: center; font-size: 1.4rem; padding-left: 4px; box-sizing: border-box; }
+.video-embed small { opacity: 0.75; }
+.story .video-embed { margin: 0 0 12px; }
+
+.post-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; margin: 18px 0; }
+.post-gallery img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 10px; display: block; }
+.post-media { font-size: 0.8rem; margin-left: 8px; }
+.post-admin-imgs { display: flex; flex-wrap: wrap; gap: 12px; }
+.post-admin-imgs label { flex-direction: column; align-items: flex-start; }
+.post-admin-imgs img { width: 120px; height: 80px; object-fit: cover; border-radius: 8px; }
