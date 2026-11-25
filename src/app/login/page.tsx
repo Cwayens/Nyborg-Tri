@@ -19,7 +19,7 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
   const sp = await searchParams;
   const callbackUrl = safeCallback(sp.callbackUrl);
   const t = await tr();
-  if ((await auth())?.user && !demoEnabled()) redirect(callbackUrl);
+  if ((await auth())?.user && !(await demoEnabled())) redirect(callbackUrl);
 
   async function login(formData: FormData) {
     "use server";
@@ -43,7 +43,7 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
       </form>
     
       {sp.fejl && <p className="status-warn">{sp.fejl}</p>}
-      {demoEnabled() && (
+      {(await demoEnabled()) && (
         <section style={{ marginTop: 40 }}>
           <h2>{t("Log ind som testbruger", "Log in as a test user")}</h2>
           <p className="muted">{t("Kun i testversionen. Prøv siden fra forskellige roller uden at bruge mail.", "Test version only. Try the site from different roles without using email.")}</p>

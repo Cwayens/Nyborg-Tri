@@ -1,9 +1,10 @@
 import { auth } from "@/auth";
 import { exportUserData } from "@/lib/account";
-import { CLUB } from "@/lib/club";
+import { getClub } from "@/lib/site";
 
 // Download af alle egne data som JSON (GDPR art. 15 og 20)
 export async function GET() {
+  const CLUB = await getClub();
   const session = await auth();
   if (!session?.user) return new Response("Log ind først", { status: 401 });
   const data = await exportUserData(session.user.id);

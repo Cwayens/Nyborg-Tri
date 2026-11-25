@@ -7,14 +7,15 @@
  * Billeder linker indtil videre til den gamle side. Flyt dem til egen lagring,
  * før WordPress lukkes (se docs/arkitektur.md).
  */
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../src/lib/db";
+import { currentClubId } from "../src/lib/tenant";
+import { withClub } from "./_klub";
 import { toPage, toPost, type WpItem } from "../src/lib/wp-import";
 
 const SITE = process.env.WP_URL ?? "https://www.nyborgtri.dk";
 // Sider der erstattes af funktioner i det nye system (fx /om og /om/kontakt), eller ikke skal med
 const SKIP_PAGES = new Set(["bliv-medlem", "test", "fortryd-tilmelding", "tilmeld-nyhedbrev", "kalender", "om", "om/kontakt", "privatlivspolitik", "sponsorer"]);
 
-const prisma = new PrismaClient();
 
 async function fetchAll<T>(endpoint: string): Promise<T[]> {
   const out: T[] = [];
@@ -40,22 +41,21 @@ async function main() {
   for (const item of pages) {
     const data = toPage(item, SITE);
     if (SKIP_PAGES.has(data.path)) continue;
-    await prisma.page.upsert({ where: { wpId: item.id }, update: data, create: data });
+    await prisma.page.upsert({ where: { clubId_wpId: { clubId: await currentClubId(), wpId: item.id } }, update: data, create: data });
     p++;
   }
 
   const posts = await fetchAll<WpItem>("posts?_embed=author,wp:featuredmedia");
   for (const item of posts) {
     const data = toPost(item, SITE, catNames);
-    await prisma.post.upsert({ where: { wpId: item.id }, update: data, create: data });
+    await prisma.post.upsert({ where: { clubId_wpId: { clubId: await currentClubId(), wpId: item.id } }, update: data, create: data });
   }
 
   console.log(`Importeret ${p} sider og ${posts.length} nyheder fra ${SITE}`);
 }
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(() => prisma.$disconnect());
+// Klubben vælges med --klub=<slug> (standard: standardklubben)
+withClub(() => main()).catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

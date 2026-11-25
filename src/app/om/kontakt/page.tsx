@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
-import { CLUB, TOPICS, formatPhone, mapsUrl, telHref } from "@/lib/club";
+import { TOPICS, formatPhone, mapsUrl, telHref } from "@/lib/club";
+import { getClub } from "@/lib/site";
 import { getPlaces } from "@/lib/site";
 import { MailIcon, PhoneIcon, PinIcon, initials } from "@/components/Icons";
 import { sendContact } from "./actions";
@@ -9,6 +10,7 @@ import { isOn } from "@/lib/features";
 import { getLocale, translator } from "@/lib/i18n";
 
 export async function generateMetadata() {
+  const CLUB = await getClub();
   const t = translator(await getLocale());
   return { title: t("Kontakt", "Contact"), description: t(`Skriv eller ring til ${CLUB.name}.`, `Write to or call ${CLUB.name}.`) };
 }
@@ -16,6 +18,7 @@ export async function generateMetadata() {
 type Props = { searchParams: Promise<{ sendt?: string; fejl?: string; emne?: string }> };
 
 export default async function Contact({ searchParams }: Props) {
+  const CLUB = await getClub();
   const sp = await searchParams;
   const places = await getPlaces();
   const [people, session] = await Promise.all([
@@ -120,7 +123,7 @@ export default async function Contact({ searchParams }: Props) {
         <ul className="contact-places">
           {places.map((p) => (
             <li key={p.id}>
-              <a className="card contact-place" href={mapsUrl(p.query)} target="_blank" rel="noopener noreferrer">
+              <a className="card contact-place" href={mapsUrl(p.query, CLUB)} target="_blank" rel="noopener noreferrer">
                 <span className="contact-icon"><PinIcon size={20} /></span>
                 <span><b>{p.name}</b><small className="muted">{p.what}</small><span className="contact-map">{t("Vis på kort ↗", "Show on map ↗")}</span></span>
               </a>

@@ -3,7 +3,7 @@ import { NOT_CHILD, isChild } from "./child-safety";
 import { adultFilter, needsGuardian } from "./guardian";
 import { sendMail } from "./mail";
 import { baseUrl } from "./url";
-import { CLUB } from "./club";
+import { getClub } from "./site";
 
 // Mentorordningen: tildel den mentor, der har færrest nye medlemmer, og giv begge besked på mail.
 // Børn kan hverken få eller være mentor (se også databasens child_guard_mentor).
@@ -11,6 +11,7 @@ import { CLUB } from "./club";
 export type AssignResult = { ok: true; mentorName: string | null } | { ok: false; reason: "har" | "barn" | "ingen" };
 
 export async function assignMentor(userId: string, note = ""): Promise<AssignResult> {
+  const CLUB = await getClub();
   const me = await prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { name: true, email: true, phone: true, role: true, athleteGroup: true, birthDate: true } });
   if (isChild(me) || needsGuardian(me.birthDate)) return { ok: false, reason: "barn" };
   if (await prisma.mentorship.findUnique({ where: { menteeId: userId } })) return { ok: false, reason: "har" };
@@ -41,6 +42,7 @@ export async function assignMentor(userId: string, note = ""): Promise<AssignRes
 
 /** Giv klubben besked om et nyt medlem, der gerne vil have en mentor (til klubbens mail). */
 export async function notifyClubWantsMentor(name: string, reason: "ny" | "ingen"): Promise<void> {
+  const CLUB = await getClub();
   const url = `${await baseUrl()}/mentor`;
   await sendMail(
     CLUB.email,

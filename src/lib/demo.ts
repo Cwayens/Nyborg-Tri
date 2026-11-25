@@ -1,9 +1,17 @@
-// Testbrugere til gennemgang af siden. Kun aktive når DEMO_MODE=1.
+// Testbrugere til gennemgang af siden. Kun aktive med DEMO_MODE: "1" for alle klubber, eller en liste af klubber
+// (slugs adskilt af komma, fx DEMO_MODE=demo), så rigtige klubber på samme platform ikke får test-login.
 import type { AthleteGroup, Duty, Role } from "@prisma/client";
+import { currentClub } from "./tenant";
 
 export const DEMO_DOMAIN = "demo.nyborgtri.dk";
 
-export const demoEnabled = () => process.env.DEMO_MODE === "1";
+export async function demoEnabled(): Promise<boolean> {
+  const v = process.env.DEMO_MODE?.trim();
+  if (!v) return false;
+  if (v === "1") return true;
+  const slug = (await currentClub().catch(() => null))?.slug;
+  return !!slug && v.split(",").map((s) => s.trim()).includes(slug);
+}
 
 export type DemoUser = {
   key: string; name: string; role: Role; group: AthleteGroup | null; describe: string;

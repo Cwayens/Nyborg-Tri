@@ -1,6 +1,6 @@
-// Klubbens identitet: navn, logo, farver og kontaktoplysninger. Alt andet i koden læser herfra, så samme kode
-// kan køre for en anden klub ved kun at sætte miljøvariabler (CLUB_*) i dens egen installation. Uden variabler er
-// det Nyborg Triathlon Klub. Se docs/ny-klub.md.
+// Klubbens identitet: navn, logo, farver og kontaktoplysninger. Alle klubber kører fra samme installation; den aktuelle
+// klubs oplysninger hentes med getClub() i src/lib/site.ts. Standardklubben (Nyborg) kan få sine standarder fra
+// miljøvariabler (CLUB_*); andre klubber starter med deres navn og retter resten under Admin → Klubben. Se docs/ny-klub.md.
 
 export type ClubConfig = {
   name: string; // fulde navn, fx "Nyborg Triathlon Klub"
@@ -70,9 +70,18 @@ export function clubFrom(env: Record<string, string | undefined>): ClubConfig {
   };
 }
 
-/** Klubbens oplysninger fra miljøvariabler (standard). Admin kan rette dem under Admin → Klubben, se applyClubOverrides. */
+/** Standardklubbens oplysninger fra miljøvariabler. Admin kan rette dem under Admin → Klubben. */
 export const ENV_CLUB = clubFrom(process.env);
-let current: ClubConfig = ENV_CLUB;
+
+/**
+ * Udgangspunktet for en klub, før det admin har gemt lægges ovenpå: standardklubben bruger miljøvariablerne,
+ * andre klubber kun deres navn (ingen af Nyborgs oplysninger eller logo) og deres eget domæne.
+ */
+export function baseClub(club: { name: string; slug: string; domains: string[] }, isDefault: boolean, platformDomain = process.env.PLATFORM_DOMAIN): ClubConfig {
+  const domain = club.domains[0] ?? (platformDomain ? `${club.slug}.${platformDomain}` : "");
+  if (isDefault) return { ...ENV_CLUB, domain: ENV_CLUB.domain || domain };
+  return { ...clubFrom({ CLUB_NAME: club.name === NYBORG.name ? `${club.name} ` : club.name }), logoImage: "", domain };
+}
 
 /** Det admin har gemt under Admin → Klubben. Tomme felter og ugyldige farver beholder standarden. */
 export type ClubOverrides = Partial<Omit<ClubConfig, "colors">> & { colors?: Partial<ClubConfig["colors"]> };
@@ -97,20 +106,8 @@ export function mergeClub(base: ClubConfig, o: ClubOverrides | null | undefined)
   return out;
 }
 
-/** Bruges af src/lib/site.ts, når klubbens oplysninger er læst fra databasen. */
-export function applyClubOverrides(o: ClubOverrides | null | undefined) {
-  current = mergeClub(ENV_CLUB, o);
-}
-
-/** Klubbens oplysninger. Læses altid frisk, så ændringer fra Admin → Klubben slår igennem uden ny udgivelse. */
-export const CLUB: ClubConfig = new Proxy({} as ClubConfig, {
-  get: (_t, k) => (current as Record<string | symbol, unknown>)[k],
-  ownKeys: () => Reflect.ownKeys(current),
-  getOwnPropertyDescriptor: (_t, k) => ({ enumerable: true, configurable: true, value: (current as Record<string | symbol, unknown>)[k] }),
-});
-
 /** CSS, der giver siden klubbens farver. Tom, når farverne er Nyborgs (de står allerede i globals.css). */
-export function clubCss(club: ClubConfig = CLUB): string {
+export function clubCss(club: ClubConfig): string {
   const k = club.colors, n = NYBORG.colors;
   const rules: string[] = [];
   if (k.accent !== n.accent) rules.push(`--accent:${k.accent}`, `--link:${k.accent}`, `--club-dark:${k.accent}`);
@@ -122,13 +119,10 @@ export function clubCss(club: ClubConfig = CLUB): string {
   return rules.length ? `:root{${rules.join(";")}}` : "";
 }
 
-/** Fuld adresse til siden, fx til links i mails. */
-export const siteUrl = () => process.env.AUTH_URL || process.env.NEXT_PUBLIC_SITE_URL || (CLUB.domain ? `https://${CLUB.domain}` : "http://localhost:3000");
-
 export const TOPICS = ["Prøvetræning", "Medlemskab", "Sponsorat", "Stævner", "Andet"] as const;
 
 /** Hvor kontaktformularen sendes hen. */
-export const contactInbox = () => process.env.CONTACT_EMAIL || CLUB.email;
+export const contactInbox = (club: ClubConfig) => club.email;
 
 // Træningssteder på kortet. Ret her, hvis klubben flytter træning. Koordinater fra OpenStreetMap og den gamle side.
 export type Place = { id: string; name: string; what: string; query: string; lat: number; lng: number; home?: boolean };
@@ -142,7 +136,7 @@ export const PLACES: Place[] = [
 ];
 export const HOME = PLACES.find((p) => p.home)!;
 
-export const mapsUrl = (q: string) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(CLUB.city ? `${q}, ${CLUB.zip} ${CLUB.city}`.trim() : q)}`;
+export const mapsUrl = (q: string, club: Pick<ClubConfig, "city" | "zip">) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(club.city ? `${q}, ${club.zip} ${club.city}`.trim() : q)}`;
 
 /** "22446633" bliver til "22 44 66 33", og tel:-linket får +45. */
 export function formatPhone(p: string): string {

@@ -12,10 +12,10 @@ import { isHttps } from "@/lib/url";
  * så rigtige konti aldrig kan overtages på denne måde.
  */
 export async function loginAsDemo(formData: FormData) {
-  if (!demoEnabled()) redirect("/login");
+  if (!(await demoEnabled())) redirect("/login");
   const key = String(formData.get("key"));
   if (!DEMO_USERS.some((u) => u.key === key)) redirect("/login");
-  const user = await prisma.user.findUnique({ where: { email: demoEmail(key) } });
+  const user = await prisma.user.findFirst({ where: { email: demoEmail(key) } });
   if (!user) redirect("/login?fejl=" + encodeURIComponent("Testbrugerne er ikke oprettet endnu – lav en redeploy"));
 
   const sessionToken = randomBytes(32).toString("hex");

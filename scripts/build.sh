@@ -22,8 +22,13 @@ if [ "${IMPORT_WP_ON_BUILD:-}" = "1" ]; then
   tsx scripts/import-wordpress.ts || echo "WordPress-import fejlede – fortsætter uden"
 fi
 
+# DEMO_MODE=1: testbrugere i standardklubben. DEMO_MODE=demo,klub2: testbrugere i de nævnte klubber.
 if [ "${DEMO_MODE:-}" = "1" ]; then
   tsx scripts/seed-demo.ts
+elif [ -n "${DEMO_MODE:-}" ]; then
+  for k in ${DEMO_MODE//,/ }; do
+    tsx scripts/seed-demo.ts --klub="$k" || echo "Demodata for $k fejlede – fortsætter"
+  done
 fi
 
 next build

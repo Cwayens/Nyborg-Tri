@@ -20,6 +20,16 @@
 
 Skalerbarhed: siden er stateless, så den skalerer vandret uden ændringer. 100 eller 2.000 medlemmer gør ingen forskel for denne arkitektur.
 
+## Flere klubber (tilføjet 25. nov. 2026)
+
+Alle klubber deler én installation og én database (multi-tenant), så en ny klub ikke koster ekstra hosting.
+Hver tabel har `clubId`; klubben findes ud fra domænet, og `src/lib/db.ts` begrænser automatisk alle forespørgsler til klubben.
+Databasen afviser desuden rækker, der peger på en anden klub. Se "Sådan holdes klubberne adskilt" i `docs/ny-klub.md`.
+
+Omkostninger: ét Vercel-projekt (Pro, ca. 20 $ om måneden, fordi platformen sælges kommercielt; Hobby må ikke bruges kommercielt),
+én Neon-database i EU (gratis niveau til at starte med, derefter betaling efter forbrug), én mailafsender og én Strava-app for alle klubber.
+Stripe betaler hver klub selv (kun gebyr pr. betaling).
+
 ## Moduler
 
 ```

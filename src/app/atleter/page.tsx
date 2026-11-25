@@ -3,16 +3,16 @@ import { prisma } from "@/lib/db";
 import { VISIBLE_ATHLETE } from "@/lib/athletes";
 import { AthleteCard } from "@/components/AthleteCard";
 import { requireFeature } from "@/lib/features";
-import { CLUB } from "@/lib/club";
+import { getClub } from "@/lib/site";
 
-export const metadata = {
-  title: "Atleter",
-  description: `Mød ${CLUB.name}s elite-atleter, og se hvordan din virksomhed kan støtte dem.`,
-};
-
-const CONTACT = CLUB.email;
+export async function generateMetadata() {
+  const CLUB = await getClub();
+  return { title: "Atleter", description: `Mød ${CLUB.name}s elite-atleter, og se hvordan din virksomhed kan støtte dem.` };
+}
 
 export default async function Athletes() {
+  const CLUB = await getClub();
+  const CONTACT = CLUB.email;
   await requireFeature("atleter");
   const athletes = await prisma.athleteProfile.findMany({
     where: VISIBLE_ATHLETE,

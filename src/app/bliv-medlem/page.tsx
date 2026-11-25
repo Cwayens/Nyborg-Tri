@@ -8,7 +8,7 @@ import { TRIAL_DAYS } from "@/lib/access";
 import { joinAsGuest, requestTrial, resendPayLink, startCheckout, redeemCodeAction } from "./actions";
 import { needsGuardian } from "@/lib/guardian";
 import { demoEnabled } from "@/lib/demo";
-import { CLUB } from "@/lib/club";
+import { getClub } from "@/lib/site";
 import { getLocale, translator } from "@/lib/i18n";
 import { isOn } from "@/lib/features";
 
@@ -18,10 +18,11 @@ export async function generateMetadata() {
 }
 
 export default async function JoinPage({ searchParams }: { searchParams: Promise<{ fejl?: string; annulleret?: string; besked?: string; sendt?: string; ikkesendt?: string; plan?: string }> }) {
+  const CLUB = await getClub();
   const { fejl, annulleret, besked, sendt, ikkesendt, plan } = await searchParams;
   const session = await auth();
   const [page, types] = await Promise.all([
-    prisma.page.findUnique({ where: { path: "bliv-medlem" } }),
+    prisma.page.findFirst({ where: { path: "bliv-medlem" } }),
     prisma.membershipType.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
   ]);
   const user = session?.user ? await prisma.user.findUnique({ where: { id: session.user.id } }) : null;
@@ -67,7 +68,7 @@ export default async function JoinPage({ searchParams }: { searchParams: Promise
             {" "}{t("Når kontingentet er betalt, kan du tilmelde dig træninger.", "Once the fee is paid, you can sign up for trainings.")}
           </p>
           {ikkesendt && <p className="status-warn" style={{ margin: "8px 0 0" }}>{t("Mailen kunne ikke sendes lige nu. Prøv igen om lidt, eller giv linket direkte til din forælder.", "The email could not be sent right now. Try again shortly, or give the link to your parent directly.")}</p>}
-          {demoEnabled() && <p className="muted" style={{ margin: "8px 0 0" }}>{t("Testversion:", "Test version:")} <Link href={`/betal/${awaiting.payToken}`}>{t("åbn betalingslinket", "open the payment link")}</Link> {t("som forælderen får.", "the parent receives.")}</p>}
+          {(await demoEnabled()) && <p className="muted" style={{ margin: "8px 0 0" }}>{t("Testversion:", "Test version:")} <Link href={`/betal/${awaiting.payToken}`}>{t("åbn betalingslinket", "open the payment link")}</Link> {t("som forælderen får.", "the parent receives.")}</p>}
           <form action={resendPayLink} style={{ marginTop: 8 }}>
             <button className="linklike" type="submit">{t("Send linket igen", "Send the link again")}</button>
           </form>

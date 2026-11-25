@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import sharp from "sharp";
 import { put } from "@vercel/blob";
+import { currentClub } from "./tenant";
 
 // Billeder fra admin og atleter (logoer, profilbilleder). De skaleres ned og gemmes som WebP.
 // Med BLOB_READ_WRITE_TOKEN (Vercel Blob) ligger de i klubbens eget billedlager, og databasen gemmer kun adressen.
@@ -14,10 +15,10 @@ type Opts = { folder: string; maxWidth: number; allowSvg?: boolean };
 
 export const blobEnabled = () => !!process.env.BLOB_READ_WRITE_TOKEN;
 
-/** Gemmer en færdig fil og returnerer dens adresse. */
+/** Gemmer en færdig fil og returnerer dens adresse. Filerne ligger i en mappe pr. klub (klubbens slug). */
 export async function storeFile(path: string, body: Buffer, contentType: string): Promise<string> {
   if (!blobEnabled()) return `data:${contentType};base64,${body.toString("base64")}`;
-  const r = await put(path, body, { access: "public", contentType, addRandomSuffix: false, allowOverwrite: true });
+  const r = await put(`${(await currentClub()).slug}/${path}`, body, { access: "public", contentType, addRandomSuffix: false, allowOverwrite: true });
   return r.url;
 }
 

@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { CLUB } from "@/lib/club";
+import { getClub } from "@/lib/site";
 import { getPrivacy } from "@/lib/site";
 import { Inline } from "@/components/Inline";
 import { getLocale } from "@/lib/i18n";
 
 export async function generateMetadata() {
+  const CLUB = await getClub();
   if ((await getLocale()) === "en") return { title: "Privacy policy", description: `How ${CLUB.name} handles your personal data.` };
   return { title: "Privatlivspolitik", description: `Sådan behandler ${CLUB.name} dine personoplysninger: hvad vi gemmer, hvorfor, hvor længe og dine rettigheder.` };
 }
@@ -32,6 +33,7 @@ const DATA: [string, string, string, string][] = [
 ];
 
 export default async function Privacy() {
+  const CLUB = await getClub();
   const extra = (await getPrivacy()).extra;
   const en = (await getLocale()) === "en";
   return (

@@ -9,8 +9,10 @@ import { readImage, storeFile } from "@/lib/upload";
 import { CATEGORY, isCategory, parseKr } from "@/lib/finance";
 import { sendMail } from "@/lib/mail";
 import { baseUrl } from "@/lib/url";
-import { CLUB } from "@/lib/club";
+import { getClub } from "@/lib/site";
 import { dato, kr } from "@/lib/format";
+import { currentClubId } from "@/lib/tenant";
+import { createLedgerEntry } from "@/lib/finance-db";
 
 const CB = "/admin/oekonomi";
 const fail = (path: string, msg: string): never => {
@@ -58,7 +60,7 @@ export async function saveEntry(fd: FormData) {
     ...(file !== undefined ? { receipt: file } : {}),
   } as const;
   if (id) await prisma.ledgerEntry.update({ where: { id }, data });
-  else await prisma.ledgerEntry.create({ data: { ...data, createdById: me.id } });
+  else await createLedgerEntry({ ...data, createdById: me.id });
   revalidatePath(CB, "layout");
   redirect(`${CB}/posteringer?aar=${date.slice(0, 4)}&gemt=1`);
 }
@@ -83,7 +85,7 @@ export async function saveBudget(fd: FormData) {
     }
     const ore = raw === "0" ? 0 : parseKr(raw);
     if (ore === null) fail(`${CB}/budget?aar=${year}`, `Beløbet for ${CATEGORY[code].label} ser forkert ud`);
-    await prisma.budgetLine.upsert({ where: { year_category: { year, category: code } }, update: { amountOre: ore! }, create: { year, category: code, amountOre: ore! } });
+    await prisma.budgetLine.upsert({ where: { clubId_year_category: { clubId: await currentClubId(), year, category: code } }, update: { amountOre: ore! }, create: { year, category: code, amountOre: ore! } });
   }
   revalidatePath(CB, "layout");
   redirect(`${CB}/budget?aar=${year}&gemt=1`);
@@ -95,7 +97,7 @@ export async function copyBudget(fd: FormData) {
   const year = Number(fd.get("year"));
   const last = await prisma.budgetLine.findMany({ where: { year: year - 1 } });
   for (const b of last) {
-    await prisma.budgetLine.upsert({ where: { year_category: { year, category: b.category } }, update: {}, create: { year, category: b.category, amountOre: b.amountOre } });
+    await prisma.budgetLine.upsert({ where: { clubId_year_category: { clubId: await currentClubId(), year, category: b.category } }, update: {}, create: { year, category: b.category, amountOre: b.amountOre } });
   }
   revalidatePath(CB, "layout");
   redirect(`${CB}/budget?aar=${year}${last.length ? "&kopieret=1" : "&fejl=" + encodeURIComponent(`Der er intet budget for ${year - 1}`)}`);
@@ -103,6 +105,7 @@ export async function copyBudget(fd: FormData) {
 
 /** Send en venlig påmindelse om at forny (til forælder, hvis medlemmet er under 18 og har en værge). */
 export async function sendReminder(fd: FormData) {
+  const CLUB = await getClub();
   await requireTreasurer(CB);
   const u = await prisma.user.findUnique({
     where: { id: String(fd.get("userId")) },

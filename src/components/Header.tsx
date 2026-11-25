@@ -7,11 +7,12 @@ import { dato } from "@/lib/format";
 import { AppNav } from "./AppNav";
 import { hiddenHrefs } from "@/lib/features";
 import { Logo, MenuIcon, initials } from "./Icons";
-import { CLUB } from "@/lib/club";
+import { getClub } from "@/lib/site";
 import { staffOf } from "@/lib/staff";
 import { getLocale, translator } from "@/lib/i18n";
 
 export async function Header() {
+  const CLUB = await getClub();
   const session = await auth();
   const user = session?.user;
   const staff = user ? await staffOf(user.id) : null;
@@ -32,7 +33,7 @@ export async function Header() {
       <header className="site-header">
         <div className="wrap header-row">
           <Link href="/" className="logo" aria-label={`${CLUB.name} – ${t("til forsiden", "home")}`}>
-            <Logo />
+            <Logo club={CLUB} />
           </Link>
 
           {user ? (

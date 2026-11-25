@@ -1,23 +1,25 @@
 import { prisma } from "@/lib/db";
 import { isoDate } from "@/lib/format";
 import { economicProvider } from "./economic";
+import { clubEnv } from "@/lib/club-secrets";
 import type { AccountingPayment, AccountingProvider } from "./types";
 
 export type { AccountingPayment, AccountingProvider };
 
 /**
- * Vælg økonomisystem via ACCOUNTING_PROVIDER.
+ * Vælg økonomisystem via klubbens ACCOUNTING_PROVIDER.
  * "none": intet push – kassereren henter i stedet data via CSV eller /api/v1/payments.
  * Nye systemer (Dinero, Billy, Uniconta …) tilføjes som en ny provider-fil.
  */
-export function getProvider(): AccountingProvider | null {
-  switch (process.env.ACCOUNTING_PROVIDER ?? "none") {
+export async function getProvider(): Promise<AccountingProvider | null> {
+  const name = (await clubEnv("ACCOUNTING_PROVIDER")) ?? "none";
+  switch (name) {
     case "economic":
       return economicProvider();
     case "none":
       return null;
     default:
-      throw new Error(`Ukendt ACCOUNTING_PROVIDER: ${process.env.ACCOUNTING_PROVIDER}`);
+      throw new Error(`Ukendt ACCOUNTING_PROVIDER: ${name}`);
   }
 }
 
@@ -44,7 +46,7 @@ export async function toAccountingPayment(paymentId: string): Promise<Accounting
 export async function syncPayment(paymentId: string): Promise<void> {
   let provider: AccountingProvider | null;
   try {
-    provider = getProvider();
+    provider = await getProvider();
   } catch (e) {
     await prisma.payment.update({ where: { id: paymentId }, data: { accountingStatus: "FAILED", accountingError: String(e) } });
     return;

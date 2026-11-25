@@ -2,19 +2,22 @@ import type Stripe from "stripe";
 import { prisma } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
 import { completePayment } from "@/lib/payments";
+import { clubEnv } from "@/lib/club-secrets";
 
 // Stripe kalder denne adresse, når en betaling er gennemført.
-// Opsætning: Stripe Dashboard → Developers → Webhooks → https://<domæne>/api/stripe/webhook
+// Opsætning: Stripe Dashboard → Developers → Webhooks → https://<klubbens domæne>/api/stripe/webhook
+// Hver klub har sin egen Stripe-konto og webhook på sit eget domæne; klubben findes ud fra domænet, og signaturen
+// tjekkes med klubbens egen hemmelighed, så en anden klubs Stripe-konto ikke kan markere betalinger som betalt.
 // Events: checkout.session.completed, checkout.session.async_payment_succeeded, checkout.session.expired, charge.refunded
 
 export async function POST(req: Request) {
   const signature = req.headers.get("stripe-signature");
-  const secret = process.env.STRIPE_WEBHOOK_SECRET;
+  const secret = await clubEnv("STRIPE_WEBHOOK_SECRET");
   if (!signature || !secret) return new Response("Mangler signatur", { status: 400 });
 
   let event: Stripe.Event;
   try {
-    event = stripe().webhooks.constructEvent(await req.text(), signature, secret);
+    event = (await stripe()).webhooks.constructEvent(await req.text(), signature, secret);
   } catch {
     return new Response("Ugyldig signatur", { status: 400 });
   }

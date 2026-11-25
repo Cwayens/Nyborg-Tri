@@ -3,9 +3,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/auth";
 import { prisma } from "@/lib/db";
-import { CLUB, ENV_CLUB } from "@/lib/club";
-import { SITE_KEYS, saveSite } from "@/lib/site";
-import { blankAbout, blankHome } from "@/data/site-default";
+import { SITE_KEYS, getClub, getClubBase } from "@/lib/site";
+import { clubEnv } from "@/lib/club-secrets";
+import { clearExampleContent } from "@/lib/club-setup";
 import { featuresOff, FEATURE_KEYS } from "@/lib/features";
 
 export const metadata = { title: "Admin – kom i gang" };
@@ -16,11 +16,7 @@ async function startBlank() {
   "use server";
   await requireAdmin();
   // Erstat Nyborgs eksempelindhold med neutralt indhold. Kan altid rettes eller sættes tilbage under Admin → Klubben.
-  await saveSite("home", blankHome(CLUB.name));
-  await saveSite("about", blankAbout(CLUB.name));
-  await saveSite("places", []);
-  await saveSite("routes", { useDefault: false });
-  await prisma.clubRoute.deleteMany({});
+  await clearExampleContent((await getClub()).name);
   revalidatePath("/", "layout");
   redirect("/admin/kom-i-gang?ryddet=1");
 }
@@ -28,6 +24,7 @@ async function startBlank() {
 type Step = { title: string; text: string; href?: string; link?: string; done: boolean; note?: string };
 
 export default async function Onboarding({ searchParams }: { searchParams: Promise<{ ryddet?: string }> }) {
+  const CLUB = await getClub();
   await requireAdmin();
   const sp = await searchParams;
   const keys = await prisma.setting.findMany({ where: { key: { in: Object.values(SITE_KEYS) } }, select: { key: true } });
@@ -39,10 +36,10 @@ export default async function Onboarding({ searchParams }: { searchParams: Promi
     featuresOff(),
     prisma.team.findMany({ where: { active: true }, select: { name: true } }),
   ]);
-  const stripeKey = process.env.STRIPE_SECRET_KEY ?? "";
+  const stripeKey = (await clubEnv("STRIPE_SECRET_KEY")) ?? "";
   const stripeMode = stripeKey.startsWith("sk_live_") ? "live" : stripeKey ? "test" : null;
   const mailOk = !!(process.env.RESEND_API_KEY || process.env.EMAIL_SERVER || process.env.SMTP_HOST);
-  const ownName = has("club") || ENV_CLUB.name !== "Nyborg Triathlon Klub";
+  const ownName = has("club") || (await getClubBase()).name !== "Nyborg Triathlon Klub";
   const nyborgContent = CLUB.name !== "Nyborg Triathlon Klub" && !has("home");
 
   const steps: Step[] = [

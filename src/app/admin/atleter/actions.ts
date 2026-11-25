@@ -21,7 +21,7 @@ export async function createProfile(formData: FormData) {
   const user = await prisma.user.findFirst({ where: { id: String(formData.get("userId")), athleteGroup: "ELITE" } });
   if (!user) back("fejl=" + encodeURIComponent("Vælg en atlet fra Elite"));
   let slug = slugify(user!.name ?? "atlet");
-  if (await prisma.athleteProfile.findUnique({ where: { slug } })) slug = `${slug}-${user!.id.slice(-4)}`;
+  if (await prisma.athleteProfile.findFirst({ where: { slug } })) slug = `${slug}-${user!.id.slice(-4)}`;
   const last = await prisma.athleteProfile.aggregate({ _max: { sortOrder: true } });
   await prisma.athleteProfile.upsert({
     where: { userId: user!.id },

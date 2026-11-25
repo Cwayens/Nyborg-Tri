@@ -5,9 +5,10 @@ import { requireUser } from "@/auth";
 import { deleteAccount } from "@/lib/account";
 import { prisma } from "@/lib/db";
 import { sendMail } from "@/lib/mail";
-import { CLUB } from "@/lib/club";
+import { getClub } from "@/lib/site";
 
 export async function deleteMyAccount(formData: FormData) {
+  const CLUB = await getClub();
   const sessionUser = await requireUser("/profil");
   if (String(formData.get("confirm") ?? "").trim().toUpperCase() !== "SLET") {
     redirect("/profil?fejl=" + encodeURIComponent('Skriv SLET i feltet for at bekræfte') + "#slet");

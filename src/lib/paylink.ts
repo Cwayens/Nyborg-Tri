@@ -3,10 +3,11 @@ import { prisma } from "@/lib/db";
 import { kr } from "@/lib/format";
 import { sendMail } from "@/lib/mail";
 import { baseUrl } from "@/lib/url";
-import { CLUB } from "@/lib/club";
+import { getClub } from "@/lib/site";
 
 /** Opretter (eller genbruger) et hemmeligt betalingslink og sender det til medlemmets forælder/værge. */
 export async function sendPayLink(paymentId: string): Promise<{ url: string; sent: boolean }> {
+  const CLUB = await getClub();
   const p = await prisma.payment.findUniqueOrThrow({ where: { id: paymentId }, include: { user: true } });
   const to = p.user.guardianEmail;
   if (!to) throw new Error("Medlemmet har ingen forælder/værge");

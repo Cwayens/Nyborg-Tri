@@ -16,7 +16,9 @@
     "import:wordpress": "tsx scripts/import-wordpress.ts",
     "vercel-build": "bash scripts/build.sh",
     "db:demo": "tsx scripts/seed-demo.ts",
-    "images:move": "tsx scripts/move-images.ts"
+    "images:move": "tsx scripts/move-images.ts",
+    "klub": "tsx scripts/klub.ts",
+    "test:db": "tsx --test \"src/**/*.dbtest.ts\""
   },
   "dependencies": {
     "@auth/prisma-adapter": "2.11.3",

@@ -2,10 +2,11 @@ import { auth } from "@/auth";
 import { isTreasurer, staffOf } from "@/lib/staff";
 import { exportRows } from "@/lib/finance-db";
 import { toCsv } from "@/lib/finance";
-import { CLUB } from "@/lib/club";
+import { getClub } from "@/lib/site";
 
 // Alle posteringer i et år som CSV til bogføringsprogrammet (kun kasserer og admin)
 export async function GET(req: Request) {
+  const CLUB = await getClub();
   const me = await staffOf((await auth())?.user?.id);
   if (!isTreasurer(me)) return new Response("Kun for kasserer og admin", { status: 403 });
   const y = Number(new URL(req.url).searchParams.get("aar"));

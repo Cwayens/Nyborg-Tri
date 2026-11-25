@@ -2,6 +2,7 @@ import { cache } from "react";
 import { notFound } from "next/navigation";
 import { prisma } from "./db";
 import { CHILD_BLOCKED, viewerIsChild } from "./child-safety";
+import { currentClubId } from "./tenant";
 
 // Funktioner, som admin kan slå fra under Administration → Funktioner, hvis de bliver for meget.
 // Når en funktion er slået fra, forsvinder links og bokse, og siderne svarer 404. Data gemmes, så den kan slås til igen.
@@ -82,8 +83,9 @@ export async function requireFeature(f: Feature): Promise<void> {
 
 export async function setFeaturesOff(off: Feature[]): Promise<void> {
   const on = DEFAULT_OFF.filter((k) => !off.includes(k));
+  const clubId = await currentClubId();
   await prisma.$transaction([
-    prisma.setting.upsert({ where: { key: KEY }, update: { value: off }, create: { key: KEY, value: off } }),
-    prisma.setting.upsert({ where: { key: ON_KEY }, update: { value: on }, create: { key: ON_KEY, value: on } }),
+    prisma.setting.upsert({ where: { clubId_key: { clubId, key: KEY } }, update: { value: off }, create: { key: KEY, value: off } }),
+    prisma.setting.upsert({ where: { clubId_key: { clubId, key: ON_KEY } }, update: { value: on }, create: { key: ON_KEY, value: on } }),
   ]);
 }

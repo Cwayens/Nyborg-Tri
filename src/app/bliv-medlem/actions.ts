@@ -10,7 +10,7 @@ import { redeemCode } from "@/lib/access";
 import { baseUrl } from "@/lib/url";
 import { ageOn, isEmail, needsGuardian } from "@/lib/guardian";
 import { sendPayLink } from "@/lib/paylink";
-import { CLUB } from "@/lib/club";
+import { getClub } from "@/lib/site";
 import { isOn } from "@/lib/features";
 import { notifyClubWantsMentor } from "@/lib/mentor";
 
@@ -66,8 +66,9 @@ export async function startCheckout(formData: FormData) {
 
 /** Opretter en Stripe-betaling for kontingentet og returnerer adressen, man sendes til. */
 async function checkoutUrl(paymentId: string, userId: string, email: string | undefined, type: { id: string; name: string; priceOre: number }, success: string) {
+  const CLUB = await getClub();
   const base = await baseUrl();
-  const session = await stripe().checkout.sessions.create({
+  const session = await (await stripe()).checkout.sessions.create({
     mode: "payment",
     customer_email: email,
     locale: "da",
@@ -123,7 +124,7 @@ export async function joinAsGuest(formData: FormData) {
   const { email, typeCode, guardianName, guardianEmail, message, plan: _plan, ...profile } = parsed.data!;
   if (!isEmail(email)) guestFail("Skriv en gyldig e-mail");
 
-  const existing = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+  const existing = await prisma.user.findFirst({ where: { email }, select: { id: true } });
   if (existing) {
     await sendLoginLink(email, "/bliv-medlem");
     redirect("/bliv-medlem/tjek-mail?findes=1");

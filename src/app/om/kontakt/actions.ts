@@ -3,12 +3,14 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { sendMail } from "@/lib/mail";
-import { CLUB, TOPICS, contactInbox } from "@/lib/club";
+import { TOPICS } from "@/lib/club";
+import { contactInbox, getClub } from "@/lib/site";
 import { isEmail } from "@/lib/guardian";
 
 const back = (q: string) => redirect(`/om/kontakt?${q}#skriv`);
 
 export async function sendContact(formData: FormData) {
+  const CLUB = await getClub();
   // Robotter udfylder det skjulte felt; vi lader som om det lykkedes
   if (String(formData.get("website") ?? "")) back("sendt=1");
   const name = String(formData.get("name") ?? "").trim().slice(0, 100);
@@ -29,7 +31,7 @@ export async function sendContact(formData: FormData) {
 
   await prisma.contactMessage.create({ data: { name, email, phone, topic, message } });
   await sendMail(
-    contactInbox(),
+    await contactInbox(),
     `Ny henvendelse${topic ? ` (${topic})` : ""} fra ${name}`,
     `${name} <${email}>${phone ? `, tlf. ${phone}` : ""} skrev via ${CLUB.domain || "hjemmesiden"}:\n\n${message}\n\nSvar direkte til ${email}. Alle henvendelser kan også ses under Admin > Kontakt.`,
   );

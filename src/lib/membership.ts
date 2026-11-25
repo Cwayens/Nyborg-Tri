@@ -1,5 +1,4 @@
-import type { Prisma } from "@prisma/client";
-import { prisma } from "./db";
+import { prisma, type Tx } from "./db";
 
 export function addOneYear(d: Date): Date {
   const r = new Date(d);
@@ -21,7 +20,7 @@ export async function currentMembership(userId: string) {
   });
 }
 
-export async function latestMembershipEnd(userId: string, db: Prisma.TransactionClient = prisma): Promise<Date | null> {
+export async function latestMembershipEnd(userId: string, db: Tx = prisma): Promise<Date | null> {
   const m = await db.membership.findFirst({ where: { userId }, orderBy: { endDate: "desc" } });
   return m?.endDate ?? null;
 }

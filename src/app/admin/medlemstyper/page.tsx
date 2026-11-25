@@ -37,7 +37,7 @@ async function add(fd: FormData) {
   const p = price(fd);
   if (!name || p === null) redirect("/admin/medlemstyper?fejl=" + encodeURIComponent("Skriv navn og pris i kroner"));
   let code = slug(name).toUpperCase().replace(/-/g, "_").slice(0, 24);
-  if (await prisma.membershipType.findUnique({ where: { code } })) code = `${code}_${Date.now().toString(36).slice(-4).toUpperCase()}`;
+  if (await prisma.membershipType.findFirst({ where: { code } })) code = `${code}_${Date.now().toString(36).slice(-4).toUpperCase()}`;
   const max = await prisma.membershipType.aggregate({ _max: { sortOrder: true } });
   await prisma.membershipType.create({ data: { code, name, description: str(fd, "description", 300) || null, priceOre: p!, sortOrder: (max._max.sortOrder ?? 0) + 1 } });
   revalidatePath("/", "layout");

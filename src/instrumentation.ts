@@ -1,9 +1,5 @@
-// Ved opstart: hent klubbens oplysninger (Admin → Klubben) fra databasen, så mails og sider bruger dem med det samme.
-export async function register() {
-  if (process.env.NEXT_RUNTIME !== "nodejs") return;
-  const { refreshClub } = await import("./lib/site");
-  await refreshClub(true).catch(() => {});
-}
+// Klubbens oplysninger hentes pr. forespørgsel ud fra domænet (src/lib/site.ts getClub), så der er intet at gøre ved opstart.
+export async function register() {}
 
 // Next.js kalder onRequestError ved fejl i sider, server actions og API-ruter. Vi mailer den driftsansvarlige.
 export async function onRequestError(error: unknown, request: { path: string; method: string }) {
