@@ -10,12 +10,14 @@ import { isOn, requireFeature } from "@/lib/features";
 
 export const metadata = { title: "Træn sammen" };
 
-type Props = { searchParams: Promise<{ ny?: string; fejl?: string; oprettet?: string; sport?: string }> };
+type Props = { searchParams: Promise<{ ny?: string; fejl?: string; oprettet?: string; sport?: string; fra?: string }> };
 
 export default async function TrainTogether({ searchParams }: Props) {
   await requireFeature("traensammen");
   const user = await requireUser("/traen-sammen");
-  const { ny, fejl, oprettet, sport } = await searchParams;
+  const { ny, fejl, oprettet, sport, fra } = await searchParams;
+  // Del en træning fra eget program: felterne udfyldes, så man kun mangler tid og sted
+  const from = fra && (await isOn("egetprogram")) ? await prisma.plannedWorkout.findFirst({ where: { id: fra, userId: user.id, sharedId: null } }) : null;
   const eligible = await canSignUp(user.id);
   const workouts = await prisma.groupWorkout.findMany({
     where: { startsAt: { gte: new Date(Date.now() - 2 * 3600 * 1000) }, ...(sport ? { discipline: sport as never } : {}) },
@@ -45,25 +47,31 @@ export default async function TrainTogether({ searchParams }: Props) {
 
       {ny && eligible && (
         <section className="card" style={{ marginBottom: 24 }}>
-          <h2 style={{ marginTop: 0 }}>Ny tur</h2>
+          <h2 style={{ marginTop: 0 }}>{from ? "Del din træning" : "Ny tur"}</h2>
           <form action={createWorkout} className="stack" encType="multipart/form-data" style={{ maxWidth: "100%" }}>
+            {from && (
+              <>
+                <input type="hidden" name="plannedId" value={from.id} />
+                <p className="share-from"><span>Fra dit eget program: <b>{from.title}</b>{from.workout ? " med program" : ""}. Tilføj tid og mødested, så kan andre hoppe med.</span></p>
+              </>
+            )}
             <div className="row">
               <label>Sport
-                <select name="discipline" defaultValue="RUN">
+                <select name="discipline" defaultValue={from?.discipline ?? "RUN"}>
                   {(["RUN", "BIKE", "SWIM", "STRENGTH", "OTHER"] as const).map((d) => <option key={d} value={d}>{DISCIPLINE_LABEL[d]}</option>)}
                 </select>
               </label>
-              <label>Dato<input type="date" name="date" min={today} defaultValue={today} required /></label>
-              <label>Tid<input type="time" name="time" defaultValue="17:30" required /></label>
+              <label>Dato<input type="date" name="date" min={today} defaultValue={from && from.day >= today ? from.day : today} required /></label>
+              <label>Tid<input type="time" name="time" defaultValue={from?.time ?? "17:30"} required /></label>
             </div>
-            <label>Hvad skal I?<input name="title" placeholder="fx Rolig langtur 15 km (eller tag navnet fra programmet)" /></label>
+            <label>Hvad skal I?<input name="title" defaultValue={from?.title} placeholder="fx Rolig langtur 15 km (eller tag navnet fra programmet)" /></label>
             <div className="row">
               <label>Mødested<input name="location" placeholder="fx P-pladsen ved hallen" required /></label>
-              <label>Varighed (min)<input type="number" name="durationMin" defaultValue={60} min={10} max={600} required /></label>
+              <label>Varighed (min)<input type="number" name="durationMin" defaultValue={from?.durationMin && from.durationMin >= 10 ? from.durationMin : 60} min={10} max={600} required /></label>
               <label>Max deltagere<input type="number" name="maxPeople" min={2} max={100} placeholder="Ingen grænse" /></label>
             </div>
             <label>Tempo/niveau (valgfrit)<input name="level" placeholder="fx 5:30-6:00 /km eller 28-30 km/t" /></label>
-            <fieldset className="program-field">
+            {!from?.workout && <fieldset className="program-field">
               <legend>Program fra TrainingPeaks (valgfrit)</legend>
               <p className="muted">
                 Åbn træningen i TrainingPeaks, vælg <b>Export</b> og gem som <b>.fit</b>, <b>.zwo</b> eller <b>.mrc</b>. Programmet vises i procent
@@ -72,8 +80,8 @@ export default async function TrainTogether({ searchParams }: Props) {
               <label>Importér fil<input type="file" name="programFile" accept=".fit,.zwo,.mrc,.erg,.json,.txt" /></label>
               <label>…eller skriv det<textarea name="program" placeholder={"10min 60%\n5x(4min 105%, 3min 55%)\n10min 50%"} style={{ minHeight: 80, fontFamily: "ui-monospace, monospace" }} /></label>
               <label className="check"><input type="checkbox" name="durationAuto" value="1" defaultChecked /><span>Brug programmets længde som varighed</span></label>
-            </fieldset>
-            <label>Besked (valgfri)<textarea name="description" style={{ minHeight: 80, fontFamily: "inherit" }} placeholder="fx Vi tager en kaffe bagefter" /></label>
+            </fieldset>}
+            <label>Besked (valgfri)<textarea name="description" defaultValue={from?.description ?? undefined} maxLength={1000} style={{ minHeight: 80, fontFamily: "inherit" }} placeholder="fx Vi tager en kaffe bagefter" /></label>
             <div style={{ display: "flex", gap: 10 }}>
               <button className="button" type="submit">Slå op</button>
               <Link href="/traen-sammen" className="button ghost">Annullér</Link>

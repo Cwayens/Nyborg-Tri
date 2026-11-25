@@ -940,3 +940,16 @@ form.stack.mail-form { max-width: 760px; }
 .emoji-panel { position: absolute; bottom: calc(100% + 8px); right: 0; z-index: 20; width: min(316px, calc(100vw - 32px)); display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px; padding: 8px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm); box-shadow: var(--shadow-lg); }
 .emoji-panel button { font-size: 1.25rem; line-height: 1; padding: 6px 0; border: 0; background: none; border-radius: 6px; cursor: pointer; }
 .emoji-panel button:hover, .emoji-panel button:focus-visible { background: var(--bg); }
+
+/* Eget program */
+.item-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.item-actions form { margin: 0; }
+.howto { margin-top: 14px; font-size: 0.9rem; }
+.howto summary { cursor: pointer; font-weight: 600; }
+.howto ul { padding-left: 18px; display: grid; gap: 8px; margin: 8px 0 0; }
+.month-item.own { font-style: italic; }
+.month-item.own i { background: transparent; border: 1.5px solid var(--c); }
+.card.training.own { border-style: dashed; }
+.own-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+.share-from { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--ok-bg); margin: 0 0 6px; }
+.cal-links { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }

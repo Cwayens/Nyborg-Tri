@@ -20,7 +20,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const plan = kilde === "forloeb" ? PLAN_SESSIONS.find((s) => s.id === id) : null;
   const t = plan
     ? { title: `Begynder ${plan.id.replace("u", "uge ").replace("-", " pas ")}`, discipline: plan.discipline, startsAt: new Date(), workout: parseText(plan.program) as unknown }
-    : kilde === "tur"
+    : kilde === "eget"
+      ? await prisma.plannedWorkout.findFirst({ where: { id, userId: session.user.id } }).then((p) => p && { ...p, startsAt: new Date(`${p.day}T12:00:00Z`) })
+      : kilde === "tur"
       ? await prisma.groupWorkout.findUnique({ where: { id } })
       : await prisma.trainingSession.findFirst({ where: { id, group: { in: await groupsFor(session.user.id) } } });
   if (!t || !isWorkout(t.workout)) return new Response("Træningen har intet program", { status: 404 });

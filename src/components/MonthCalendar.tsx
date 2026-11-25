@@ -13,6 +13,7 @@ import { WorkoutView } from "@/components/WorkoutView";
 import { isWorkout, referencesFrom } from "@/lib/workout";
 import { FROM_WEARABLE } from "@/lib/benchmarks";
 import { calendarViewer } from "@/lib/visibility";
+import { deletePlanned } from "@/app/kalender/mit-program/actions";
 import { visibleGroups } from "@/lib/roles";
 
 export type CalendarParams = { gruppe?: string; maaned?: string; dag?: string };
@@ -63,18 +64,25 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
   for (const s of sessions) days.set(dayKey(s.startsAt), [...(days.get(dayKey(s.startsAt)) ?? []), s]);
 
   const userId = session?.user.id ?? null;
-  const [tempo, testdage] = await Promise.all([isOn("tempo"), isOn("testdage")]);
+  const [tempo, testdage, ownOn, shareOn] = await Promise.all([isOn("tempo"), isOn("testdage"), isOn("egetprogram"), isOn("traensammen")]);
+  // Eget program (importeret fra TrainingPeaks m.fl.): kun for den, der er logget ind
+  const planned = userId && ownOn && !publicView
+    ? await prisma.plannedWorkout.findMany({ where: { userId, day: { gte: `${monthKey}-01`, lt: `${next}-01` } }, orderBy: [{ day: "asc" }, { time: "asc" }] })
+    : [];
+  const ownDays = new Map<string, typeof planned>();
+  for (const p of planned) ownDays.set(p.day, [...(ownDays.get(p.day) ?? []), p]);
   const eligible = userId ? await canSignUp(userId) : false;
   const refs = userId
     ? referencesFrom(await prisma.benchmarkResult.findMany({ where: { userId, ...FROM_WEARABLE }, select: { test: true, seconds: true, watts: true } }))
     : null;
 
   // Valgt dag: ?dag=, ellers næste dag med træning fra i dag, ellers første dag med træning i måneden
-  const keys = [...days.keys()];
+  const keys = [...new Set([...days.keys(), ...ownDays.keys()])].sort();
   const selected =
     sp.dag?.startsWith(monthKey) ? sp.dag
     : keys.find((k) => k >= todayKey) ?? keys[0] ?? (todayKey.startsWith(monthKey) ? todayKey : `${monthKey}-01`);
   const selectedList = days.get(selected) ?? [];
+  const selectedOwn = ownDays.get(selected) ?? [];
 
   const gq = `gruppe=${group ?? "alle"}`;
   const url = (month: string, day?: string) => `${base}?${gq}&maaned=${month}${day ? `&dag=${day}` : ""}`;
@@ -97,7 +105,10 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
       ) : (
         <div className="section-head" style={{ marginTop: 0 }}>
           <h1 style={{ margin: 0 }}>Kalender</h1>
-          <Link href="/forbindelser" className="muted">Få kalenderen på telefonen →</Link>
+          <span className="cal-links">
+            {ownOn && <Link href="/kalender/mit-program" className="button small secondary">+ Importér eget program</Link>}
+            <Link href="/forbindelser" className="muted">Få kalenderen på telefonen →</Link>
+          </span>
         </div>
       )}
       {allowed.length > 1 && <p className="filters">
@@ -132,22 +143,29 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
           {cells.map((key, i) => {
             if (!key) return <div key={`x${i}`} className="month-cell empty" />;
             const list = days.get(key) ?? [];
+            const ownList = ownDays.get(key) ?? [];
+            // Højst tre linjer pr. dag; eget program får mindst én plads
+            const clubN = Math.min(list.length, ownList.length ? 2 : 3), ownN = Math.min(ownList.length, 3 - clubN), more = list.length + ownList.length - clubN - ownN;
             const mine = userId ? list.some((s) => s.signups.some((x) => x.user.id === userId)) : false;
             const cls = ["month-cell", key === todayKey && "today", key === selected && "selected", key < todayKey && "past", mine && "mine"].filter(Boolean).join(" ");
             return (
               <Link key={key} href={url(monthKey, key)} className={cls} aria-current={key === selected ? "date" : undefined} scroll={false}
-                aria-label={`${Number(key.slice(8))}. ${MONTHS[m - 1]}: ${list.length ? `${list.length} træning${list.length > 1 ? "er" : ""}` : "ingen træninger"}`}>
+                aria-label={`${Number(key.slice(8))}. ${MONTHS[m - 1]}: ${list.length ? `${list.length} træning${list.length > 1 ? "er" : ""}` : "ingen træninger"}${ownList.length ? `, ${ownList.length} i dit eget program` : ""}`}>
                 <span className="month-num">{Number(key.slice(8))}</span>
                 <span className="month-items">
-                  {list.slice(0, 3).map((s) => (
+                  {list.slice(0, clubN).map((s) => (
                     <span key={s.id} className={`month-item disc disc-${s.discipline}${s.cancelledAt ? " cancelled" : ""}`}>
                       <i />{formatTime(s.startsAt)} {s.title}
                     </span>
                   ))}
-                  {list.length > 3 && <span className="month-more">+{list.length - 3} mere</span>}
+                  {ownList.slice(0, ownN).map((p) => (
+                    <span key={p.id} className={`month-item own disc disc-${p.discipline}`}><i />{p.time ? `${p.time} ` : ""}{p.title}</span>
+                  ))}
+                  {more > 0 && <span className="month-more">+{more} mere</span>}
                 </span>
                 <span className="month-dots" aria-hidden="true">
                   {list.slice(0, 4).map((s) => <i key={s.id} className={`disc disc-${s.discipline}${s.cancelledAt ? " cancelled" : ""}`} />)}
+                  {ownList.slice(0, Math.max(0, 4 - list.length)).map((p) => <i key={p.id} className={`own disc disc-${p.discipline}`} />)}
                 </span>
               </Link>
             );
@@ -157,7 +175,28 @@ export async function MonthCalendar({ sp, publicView }: { sp: CalendarParams; pu
 
       <section className="day" id="dag">
         <h2>{formatDay(parseLocal(`${selected}T12:00`))}</h2>
-        {selectedList.length === 0 && <p className="card empty">Ingen træninger denne dag.</p>}
+        {selectedList.length === 0 && selectedOwn.length === 0 && <p className="card empty">Ingen træninger denne dag.</p>}
+        {selectedOwn.map((p) => (
+          <article key={p.id} className={`card training own disc disc-${p.discipline}`}>
+            <div className="training-time">{p.time ?? "Hele dagen"}</div>
+            <div>
+              <span className="own-label">Dit eget program · kun du kan se det</span>
+              <h3>{p.title}</h3>
+              <p className="muted">{DISCIPLINE_LABEL[p.discipline]}{p.durationMin ? ` · ${p.durationMin} min` : ""}{p.sharedId ? " · delt i Træn sammen" : ""}</p>
+              {p.description && <p style={{ whiteSpace: "pre-line" }}>{p.description}</p>}
+              {isWorkout(p.workout) && <WorkoutView workout={p.workout} discipline={p.discipline} refs={refs} downloadId={p.id} kind="eget" />}
+            </div>
+            <div className="signup item-actions">
+              {shareOn && !p.sharedId && p.day >= todayKey && <Link href={`/traen-sammen?ny=1&fra=${p.id}`} className="button small">Del i Træn sammen</Link>}
+              {p.sharedId && <Link href="/traen-sammen" className="button small secondary">Se turen</Link>}
+              <form action={deletePlanned}>
+                <input type="hidden" name="id" value={p.id} />
+                <input type="hidden" name="back" value={url(monthKey, selected)} />
+                <button className="button small ghost" type="submit">Slet</button>
+              </form>
+            </div>
+          </article>
+        ))}
         {selectedList.map((s) => (
           <article key={s.id} className={`card training disc disc-${s.discipline}`}>
             <div className="training-time">

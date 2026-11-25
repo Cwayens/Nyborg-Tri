@@ -89,6 +89,7 @@ model User {
   newsMail        Boolean   @default(true) // vil have nyheder på mail (vigtige beskeder sendes altid)
   mentor          Boolean   @default(false) // frivillig mentor for nye medlemmer
   deletedAt       DateTime? // kontoen er slettet; rækken er anonymiseret, men betalinger gemmes efter bogføringsloven
+  plannedWorkouts PlannedWorkout[]
 }
 
 model Account {
@@ -410,6 +411,7 @@ model GroupWorkout {
 
   host         User                      @relation(fields: [hostId], references: [id], onDelete: Cascade)
   participants GroupWorkoutParticipant[]
+  planned      PlannedWorkout[]
 
   @@index([startsAt])
 }
@@ -724,4 +726,28 @@ model RaceEntry {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([raceId, userId])
+}
+
+// Medlemmets egne planlagte træninger, importeret fra TrainingPeaks m.fl. Vises kun for medlemmet selv i kalenderen
+// og kan deles til Træn sammen.
+model PlannedWorkout {
+  id          String     @id @default(cuid())
+  userId      String
+  day         String // "2026-12-01" (dansk dato)
+  time        String? // "06:30", hvis kalenderfilen havde et klokkeslæt
+  title       String
+  discipline  Discipline
+  durationMin Int?
+  description String?    @db.Text
+  workout     Json? // program fra .fit/.zwo/.mrc/.erg (src/lib/workout.ts)
+  source      String // "fil", "kalender" eller "manuel"
+  uid         String? // id fra kalenderfilen, så samme fil kan importeres igen uden dubletter
+  sharedId    String? // Træn sammen-turen, hvis den er delt
+  createdAt   DateTime   @default(now())
+
+  user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shared GroupWorkout? @relation(fields: [sharedId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, uid])
+  @@index([userId, day])
 }

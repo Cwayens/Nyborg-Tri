@@ -121,6 +121,13 @@ Alle otte, og 10 af de øvrige funktioner (Træn sammen, programmer til uret, Mi
 
 - [ ] Læs titlerne igennem (src/lib/trophies.ts) og ret dem, der ikke passer til klubbens humor. Kan slås fra under Admin → Funktioner.
 
+## Eget program og kalenderregler
+
+- [ ] Test import af en rigtig kalenderfil (.ics) fra TrainingPeaks og Garmin Connect. Formatet er testet med eksempelfiler.
+- [ ] Senere: automatisk synkronisering fra TrainingPeaks kræver deres API (partneraftale), se Integrationer.
+- [ ] Bekræft kalenderreglerne: besøgende ser kun bredde-træninger, og elite kan se men ikke tilmelde sig bredde.
+- [ ] Ugens tip er slået fra som standard. Kan slås til under Admin → Funktioner.
+
 ## Andre klubber (senere)
 
 - [ ] Beslut ejerskab af selskabet (ApS) og aftalen med NyborgTri. Se planen "Platformen til andre klubber".

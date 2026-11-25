@@ -5,10 +5,11 @@ import { prisma } from "./db";
 // Funktioner, som admin kan slå fra under Administration → Funktioner, hvis de bliver for meget.
 // Når en funktion er slået fra, forsvinder links og bokse, og siderne svarer 404. Data gemmes, så den kan slås til igen.
 export const FEATURE_GROUPS = ["Træning", "Fællesskab", "Bredden", "Offentlig side", "Administration"] as const;
-type Def = { label: string; text: string; group: (typeof FEATURE_GROUPS)[number]; href?: string };
+type Def = { label: string; text: string; group: (typeof FEATURE_GROUPS)[number]; href?: string; defaultOff?: boolean };
 
 export const FEATURES = {
   traensammen: { group: "Træning", href: "/traen-sammen", label: "Træn sammen", text: "Medlemmer slår egne ture op og deler programmer fra TrainingPeaks, så andre kan hoppe med." },
+  egetprogram: { group: "Træning", href: "/kalender/mit-program", label: "Eget program i kalenderen", text: "Medlemmer importerer egne træninger fra TrainingPeaks, Garmin m.fl. til deres egen kalender og kan dele dem til Træn sammen." },
   urfiler: { group: "Træning", label: "Programmer til uret", text: "Knapper til at hente træningsprogrammer som .fit (ur) og .zwo (Zwift)." },
   tests: { group: "Træning", href: "/benchmarks", label: "Mine tests", text: "Testresultater fra uret (5 km, FTP, 100 m m.fl.) og trænernes oversigt over testresultater." },
   statistik: { group: "Træning", href: "/statistik", label: "Statistik", text: "Klubbens og medlemmets træningsstatistik." },
@@ -19,7 +20,7 @@ export const FEATURES = {
   makker: { group: "Bredden", href: "/makker", label: "Find en makker", text: "Medlemmer udfylder en makkerprofil og finder andre på samme niveau og tidspunkt." },
   begynder: { group: "Bredden", href: "/begynder", label: "Begynderforløb", text: "10 uger \"Fra 0 til første triatlon\" med programmer til uret og en stævnetjekliste." },
   mentor: { group: "Bredden", href: "/mentor", label: "Mentorordning", text: "Erfarne medlemmer melder sig som mentor, og nye kan få tildelt en." },
-  tips: { group: "Bredden", href: "/tips", label: "Ugens tip", text: "Trænere lægger korte tips og videoer ud om teknik og træning." },
+  tips: { group: "Bredden", href: "/tips", label: "Ugens tip", text: "Trænere lægger korte tips og videoer ud om teknik og træning.", defaultOff: true },
   testdage: { group: "Bredden", label: "Testdage", text: "Trænere markerer klubtræninger som testdag, og medlemmer ser deres fremgang som graf." },
   udfordringer: { group: "Bredden", href: "/udfordringer", label: "Klubudfordringer", text: "Fælles månedsmål for klubben med mærker for at være med." },
   staevner: { group: "Bredden", href: "/staevner", label: "Stævner og samkørsel", text: "Hvem skal til hvilke stævner, samkørsel og klubtelt." },
@@ -33,11 +34,24 @@ export type Feature = keyof typeof FEATURES;
 export const FEATURE_KEYS = Object.keys(FEATURES) as Feature[];
 
 const KEY = "features_off";
+const ON_KEY = "features_on"; // funktioner, der er slået fra som standard, men som admin har slået til
+
+/** Funktioner, der er slået fra, til admin slår dem til (fx Ugens tip). */
+export const DEFAULT_OFF = FEATURE_KEYS_ALL().filter((k) => (FEATURES[k] as Def).defaultOff);
+function FEATURE_KEYS_ALL() { return Object.keys(FEATURES) as Feature[]; }
+
+/** Ud fra de gemte lister: slåede-fra funktioner. Ren funktion, så den kan testes. */
+export function resolveOff(savedOff: unknown, savedOn: unknown): Set<Feature> {
+  const off = new Set<Feature>(Array.isArray(savedOff) ? (savedOff as Feature[]) : []);
+  const on = new Set<Feature>(Array.isArray(savedOn) ? (savedOn as Feature[]) : []);
+  for (const k of DEFAULT_OFF) if (!on.has(k)) off.add(k);
+  return off;
+}
 
 /** Slåede-fra funktioner. Hentes én gang pr. forespørgsel. */
 export const featuresOff = cache(async (): Promise<Set<Feature>> => {
-  const row = await prisma.setting.findUnique({ where: { key: KEY } }).catch(() => null);
-  return new Set(Array.isArray(row?.value) ? (row!.value as Feature[]) : []);
+  const rows = await prisma.setting.findMany({ where: { key: { in: [KEY, ON_KEY] } } }).catch(() => []);
+  return resolveOff(rows.find((r) => r.key === KEY)?.value, rows.find((r) => r.key === ON_KEY)?.value);
 });
 
 export async function isOn(f: Feature): Promise<boolean> {
@@ -56,5 +70,9 @@ export async function requireFeature(f: Feature): Promise<void> {
 }
 
 export async function setFeaturesOff(off: Feature[]): Promise<void> {
-  await prisma.setting.upsert({ where: { key: KEY }, update: { value: off }, create: { key: KEY, value: off } });
+  const on = DEFAULT_OFF.filter((k) => !off.includes(k));
+  await prisma.$transaction([
+    prisma.setting.upsert({ where: { key: KEY }, update: { value: off }, create: { key: KEY, value: off } }),
+    prisma.setting.upsert({ where: { key: ON_KEY }, update: { value: on }, create: { key: ON_KEY, value: on } }),
+  ]);
 }

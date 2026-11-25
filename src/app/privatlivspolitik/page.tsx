@@ -22,6 +22,7 @@ const DATA: [string, string, string, string][] = [
   ["Kontaktformular", "Navn, mail, telefon og din besked", "For at kunne svare dig (legitim interesse)", "1 år"],
   ["Makkerprofil (frivillig)", "Sportsgrene, roligt tempo, tidspunkter, kort tekst. Navn og mail vises for andre med en makkerprofil", "Så medlemmer kan finde nogen at træne med (samtykke)", "Til du sletter profilen"],
   ["Mentorordning (frivillig)", "Hvem der er mentor for hvem. Navn, mail og telefon deles mellem mentor og nyt medlem", "Hjælpe nye medlemmer i gang (samtykke)", "Til I afslutter forløbet"],
+  ["Eget program", "Træninger du selv importerer fra TrainingPeaks, Garmin m.fl. eller skriver ind: dato, titel, varighed, beskrivelse og program. Kun du kan se dem, indtil du deler en til Træn sammen", "Din egen træningsplanlægning (samtykke, du importerer selv)", "Til du sletter dem eller din profil"],
   ["Begynderforløb, udfordringer og stævner", "Startdato og afkrydsede træninger, deltagelse i udfordringer, stævner, distance og samkørsel (mail vises ved samkørsel)", "Træning og fællesskab i klubben (samtykke)", "Til du melder dig fra eller sletter din profil"],
 ];
 
