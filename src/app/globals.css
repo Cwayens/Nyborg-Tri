@@ -974,4 +974,11 @@ form.stack.mail-form { max-width: 760px; }
 .color-field input[type=color] { width: 44px; height: 36px; padding: 2px; border-radius: 8px; flex: none; }
 .reset-form { margin-top: 18px; }
 .admin-form small.muted, .admin-form .small { font-size: 0.8rem; }
-.admin-form .row:has(> .img-field) { flex-direction: column; align-items: stretch; }
+.admin-form .row:has(> .img-field) { grid-template-columns: 1fr; }
+form.admin-form, .admin-form { max-width: 920px; }
+.admin-form .row { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+.onboard { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; max-width: 820px; }
+.onboard li { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; }
+.onboard-num { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; background: var(--bg); border: 1px solid var(--line); }
+.onboard li.done .onboard-num { background: var(--ok-bg); color: var(--ok); border-color: transparent; }
+@media (max-width: 560px) { .onboard li { grid-template-columns: auto 1fr; } .onboard li .button { grid-column: 2; justify-self: start; } }

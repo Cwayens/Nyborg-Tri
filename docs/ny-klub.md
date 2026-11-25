@@ -11,7 +11,15 @@ Klubbens navn, logo, farver og kontaktoplysninger sættes som miljøvariabler, s
    og klubbens egen Stripe-konto (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`). Se `.env.example`.
 4. Kør migreringerne. Det sker automatisk ved første deploy.
 
-## 2. Klubbens identitet
+## 2. Opstartsguiden
+
+Log ind som admin og gå til **Admin → Kom i gang**. Den viser, hvad der mangler, med links til hvert trin:
+navn, logo og farver, forside, træningssteder og ruter, medlemstyper og priser, import af medlemmer fra Excel (CSV),
+trænere og bestyrelse, funktioner, Stripe og mail. Knappen "Ryd eksempelindholdet" fjerner Nyborgs tekster, steder og ruter.
+
+## 2a. Klubbens identitet som miljøvariabler (valgfrit)
+
+Navn, logo og farver kan også sættes som miljøvariabler. Det, admin gemmer under Admin → Klubben, vinder.
 
 | Variabel | Eksempel | Bruges til |
 |---|---|---|

@@ -84,6 +84,15 @@ export function mergeClub(base: ClubConfig, o: ClubOverrides | null | undefined)
     if (k === "colors" || typeof v !== "string" || !v.trim() || !(k in base)) continue;
     (out as Record<string, unknown>)[k] = k === "domain" ? v.trim().replace(/^https?:\/\//, "").replace(/\/$/, "") : v.trim();
   }
+  // Nyt navn uden egen logotekst eller kort navn: brug navnet, ikke standardklubbens
+  const given = (k: keyof ClubConfig) => typeof (o as Record<string, unknown>)[k] === "string" && !!((o as Record<string, string>)[k]).trim();
+  if (given("name") && out.name !== base.name) {
+    if (!given("shortName")) out.shortName = out.name;
+    if (!given("logoTop")) out.logoTop = out.name.split(" ")[0];
+    if (!given("logoSub")) out.logoSub = out.name.split(" ").slice(1).join(" ");
+    // Standarden er Nyborgs oplysninger: dem skal en anden klub ikke arve
+    if (base.name === NYBORG.name) for (const k of ["email", "cvr", "bank", "facebook", "domain", "city", "zip", "tagline"] as const) if (!given(k)) out[k] = k === "tagline" ? `${out.name}. Svømning, cykling og løb for alle niveauer.` : "";
+  }
   for (const [k, v] of Object.entries(o.colors ?? {})) if (k in out.colors && typeof v === "string" && HEX.test(v.trim())) (out.colors as Record<string, string>)[k] = v.trim();
   return out;
 }

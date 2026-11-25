@@ -8,7 +8,7 @@ import { DEFAULT_ABOUT, DEFAULT_HOME, DEFAULT_PRIVACY, type AboutContent, type H
 // Klubbens eget indhold, som admin retter under Admin → Klubben: oplysninger, farver, forside, Om klubben,
 // træningssteder, ruter og privatlivspolitik. Gemmes i Setting-tabellen; det der ikke er gemt, tager standarden.
 
-export const SITE_KEYS = { club: "site_club", home: "site_home", about: "site_about", privacy: "site_privacy", places: "site_places" } as const;
+export const SITE_KEYS = { club: "site_club", home: "site_home", about: "site_about", privacy: "site_privacy", places: "site_places", routes: "site_routes" } as const;
 type Key = keyof typeof SITE_KEYS;
 
 const obj = (v: unknown) => (v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : null);
@@ -83,13 +83,15 @@ export async function saveSite(key: Key, value: unknown): Promise<void> {
 /** Klubbens ruter: dem admin har lagt ind, ellers standardruterne. */
 export const getRoutes = cache(async (): Promise<Route[]> => {
   const rows = await prisma.clubRoute.findMany({ orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] }).catch(() => null);
-  if (!rows || rows.length === 0) return ROUTES;
+  // En ny klub starter uden Nyborgs ruter (se opstartsguiden)
+  if (!rows || rows.length === 0) return obj((await load()).get("routes"))?.useDefault === false ? [] : ROUTES;
   return rows.map((r) => ({ id: r.id, name: r.name, sport: r.sport as Discipline, tag: r.tag, desc: r.desc, km: r.km, pts: r.pts as [number, number][], gpx: true }));
 });
 
 /** Første gang admin ændrer ruterne, kopieres standardruterne ind, så de kan rettes og slettes. */
 export async function ensureRoutesCopied(): Promise<void> {
   if ((await prisma.clubRoute.count()) > 0) return;
+  if (obj((await prisma.setting.findUnique({ where: { key: SITE_KEYS.routes } }))?.value)?.useDefault === false) return;
   await prisma.clubRoute.createMany({
     data: ROUTES.map((r, i) => ({ id: r.id, name: r.name, sport: r.sport, tag: r.tag, desc: r.desc, km: r.km, pts: r.pts as unknown as Prisma.InputJsonValue, sortOrder: i })),
     skipDuplicates: true,
