@@ -1,3 +1,4 @@
+import { NOT_CHILD } from "@/lib/child-safety";
 import type { AthleteGroup, Discipline } from "@prisma/client";
 import { prisma } from "./db";
 import { CLUB_SHAREABLE, startOfWeek, sumBySport } from "./activities";
@@ -34,7 +35,7 @@ export type LeaderRow = { userId: string; name: string; group: AthleteGroup | nu
 export async function clubLeaderboard(from: Date, group: AthleteGroup | null): Promise<LeaderRow[]> {
   const providers = Object.entries(CLUB_SHAREABLE).filter(([, ok]) => ok).map(([p]) => p) as (keyof typeof CLUB_SHAREABLE)[];
   const acts = await prisma.activity.findMany({
-    where: { startAt: { gte: from }, provider: { in: providers }, user: { shareActivities: true, ...(group ? { athleteGroup: group } : {}) } },
+    where: { startAt: { gte: from }, provider: { in: providers }, user: { shareActivities: true, ...NOT_CHILD, ...(group ? { athleteGroup: group } : {}) } },
     select: { userId: true, sport: true, movingSec: true, distanceM: true, user: { select: { name: true, athleteGroup: true } } },
   });
   const rows = new Map<string, LeaderRow>();

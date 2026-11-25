@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { notFound } from "next/navigation";
 import { prisma } from "./db";
+import { CHILD_BLOCKED, viewerIsChild } from "./child-safety";
 
 // Funktioner, som admin kan slå fra under Administration → Funktioner, hvis de bliver for meget.
 // Når en funktion er slået fra, forsvinder links og bokse, og siderne svarer 404. Data gemmes, så den kan slås til igen.
@@ -48,10 +49,20 @@ export function resolveOff(savedOff: unknown, savedOn: unknown): Set<Feature> {
   return off;
 }
 
-/** Slåede-fra funktioner. Hentes én gang pr. forespørgsel. */
-export const featuresOff = cache(async (): Promise<Set<Feature>> => {
+/** Funktioner, klubben har slået fra (uden hensyn til hvem der ser). Bruges på Funktioner-siden. */
+export const clubFeaturesOff = cache(async (): Promise<Set<Feature>> => {
   const rows = await prisma.setting.findMany({ where: { key: { in: [KEY, ON_KEY] } } }).catch(() => []);
   return resolveOff(rows.find((r) => r.key === KEY)?.value, rows.find((r) => r.key === ON_KEY)?.value);
+});
+
+/**
+ * Slåede-fra funktioner for den, der ser siden. Hentes én gang pr. forespørgsel.
+ * For børn er fællesskabsfunktionerne altid slået fra (se child-safety.ts), så menu, sider og handlinger lukker.
+ */
+export const featuresOff = cache(async (): Promise<Set<Feature>> => {
+  const off = new Set(await clubFeaturesOff());
+  if (await viewerIsChild()) for (const k of CHILD_BLOCKED) off.add(k);
+  return off;
 });
 
 export async function isOn(f: Feature): Promise<boolean> {

@@ -1,3 +1,4 @@
+import { NOT_CHILD } from "@/lib/child-safety";
 import type { Challenge, ChallengeMetric, Provider } from "@prisma/client";
 import { prisma } from "./db";
 import { leaderboardProviders } from "./efforts";
@@ -35,7 +36,7 @@ export function badges(c: Pick<Challenge, "startsAt" | "endsAt">, mine: Act[], c
 }
 
 export async function challengeStatus(c: Challenge, userId: string) {
-  const participants = await prisma.challengeParticipant.findMany({ where: { challengeId: c.id }, include: { user: { select: { id: true, name: true, deletedAt: true } } }, orderBy: { joinedAt: "asc" } });
+  const participants = await prisma.challengeParticipant.findMany({ where: { challengeId: c.id, user: NOT_CHILD }, include: { user: { select: { id: true, name: true, deletedAt: true } } }, orderBy: { joinedAt: "asc" } });
   const ids = participants.map((p) => p.userId);
   const where = { userId: { in: ids }, startAt: { gte: c.startsAt, lt: c.endsAt }, ...(c.discipline ? { sport: c.discipline } : {}) };
   const select = { userId: true, startAt: true, distanceM: true, movingSec: true, provider: true } as const;

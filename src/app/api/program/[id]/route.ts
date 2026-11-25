@@ -23,7 +23,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     : kilde === "eget"
       ? await prisma.plannedWorkout.findFirst({ where: { id, userId: session.user.id } }).then((p) => p && { ...p, startsAt: new Date(`${p.day}T12:00:00Z`) })
       : kilde === "tur"
-      ? await prisma.groupWorkout.findUnique({ where: { id } })
+      ? ((await isOn("traensammen")) ? await prisma.groupWorkout.findUnique({ where: { id } }) : null)
       : await prisma.trainingSession.findFirst({ where: { id, group: { in: await groupsFor(session.user.id) } } });
   if (!t || !isWorkout(t.workout)) return new Response("Træningen har intet program", { status: 404 });
 

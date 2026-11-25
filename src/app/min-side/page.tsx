@@ -17,7 +17,8 @@ import { isWorkout, referencesFrom } from "@/lib/workout";
 import { toggleSignup } from "../kalender/actions";
 import { GrowSection } from "@/components/GrowSection";
 import { TrophySection } from "@/components/TrophySection";
-import { featuresOff } from "@/lib/features";
+import { featuresOff, isOn } from "@/lib/features";
+import { NOT_CHILD } from "@/lib/child-safety";
 import { groupsFor } from "@/lib/visibility";
 
 export const metadata = { title: "Overblik" };
@@ -42,10 +43,13 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
           include: { signups: { include: { user: { select: { id: true, name: true } } } } }, orderBy: { startsAt: "asc" }, take: 6,
         })
       : Promise.resolve([]),
-    prisma.groupWorkout.findMany({
-      where: { startsAt: { gte: now } },
-      include: { participants: { include: { user: { select: { id: true, name: true } } } } }, orderBy: { startsAt: "asc" }, take: 4,
-    }),
+    // Træn sammen: ikke for børn, og voksne ser aldrig børn på listerne (child-safety.ts)
+    (await isOn("traensammen"))
+      ? prisma.groupWorkout.findMany({
+          where: { startsAt: { gte: now }, host: NOT_CHILD },
+          include: { participants: { where: { user: NOT_CHILD }, include: { user: { select: { id: true, name: true } } } } }, orderBy: { startsAt: "asc" }, take: 4,
+        })
+      : Promise.resolve([]),
     personalWeeks(user.id, 6),
     personalTotals(user.id, startOfWeek(now)),
     prisma.trainingSession.count({ where: { startsAt: { gte: now, lte: endOfToday }, group: { in: await groupsFor(user.id) } } }),
