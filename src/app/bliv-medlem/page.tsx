@@ -10,6 +10,7 @@ import { needsGuardian } from "@/lib/guardian";
 import { demoEnabled } from "@/lib/demo";
 import { CLUB } from "@/lib/club";
 import { getLocale, translator } from "@/lib/i18n";
+import { isOn } from "@/lib/features";
 
 export async function generateMetadata() {
   const t = translator(await getLocale());
@@ -34,6 +35,7 @@ export default async function JoinPage({ searchParams }: { searchParams: Promise
   const usedCode = user ? await prisma.accessCode.findUnique({ where: { usedById: user.id } }) : null;
   const loc = await getLocale();
   const t = translator(loc);
+  const mentorOn = await isOn("mentor");
 
   return (
     <>
@@ -115,6 +117,12 @@ export default async function JoinPage({ searchParams }: { searchParams: Promise
             <label>Navn<input name="guardianName" autoComplete="off" /></label>
             <label>E-mail<input type="email" name="guardianEmail" autoComplete="off" /></label>
           </fieldset>
+          {mentorOn && (
+            <label className="check join-mentor">
+              <input type="checkbox" name="wantsMentor" />
+              <span>{t("Jeg vil gerne have en mentor", "I'd like a mentor")}<small className="muted">{t("En erfaren klubkammerat kontakter dig og viser dig rundt de første gange. Kun for voksne (18+). Mentoren får dit navn, din mail og dit telefonnummer.", "An experienced clubmate gets in touch and shows you around the first few times. Adults only (18+). Your mentor gets your name, email and phone number.")}</small></span>
+            </label>
+          )}
           <label className="join-trial">{t("Lidt om dig (valgfrit)", "A bit about you (optional)")}<input name="message" placeholder={t("fx erfaring, og hvad du vil prøve", "e.g. experience, and what you want to try")} /></label>
           <label className="hp" aria-hidden="true">Lad feltet være tomt<input name="website" tabIndex={-1} autoComplete="off" /></label>
           <button className="button" type="submit" style={{ justifySelf: "start" }}>{t("Fortsæt", "Continue")}</button>

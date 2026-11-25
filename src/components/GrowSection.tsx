@@ -17,7 +17,7 @@ export async function GrowSection({ userId, joinedAt, loc = "da" }: { userId: st
   const off = await featuresOff();
   const on = (f: Parameters<typeof off.has>[0]) => !off.has(f);
   const now = new Date();
-  const [challenge, tip, testDay, plan, mentorship, race, buddy] = await Promise.all([
+  const [challenge, tip, testDay, plan, mentorship, race, buddy, me] = await Promise.all([
     on("udfordringer") ? prisma.challenge.findFirst({ where: { startsAt: { lte: now }, endsAt: { gt: now } }, orderBy: { endsAt: "asc" } }) : null,
     on("tips") ? prisma.tip.findFirst({ orderBy: { publishedAt: "desc" }, select: { title: true, body: true } }) : null,
     on("testdage") ? prisma.trainingSession.findFirst({ where: { testDay: { not: null }, startsAt: { gt: now }, cancelledAt: null, teamId: { in: await teamsFor(userId) } }, orderBy: { startsAt: "asc" } }) : null,
@@ -25,6 +25,7 @@ export async function GrowSection({ userId, joinedAt, loc = "da" }: { userId: st
     on("mentor") ? prisma.mentorship.findUnique({ where: { menteeId: userId }, include: { mentor: { select: { name: true } } } }) : null,
     on("staevner") ? prisma.race.findFirst({ where: { date: { gte: now } }, orderBy: { date: "asc" }, include: { _count: { select: { entries: true } } } }) : null,
     on("makker") ? prisma.buddyProfile.findUnique({ where: { userId }, select: { userId: true } }) : null,
+    on("mentor") ? prisma.user.findUnique({ where: { id: userId }, select: { mentor: true, wantsMentor: true } }) : null,
   ]);
   const status = challenge ? await challengeStatus(challenge, userId) : null;
   const isNew = now.getTime() - joinedAt.getTime() < 120 * 864e5;
@@ -33,10 +34,11 @@ export async function GrowSection({ userId, joinedAt, loc = "da" }: { userId: st
   const links = [
     on("begynder") && (plan || isNew) && { href: "/begynder", title: t("Fra 0 til første triatlon", "From 0 to your first triathlon"), text: plan ? t(`Uge ${week} af 10 · ${plan.done.length} træninger gennemført`, `Week ${week} of 10 · ${plan.done.length} sessions done`) : t("10 uger mod din første sprint, med programmer til uret", "10 weeks to your first sprint, with workouts for your watch") },
     on("makker") && { href: "/makker", title: t("Find en makker", "Find a buddy"), text: buddy ? t("Se hvem der træner i dit tempo", "See who trains at your pace") : t("Find klubkammerater i dit tempo og på dine tidspunkter", "Find clubmates at your pace and times") },
-    on("mentor") && (mentorship || isNew) && { href: "/mentor", title: mentorship ? t("Din mentor", "Your mentor") : t("Få en mentor", "Get a mentor"), text: mentorship ? t(`${mentorship.mentor.name} hjælper dig i gang`, `${mentorship.mentor.name} helps you get started`) : t("En erfaren klubkammerat viser dig rundt", "An experienced clubmate shows you around") },
-    on("mentor") && !isNew && !mentorship && { href: "/mentor", title: t("Bliv mentor", "Become a mentor"), text: t("Hjælp et nyt medlem godt i gang", "Help a new member get started") },
     on("staevner") && { href: "/staevner", title: t("Stævner og samkørsel", "Races and car pooling"), text: race ? t(`Næste: ${race.name} ${dato(race.date)} · ${race._count.entries} fra klubben`, `Next: ${race.name} ${dato(race.date, loc)} · ${race._count.entries} from the club`) : t("Se hvem der skal til hvad, og kør sammen", "See who's racing what, and share a ride") },
     on("tips") && !tip && { href: "/tips", title: t("Ugens tip", "Tip of the week"), text: t("Tips og videoer fra trænerne", "Tips and videos from the coaches") },
+    // Mentor står yderst: først "Få en mentor", så "Bliv mentor" ved siden af (mentorordningen er slået fra for børn)
+    on("mentor") && { href: "/mentor#faa", title: mentorship ? t("Din mentor", "Your mentor") : t("Få en mentor", "Get a mentor"), text: mentorship ? t(`${mentorship.mentor.name} hjælper dig i gang`, `${mentorship.mentor.name} helps you get started`) : me?.wantsMentor ? t("Du har bedt om en mentor. Vi finder en til dig", "You asked for a mentor. We're finding one for you") : t("En erfaren klubkammerat viser dig rundt", "An experienced clubmate shows you around") },
+    on("mentor") && { href: "/mentor#bliv", title: me?.mentor ? t("Du er mentor", "You're a mentor") : t("Bliv mentor", "Become a mentor"), text: me?.mentor ? t("Tak! Se dine nye medlemmer", "Thanks! See your new members") : t("Hjælp et nyt medlem godt i gang", "Help a new member get started") },
   ].filter(Boolean) as { href: string; title: string; text: string }[];
 
   if (!links.length && !status && !tip && !testDay) return null;

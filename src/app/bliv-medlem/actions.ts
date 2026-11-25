@@ -10,6 +10,8 @@ import { baseUrl } from "@/lib/url";
 import { ageOn, isEmail, needsGuardian } from "@/lib/guardian";
 import { sendPayLink } from "@/lib/paylink";
 import { CLUB } from "@/lib/club";
+import { isOn } from "@/lib/features";
+import { notifyClubWantsMentor } from "@/lib/mentor";
 
 const schema = z.object({
   typeCode: z.string().min(1),
@@ -139,9 +141,12 @@ export async function joinAsGuest(formData: FormData) {
   if (plan === "pay" && !type) guestFail("Vælg en medlemstype");
   if (type?.code === "YOUTH" && ageOn(profile.birthDate, new Date()) >= 18) guestFail("Ungdomskontingent gælder kun for medlemmer under 18 år");
 
+  // Ønske om mentor: kun voksne, og kun når mentorordningen er slået til. Mentoren tildeles, når medlemmet har adgang (Overblik).
+  const wantsMentor = !minor && formData.get("wantsMentor") === "on" && (await isOn("mentor"));
   const user = await prisma.user.create({
-    data: { email, ...profile, guardianName: minor ? guardianName : null, guardianEmail: minor ? guardianEmail : null },
+    data: { email, ...profile, guardianName: minor ? guardianName : null, guardianEmail: minor ? guardianEmail : null, wantsMentor },
   });
+  if (wantsMentor) await notifyClubWantsMentor(profile.name, "ny").catch((e) => console.error("[bliv-medlem] mentor-besked", e));
 
   if (plan === "trial") {
     await prisma.trialRequest.create({ data: { userId: user.id, message: message || null } });

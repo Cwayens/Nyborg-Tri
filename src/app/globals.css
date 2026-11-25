@@ -1041,3 +1041,6 @@ form.admin-form, .admin-form { max-width: 920px; }
 .post-admin-imgs { display: flex; flex-wrap: wrap; gap: 12px; }
 .post-admin-imgs label { flex-direction: column; align-items: flex-start; }
 .post-admin-imgs img { width: 120px; height: 80px; object-fit: cover; border-radius: 8px; }
+.join-guest .join-mentor { display: flex; align-items: flex-start; gap: 10px; }
+.join-mentor input { flex: none; margin-top: 4px; width: auto; }
+.join-mentor span small { display: block; font-weight: 400; margin-top: 2px; }

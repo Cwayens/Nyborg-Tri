@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/auth";
+import { assignMentor } from "@/lib/mentor";
 import { canSignUp, membershipExpired } from "@/lib/access";
 import { prisma } from "@/lib/db";
 import { formatHours, startOfWeek } from "@/lib/activities";
@@ -65,6 +66,8 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     prisma.benchmarkResult.findMany({ where: { userId: user.id, ...FROM_WEARABLE }, select: { test: true, seconds: true, watts: true } }),
     prisma.post.findMany({ where: { published: true }, orderBy: { publishedAt: "desc" }, take: 8, select: { slug: true, title: true, publishedAt: true, featuredImage: true, images: true, categories: true } }),
   ]);
+  // Bad om en mentor ved indmeldelsen: tildel en, så snart medlemmet har adgang (assignMentor afviser børn)
+  const mentorNow = user.wantsMentor && eligible && (await isOn("mentor")) ? await assignMentor(user.id) : null;
   const refs = referencesFrom(benchmarks);
   const bestByTest = new Map<string, (typeof benchmarks)[number]>();
   for (const b of benchmarks) {
@@ -99,6 +102,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
       </div>
 
       <NewsStories posts={news} loc={loc} />
+      {mentorNow?.ok && <p className="notice">{t(`Du har fået ${mentorNow.mentorName ?? "en mentor"} som mentor. I har begge fået en mail.`, `${mentorNow.mentorName ?? "A clubmate"} is now your mentor. You've both had an email.`)} <Link href="/mentor">{t("Se mentorordningen", "See the mentor scheme")}</Link></p>}
 
       {(await prisma.athleteProfile.count({ where: { userId: user.id, consentAt: null } })) > 0 && (
         <p className="notice">{t("Klubben vil gerne vise dig på Atleter-siden.", "The club would like to show you on the Athletes page.")} <Link href="/profil/atlet">{t("Se din profil og giv samtykke", "See your profile and give consent")}</Link>.</p>

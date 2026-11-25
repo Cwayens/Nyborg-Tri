@@ -92,6 +92,7 @@ model User {
   calendarToken   String?          @unique // hemmeligt link til kalender-abonnement
   newsMail        Boolean          @default(true) // vil have nyheder på mail (vigtige beskeder sendes altid)
   mentor          Boolean          @default(false) // frivillig mentor for nye medlemmer
+  wantsMentor     Boolean          @default(false) // har ved indmeldelse bedt om en mentor; tildeles, når medlemmet har adgang
   deletedAt       DateTime? // kontoen er slettet; rækken er anonymiseret, men betalinger gemmes efter bogføringsloven
   plannedWorkouts PlannedWorkout[]
   postReactions   PostReaction[]

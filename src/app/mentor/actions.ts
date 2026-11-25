@@ -1,14 +1,11 @@
 "use server";
 
-import { NOT_CHILD } from "@/lib/child-safety";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireUser } from "@/auth";
+import { requireAdmin, requireUser } from "@/auth";
 import { prisma } from "@/lib/db";
 import { requireFeature } from "@/lib/features";
-import { sendMail } from "@/lib/mail";
-import { baseUrl } from "@/lib/url";
-import { CLUB } from "@/lib/club";
+import { assignMentor } from "@/lib/mentor";
 
 export async function setMentor(formData: FormData) {
   const user = await requireUser("/mentor");
@@ -17,31 +14,31 @@ export async function setMentor(formData: FormData) {
   revalidatePath("/mentor");
 }
 
-/** Tildel den mentor, der har færrest nye medlemmer i forvejen, og giv begge besked på mail. */
+/** Bed om en mentor. Se assignMentor i lib/mentor.ts. */
 export async function requestMentor(formData: FormData) {
   const user = await requireUser("/mentor");
   await requireFeature("mentor");
-  if (await prisma.mentorship.findUnique({ where: { menteeId: user.id } })) redirect("/mentor");
-  const mentors = await prisma.user.findMany({
-    where: { mentor: true, deletedAt: null, id: { not: user.id }, ...NOT_CHILD },
-    select: { id: true, name: true, email: true, _count: { select: { mentorFor: true } } },
-  });
-  if (!mentors.length) redirect("/mentor?fejl=" + encodeURIComponent("Der er ingen ledige mentorer lige nu. Prøv igen senere, eller skriv i chatten."));
-  const mentor = mentors.sort((a, b) => a._count.mentorFor - b._count.mentorFor)[0];
-  const note = String(formData.get("note") ?? "").trim().slice(0, 300);
-  await prisma.mentorship.create({ data: { menteeId: user.id, mentorId: mentor.id } });
-  const me = await prisma.user.findUniqueOrThrow({ where: { id: user.id }, select: { name: true, email: true, phone: true } });
-  const url = `${await baseUrl()}/mentor`;
-  await sendMail(
-    mentor.email,
-    "Du er blevet mentor for et nyt medlem",
-    `Hej ${mentor.name ?? ""}\n\n${me.name ?? "Et nyt medlem"} er ny i ${CLUB.shortName} og vil gerne have en mentor. Det er dig!\n\n` +
-      `Skriv eller ring og aftal en tur sammen, og vis rundt til en klubtræning.\nMail: ${me.email}${me.phone ? `\nTelefon: ${me.phone}` : ""}` +
-      `${note ? `\n\nBesked: ${note}` : ""}\n\nSe mere: ${url}\n\nTak fordi du hjælper!\n${CLUB.name}`,
-  );
-  await sendMail(me.email, `Din mentor i ${CLUB.shortName}`, `Hej ${me.name ?? ""}\n\n${mentor.name} er din mentor og kontakter dig snart. Du kan også selv skrive til ${mentor.email}.\n\nSe mere: ${url}\n\nNyborg Triathlon Klub`);
+  const r = await assignMentor(user.id, String(formData.get("note") ?? ""));
+  if (!r.ok && r.reason === "ingen") redirect("/mentor?fejl=" + encodeURIComponent("Der er ingen ledige mentorer lige nu. Prøv igen senere, eller skriv i chatten."));
   revalidatePath("/mentor");
-  redirect("/mentor?ny=1");
+  redirect(r.ok ? "/mentor?ny=1" : "/mentor");
+}
+
+/** Admin: find en mentor til et medlem, der venter. */
+export async function assignWaiting(formData: FormData) {
+  await requireAdmin();
+  await requireFeature("mentor");
+  const r = await assignMentor(String(formData.get("userId")));
+  revalidatePath("/mentor");
+  if (!r.ok && r.reason === "ingen") redirect("/mentor?fejl=" + encodeURIComponent("Ingen har meldt sig som mentor endnu."));
+  redirect("/mentor");
+}
+
+/** Admin: fjern et medlem fra listen over dem, der venter på en mentor. */
+export async function dismissWaiting(formData: FormData) {
+  await requireAdmin();
+  await prisma.user.update({ where: { id: String(formData.get("userId")) }, data: { wantsMentor: false } });
+  revalidatePath("/mentor");
 }
 
 export async function endMentorship(formData: FormData) {
