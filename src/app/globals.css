@@ -1118,3 +1118,25 @@ table.list tfoot th, table.list tfoot td { border-top: 2px solid var(--line); }
 }
 .admin-section table.list code { white-space: nowrap; }
 @media (max-width: 640px) { .admin-section table.list { min-width: 620px; } }
+
+/* Genveje som små kort (erstatter rækker af links med prikker) */
+.quicklinks { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin: 20px 0; }
+.quicklink { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); color: var(--text); text-decoration: none; transition: border-color 0.15s, transform 0.05s; }
+.quicklink:hover { border-color: var(--accent); }
+.quicklink:active { transform: translateY(1px); }
+.ql-icon { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; background: var(--ok-bg); color: var(--ok); }
+.ql-body { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.ql-body strong { font-size: 0.98rem; }
+.ql-body small { color: var(--muted); font-size: 0.85rem; }
+.ql-arrow { color: var(--muted); display: flex; }
+.quicklink:hover .ql-arrow { color: var(--accent); }
+
+/* Kontakt som små knapper med ikon */
+.contact-chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); color: var(--text); text-decoration: none; font-size: 0.88rem; }
+.chip:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Footer: links uden prikker og understregning */
+.footer-links { display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center; }
+.footer-links a { text-decoration: none; font-weight: 500; }
+.footer-links a:hover { text-decoration: underline; text-underline-offset: 3px; }

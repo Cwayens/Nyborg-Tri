@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { QuickLinks } from "@/components/QuickLinks";
+import { CardIcon, LinkIcon, TrophyIcon } from "@/components/Icons";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -108,10 +110,11 @@ export default async function Profile({ searchParams }: { searchParams: Promise<
         <button className="button" type="submit" style={{ justifySelf: "start" }}>{velkommen ? t("Kom i gang", "Get started") : t("Gem", "Save")}</button>
       </form>
       {!velkommen && (
-        <p style={{ marginTop: 20 }}>
-          {user.athleteProfile && !off.has("atleter") && <><Link href="/profil/atlet">{t("Min atletprofil", "My athlete profile")}</Link> · </>}
-          <Link href="/forbindelser">{t("Ure, deling og kalender", "Watches, sharing and calendar")}</Link> · <Link href="/bliv-medlem">{t("Medlemskab og kvitteringer", "Membership and receipts")}</Link>
-        </p>
+        <QuickLinks label={t("Mere om dig", "More about you")} links={[
+          ...(user.athleteProfile && !off.has("atleter") ? [{ href: "/profil/atlet", icon: <TrophyIcon />, title: t("Min atletprofil", "My athlete profile"), text: t("Resultater og præsentation", "Results and bio") }] : []),
+          { href: "/forbindelser", icon: <LinkIcon />, title: t("Ure, deling og kalender", "Watches, sharing and calendar"), text: t("Forbind Garmin, Strava m.fl.", "Connect Garmin, Strava and more") },
+          { href: "/bliv-medlem", icon: <CardIcon />, title: t("Medlemskab og kvitteringer", "Membership and receipts"), text: t("Forny og se betalinger", "Renew and see payments") },
+        ]} />
       )}
       {!velkommen && (
         <section id="slet" className="card stack data-rights">

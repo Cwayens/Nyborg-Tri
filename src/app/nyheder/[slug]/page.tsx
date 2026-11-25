@@ -1,3 +1,4 @@
+import { PlayIcon } from "@/components/Icons";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/auth";
@@ -45,8 +46,8 @@ export default async function NewsPost({ params }: Props) {
       <p className="muted">
         {dato(post.publishedAt, loc)}
         {post.author ? ` · ${post.author}` : ""}
-        {" · "}<a href={`/nyheder/historier?fra=nyheder#h-${post.slug}`}>{t("Se som historie", "View as story")}</a>
       </p>
+      <p><a className="button small ghost" href={`/nyheder/historier?fra=nyheder#h-${post.slug}`}><PlayIcon /> {t("Se som historie", "View as story")}</a></p>
       {video && <VideoEmbed src={video.src} host={video.host} label={{ play: t("Se videoen", "Watch the video"), note: t(`Afspilles fra ${video.host}`, `Plays from ${video.host}`) }} />}
       <div className="content" dangerouslySetInnerHTML={{ __html: renderBody(post.body, post.format) }} />
       {/* Billeder, der ikke allerede står i teksten (importerede nyheder har dem i teksten) */}

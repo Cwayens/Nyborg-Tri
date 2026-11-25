@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireFeature } from "@/lib/features";
 import { hasRole } from "@/lib/roles";
 import { dato } from "@/lib/format";
-import { initials } from "@/components/Icons";
+import { initials, MailIcon, PhoneIcon } from "@/components/Icons";
 import { assignWaiting, dismissWaiting, endMentorship, requestMentor, setMentor } from "./actions";
 
 export const metadata = { title: "Mentorordning" };
@@ -99,7 +99,7 @@ function Person({ p, since, endId }: { p: { name: string | null; email: string; 
       <span className="avatar">{initials(p.name)}</span>
       <div>
         <b>{p.name ?? "Medlem"}</b>
-        <div><a href={`mailto:${p.email}`}>{p.email}</a>{p.phone && <> · <a href={`tel:${p.phone}`}>{p.phone}</a></>}</div>
+        <div className="contact-chips"><a className="chip" href={`mailto:${p.email}`}><MailIcon size={16} /> {p.email}</a>{p.phone && <a className="chip" href={`tel:${p.phone}`}><PhoneIcon size={16} /> {p.phone}</a>}</div>
         <small className="muted">Siden {dato(since)} · </small>
         <form action={endMentorship} style={{ display: "inline" }}><input type="hidden" name="id" value={endId} /><button className="linklike" type="submit"><small>Afslut</small></button></form>
       </div>

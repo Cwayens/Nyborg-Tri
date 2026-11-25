@@ -49,12 +49,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <strong>{CLUB.name}</strong>
               <br />{CLUB.cvr && <>CVR {CLUB.cvr} · </>}{CLUB.email && <a href={`mailto:${CLUB.email}`}>{CLUB.email}</a>}
             </div>
-            <div>
-              <Link href="/om">{t("Om klubben", "About")}</Link> · {!hidden.includes("/ruter") && <><Link href="/ruter">{t("Ruter", "Routes")}</Link> · </>}{!hidden.includes("/sponsorer") && <><Link href="/sponsorer">{t("Sponsorer", "Sponsors")}</Link> · </>}
-              {CLUB.facebook && <><a href={CLUB.facebook}>Facebook</a> · </>}<Link href="/om/kontakt">{t("Kontakt", "Contact")}</Link> ·{" "}
-              <Link href="/privatlivspolitik">{t("Privatlivspolitik", "Privacy policy")}</Link> ·{" "}
+            <nav className="footer-links" aria-label={t("Om klubben", "About the club")}>
+              <Link href="/om">{t("Om klubben", "About")}</Link>
+              {!hidden.includes("/ruter") && <Link href="/ruter">{t("Ruter", "Routes")}</Link>}
+              {!hidden.includes("/sponsorer") && <Link href="/sponsorer">{t("Sponsorer", "Sponsors")}</Link>}
+              {CLUB.facebook && <a href={CLUB.facebook}>Facebook</a>}
+              <Link href="/om/kontakt">{t("Kontakt", "Contact")}</Link>
+              <Link href="/privatlivspolitik">{t("Privatlivspolitik", "Privacy policy")}</Link>
               <Suspense fallback={null}><LangSwitch current={loc} /></Suspense>
-            </div>
+            </nav>
           </div>
         </footer>
       </body>
