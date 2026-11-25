@@ -1,11 +1,11 @@
 // Offentlig menu: kun det, der informerer nye medlemmer. Alt andet ligger bag login (se MEMBER_INFO).
-export type NavItem = { label: string; href: string };
+export type NavItem = { label: string; href: string; en?: string };
 
 export const navigation: NavItem[] = [
-  { label: "Træning", href: "/traening" },
-  { label: "Atleter", href: "/atleter" },
-  { label: "Priser", href: "/#priser" },
-  { label: "Om klubben", href: "/om" },
+  { label: "Træning", en: "Training", href: "/traening" },
+  { label: "Atleter", en: "Athletes", href: "/atleter" },
+  { label: "Priser", en: "Prices", href: "/#priser" },
+  { label: "Om klubben", en: "About", href: "/om" },
 ];
 
 // Klubinfo for medlemmer – vises på /klubben

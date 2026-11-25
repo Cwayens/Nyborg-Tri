@@ -11,7 +11,7 @@ import { deleteBenchmark, saveEffort } from "./actions";
 import { ProgressChart } from "@/components/ProgressChart";
 import { isOn, requireFeature } from "@/lib/features";
 import { formatDay, formatTime } from "@/lib/time";
-import { groupsFor } from "@/lib/visibility";
+import { teamsFor } from "@/lib/visibility";
 
 export const metadata = { title: "Mine tests" };
 
@@ -37,7 +37,7 @@ export default async function Benchmarks({ searchParams }: Props) {
 
   const testdage = await isOn("testdage");
   const testDays = testdage
-    ? await prisma.trainingSession.findMany({ where: { testDay: { not: null }, cancelledAt: null, group: { in: await groupsFor(user.id) } }, select: { id: true, testDay: true, startsAt: true, title: true, location: true }, orderBy: { startsAt: "asc" } })
+    ? await prisma.trainingSession.findMany({ where: { testDay: { not: null }, cancelledAt: null, teamId: { in: await teamsFor(user.id) } }, select: { id: true, testDay: true, startsAt: true, title: true, location: true }, orderBy: { startsAt: "asc" } })
     : [];
   const nextTest = testDays.find((d) => d.startsAt > new Date());
   const byTest = new Map<string, BenchmarkResult[]>();

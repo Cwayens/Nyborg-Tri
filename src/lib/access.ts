@@ -28,6 +28,26 @@ export async function membershipExpired(userId: string): Promise<{ endDate: Date
   return last;
 }
 
+/** Dage før udløb, hvor medlemmet bliver mindet om at forny (gul bjælke øverst). */
+export const RENEW_WARNING_DAYS = 30;
+
+/**
+ * Udløber adgangen snart? Det seneste aktive medlemskab slutter inden for 30 dage, og der er ikke allerede betalt for en ny periode.
+ * Passive medlemskaber tæller ikke (de giver ikke adgang til træning).
+ */
+export async function membershipEndingSoon(userId: string): Promise<{ endDate: Date; trial: boolean } | null> {
+  const now = new Date();
+  const m = await prisma.membership.findFirst({
+    where: { userId, startDate: { lte: now }, endDate: { gt: now }, type: { code: { not: "PASSIVE" } } },
+    orderBy: { endDate: "desc" },
+    select: { endDate: true, source: true },
+  });
+  if (!m || m.endDate.getTime() - now.getTime() > RENEW_WARNING_DAYS * 864e5) return null;
+  // Allerede fornyet: et medlemskab, der starter, når det nuværende slutter
+  const next = await prisma.membership.findFirst({ where: { userId, endDate: { gt: m.endDate }, type: { code: { not: "PASSIVE" } } }, select: { id: true } });
+  return next ? null : { endDate: m.endDate, trial: m.source === "TRIAL" };
+}
+
 export function addDays(d: Date, days: number): Date {
   return new Date(d.getTime() + days * 24 * 3600 * 1000);
 }

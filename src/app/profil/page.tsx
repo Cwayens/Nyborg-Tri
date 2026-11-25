@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { QuickLinks } from "@/components/QuickLinks";
+import { CardIcon, LinkIcon, TrophyIcon } from "@/components/Icons";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -9,8 +11,11 @@ import { isEmail, needsGuardian } from "@/lib/guardian";
 import { deleteMyAccount } from "./actions";
 import { featuresOff } from "@/lib/features";
 import { CLUB } from "@/lib/club";
+import { getLocale, translator } from "@/lib/i18n";
 
-export const metadata = { title: "Min profil" };
+export async function generateMetadata() {
+  return { title: translator(await getLocale())("Min profil", "My profile") };
+}
 
 const schema = z.object({
   name: z.string().trim().min(2, "Skriv dit fulde navn").max(80),
@@ -50,78 +55,82 @@ async function saveProfile(formData: FormData) {
 export default async function Profile({ searchParams }: { searchParams: Promise<{ fejl?: string; gemt?: string; velkommen?: string }> }) {
   const sessionUser = await requireUser("/profil");
   const { fejl, gemt, velkommen } = await searchParams;
-  const user = await prisma.user.findUniqueOrThrow({ where: { id: sessionUser.id }, include: { athleteProfile: { select: { id: true } } } });
+  const user = await prisma.user.findUniqueOrThrow({ where: { id: sessionUser.id }, include: { athleteProfile: { select: { id: true } }, team: { select: { name: true, branch: { select: { name: true } } } } } });
+  // Med flere afdelinger står afdelingen efter holdnavnet
+  const teamName = user.team ? (user.team.branch && (await prisma.branch.count()) > 1 ? `${user.team.name} (${user.team.branch.name})` : user.team.name) : "";
   const off = await featuresOff();
+  const loc = await getLocale();
+  const t = translator(loc);
   return (
     <>
-      <h1>{velkommen ? `Velkommen til ${CLUB.shortName}!` : "Min profil"}</h1>
-      {velkommen && <p>Skriv dit navn, så de andre kan se, hvem der kommer til træning.</p>}
+      <h1>{velkommen ? t(`Velkommen til ${CLUB.shortName}!`, `Welcome to ${CLUB.shortName}!`) : t("Min profil", "My profile")}</h1>
+      {velkommen && <p>{t("Skriv dit navn, så de andre kan se, hvem der kommer til træning.", "Enter your name so the others can see who is coming to training.")}</p>}
       {fejl && <p className="status-warn">{fejl}</p>}
-      {gemt && <p className="notice">Din profil er gemt.</p>}
+      {gemt && <p className="notice">{t("Din profil er gemt.", "Your profile has been saved.")}</p>}
       <form action={saveProfile} className="stack card">
         <input type="hidden" name="next" value={velkommen ? "/min-side" : ""} />
-        <label>Fulde navn<input name="name" defaultValue={user.name ?? ""} required autoComplete="name" autoFocus={!!velkommen} /></label>
-        <label>Telefon<input name="phone" defaultValue={user.phone ?? ""} autoComplete="tel" inputMode="tel" /></label>
+        <label>{t("Fulde navn", "Full name")}<input name="name" defaultValue={user.name ?? ""} required autoComplete="name" autoFocus={!!velkommen} /></label>
+        <label>{t("Telefon", "Phone")}<input name="phone" defaultValue={user.phone ?? ""} autoComplete="tel" inputMode="tel" /></label>
         <div className="row">
-          <label>Fødselsdato<input type="date" name="birthDate" defaultValue={user.birthDate?.toISOString().slice(0, 10) ?? ""} /></label>
-          {!velkommen && <label>Vægt i kg (til FTP i W/kg)<input name="weightKg" inputMode="decimal" defaultValue={user.weightKg?.toLocaleString("da-DK") ?? ""} placeholder="fx 72,5" /></label>}
-          <label>Klasse (til leaderboard)
+          <label>{t("Fødselsdato", "Date of birth")}<input type="date" name="birthDate" defaultValue={user.birthDate?.toISOString().slice(0, 10) ?? ""} /></label>
+          {!velkommen && <label>{t("Vægt i kg (til FTP i W/kg)", "Weight in kg (for FTP in W/kg)")}<input name="weightKg" inputMode="decimal" defaultValue={user.weightKg?.toLocaleString("da-DK") ?? ""} placeholder={t("fx 72,5", "e.g. 72,5")} /></label>}
+          <label>{t("Klasse (til leaderboard)", "Category (for the leaderboard)")}
             <select name="gender" defaultValue={user.gender ?? ""}>
-              <option value="">Ikke angivet</option>
-              <option value="FEMALE">Kvinder</option>
-              <option value="MALE">Mænd</option>
+              <option value="">{t("Ikke angivet", "Not specified")}</option>
+              <option value="FEMALE">{t("Kvinder", "Women")}</option>
+              <option value="MALE">{t("Mænd", "Men")}</option>
             </select>
           </label>
         </div>
         {needsGuardian(user.birthDate) && (
           <fieldset className="guardian" data-minor>
-            <legend>Forælder eller værge</legend>
-            <p className="muted" style={{ margin: 0 }}>Får betalingslink, kvitteringer og påmindelser om fornyelse.</p>
-            <label>Navn<input name="guardianName" defaultValue={user.guardianName ?? ""} /></label>
-            <label>E-mail<input type="email" name="guardianEmail" defaultValue={user.guardianEmail ?? ""} /></label>
+            <legend>{t("Forælder eller værge", "Parent or guardian")}</legend>
+            <p className="muted" style={{ margin: 0 }}>{t("Får betalingslink, kvitteringer og påmindelser om fornyelse.", "Receives the payment link, receipts and renewal reminders.")}</p>
+            <label>{t("Navn", "Name")}<input name="guardianName" defaultValue={user.guardianName ?? ""} /></label>
+            <label>{t("E-mail", "Email")}<input type="email" name="guardianEmail" defaultValue={user.guardianEmail ?? ""} /></label>
           </fieldset>
         )}
         {!velkommen && !off.has("leaderboard") && (
           <label className="check">
             <input type="hidden" name="lbShown" value="1" />
             <input type="checkbox" name="leaderboard" defaultChecked={user.leaderboard} />
-            <span>Vis mine bedste præstationer fra uret på klubbens <Link href="/leaderboard">leaderboard</Link> (kræver fødselsdato og klasse)</span>
+            <span>{t("Vis mine bedste præstationer fra uret på klubbens", "Show my best efforts from my watch on the club")} <Link href="/leaderboard">leaderboard</Link> {t("(kræver fødselsdato og klasse)", "(needs date of birth and category)")}</span>
           </label>
         )}
         {!velkommen && (
           <label className="check">
             <input type="checkbox" name="newsMail" defaultChecked={user.newsMail} />
-            <span>Send mig nyheder fra klubben på mail (vigtige beskeder som aflysninger får du altid)</span>
+            <span>{t("Send mig nyheder fra klubben på mail (vigtige beskeder som aflysninger får du altid)", "Email me news from the club (you always get important messages such as cancellations)")}</span>
           </label>
         )}
         <p className="muted" style={{ margin: 0 }}>
-          E-mail: {user.email} · Brugertype: {userTypeLabel(user.role, user.athleteGroup)}
-          {!user.athleteGroup && " (en admin tildeler din gruppe)"}
+          {t("E-mail", "Email")}: {user.email} · {t("Brugertype", "User type")}: {user.role === "ATHLETE" && user.team ? `${t("Atlet", "Athlete")} – ${teamName}` : userTypeLabel(user.role, null)}
+          {!user.teamId && user.role === "ATHLETE" && t(" (en admin tildeler dit hold)", " (an admin assigns your team)")}
         </p>
-        <button className="button" type="submit" style={{ justifySelf: "start" }}>{velkommen ? "Kom i gang" : "Gem"}</button>
+        <button className="button" type="submit" style={{ justifySelf: "start" }}>{velkommen ? t("Kom i gang", "Get started") : t("Gem", "Save")}</button>
       </form>
       {!velkommen && (
-        <p style={{ marginTop: 20 }}>
-          {user.athleteProfile && !off.has("atleter") && <><Link href="/profil/atlet">Min atletprofil</Link> · </>}
-          <Link href="/forbindelser">Ure, deling og kalender</Link> · <Link href="/bliv-medlem">Medlemskab og kvitteringer</Link>
-        </p>
+        <QuickLinks label={t("Mere om dig", "More about you")} links={[
+          ...(user.athleteProfile && !off.has("atleter") ? [{ href: "/profil/atlet", icon: <TrophyIcon />, title: t("Min atletprofil", "My athlete profile"), text: t("Resultater og præsentation", "Results and bio") }] : []),
+          { href: "/forbindelser", icon: <LinkIcon />, title: t("Ure, deling og kalender", "Watches, sharing and calendar"), text: t("Forbind Garmin, Strava m.fl.", "Connect Garmin, Strava and more") },
+          { href: "/bliv-medlem", icon: <CardIcon />, title: t("Medlemskab og kvitteringer", "Membership and receipts"), text: t("Forny og se betalinger", "Renew and see payments") },
+        ]} />
       )}
       {!velkommen && (
         <section id="slet" className="card stack data-rights">
-          <h2 style={{ margin: 0 }}>Dine data</h2>
+          <h2 style={{ margin: 0 }}>{t("Dine data", "Your data")}</h2>
           <p style={{ margin: 0 }}>
-            Du kan hente alt, hvad vi har gemt om dig, som en fil. Læs mere i vores <Link href="/privatlivspolitik">privatlivspolitik</Link>.
+            {t("Du kan hente alt, hvad vi har gemt om dig, som en fil. Læs mere i vores", "You can download everything we have stored about you as a file. Read more in our")} <Link href="/privatlivspolitik">{t("privatlivspolitik", "privacy policy")}</Link>.
           </p>
-          <p style={{ margin: 0 }}><a className="button secondary small" href="/api/mine-data" download>Hent mine data</a></p>
+          <p style={{ margin: 0 }}><a className="button secondary small" href="/api/mine-data" download>{t("Hent mine data", "Download my data")}</a></p>
           <details>
-            <summary>Slet min profil</summary>
+            <summary>{t("Slet min profil", "Delete my profile")}</summary>
             <form action={deleteMyAccount} className="stack" style={{ marginTop: 10 }}>
               <p style={{ margin: 0 }}>
-                Dine oplysninger, træninger fra uret, testresultater, tilmeldinger, chatbeskeder og atletprofil slettes, og forbindelsen til Strava
-                afbrydes. Betalinger gemmes i 5 år, fordi bogføringsloven kræver det, men uden dit navn og din mail. Det kan ikke fortrydes.
+                {t("Dine oplysninger, træninger fra uret, testresultater, tilmeldinger, chatbeskeder og atletprofil slettes, og forbindelsen til Strava afbrydes. Betalinger gemmes i 5 år, fordi bogføringsloven kræver det, men uden dit navn og din mail. Det kan ikke fortrydes.", "Your details, watch workouts, test results, sign-ups, chat messages and athlete profile are deleted, and the Strava connection is removed. Payments are kept for 5 years because Danish bookkeeping law requires it, but without your name and email. This cannot be undone.")}
               </p>
-              <label>Skriv SLET for at bekræfte<input name="confirm" autoComplete="off" required style={{ maxWidth: 200 }} /></label>
-              <button className="button danger" type="submit" style={{ justifySelf: "start" }}>Slet min profil</button>
+              <label>{t("Skriv SLET for at bekræfte", "Type SLET to confirm")}<input name="confirm" autoComplete="off" required style={{ maxWidth: 200 }} /></label>
+              <button className="button danger" type="submit" style={{ justifySelf: "start" }}>{t("Slet min profil", "Delete my profile")}</button>
             </form>
           </details>
         </section>

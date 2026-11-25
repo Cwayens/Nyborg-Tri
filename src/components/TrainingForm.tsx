@@ -1,14 +1,15 @@
 import type { TrainingSession } from "@prisma/client";
-import { DISCIPLINE_LABEL, GROUP_LABEL, GROUPS } from "@/lib/roles";
+import { DISCIPLINE_LABEL } from "@/lib/roles";
+import { getTeams } from "@/lib/visibility";
 import { toLocalInput } from "@/lib/time";
 import { isWorkout, toText } from "@/lib/workout";
 import { TESTS } from "@/lib/benchmarks";
 import { isOn } from "@/lib/features";
 
-type Props = { action: (formData: FormData) => Promise<void>; training?: TrainingSession; allowRepeat?: boolean };
+type Props = { action: (formData: FormData) => Promise<void>; training?: TrainingSession; allowRepeat?: boolean; onlyTeams?: string[] };
 
-export async function TrainingForm({ action, training, allowRepeat }: Props) {
-  const [tempo, testdage] = await Promise.all([isOn("tempo"), isOn("testdage")]);
+export async function TrainingForm({ action, training, allowRepeat, onlyTeams }: Props) {
+  const [tempo, testdage, teams] = await Promise.all([isOn("tempo"), isOn("testdage"), getTeams()]);
   const start = training ? toLocalInput(training.startsAt) : "";
   const end = training ? toLocalInput(training.endsAt) : "";
   return (
@@ -27,10 +28,10 @@ export async function TrainingForm({ action, training, allowRepeat }: Props) {
         <label>Til<input type="time" name="end" defaultValue={end.slice(11)} required /></label>
       </div>
       <fieldset>
-        <legend>Gruppe (vælg én)</legend>
-        {GROUPS.map((g) => (
-          <label key={g} className="check">
-            <input type="radio" name="group" value={g} defaultChecked={training?.group === g} required /> {GROUP_LABEL[g]}
+        <legend>Hold (vælg ét)</legend>
+        {teams.filter((t) => (t.active || t.id === training?.teamId) && (!onlyTeams || onlyTeams.includes(t.id))).map((t) => (
+          <label key={t.id} className="check">
+            <input type="radio" name="team" value={t.id} defaultChecked={training?.teamId === t.id} required /> {t.label}
           </label>
         ))}
       </fieldset>

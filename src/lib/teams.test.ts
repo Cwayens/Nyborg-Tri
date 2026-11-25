@@ -1,0 +1,56 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { canJoinTeam, matchTeam, visibleTeams, type TeamLite } from "./teams";
+
+const T = (id: string, kind: TeamLite["kind"], sees: string[] = [], pub = false, active = true): TeamLite => ({ id, name: id, kind, sees, public: pub, active });
+const teams = [T("Elite", "ELITE", ["Bredde"]), T("Bredde", "BREDDE", [], true), T("Børn", "BOERN"), T("U17", "BOERN", ["Børn"])];
+const ath = (teamId: string | null) => ({ role: "ATHLETE" as const, teamId });
+
+test("trænere og admin ser alle hold", () => {
+  assert.equal(visibleTeams({ role: "TRAINER", teamId: null }, teams).length, 4);
+  assert.equal(visibleTeams({ role: "ADMIN", teamId: "Børn" }, teams).length, 4);
+});
+
+test("medlem ser eget hold og de hold, holdet ser", () => {
+  assert.deepEqual(visibleTeams(ath("Elite"), teams), ["Elite", "Bredde"]);
+  assert.deepEqual(visibleTeams(ath("Bredde"), teams), ["Bredde"]);
+  assert.deepEqual(visibleTeams(ath("Børn"), teams), ["Børn"]);
+  assert.deepEqual(visibleTeams(ath("U17"), teams), ["Børn", "U17"]);
+});
+
+test("besøgende, prøvemedlemmer og medlemmer uden hold ser åbne hold", () => {
+  assert.deepEqual(visibleTeams(null, teams), ["Bredde"]);
+  assert.deepEqual(visibleTeams(ath(null), teams), ["Bredde"]);
+  assert.deepEqual(visibleTeams(ath("Elite"), teams, true), ["Bredde"]);
+});
+
+test("tilmelding kun til eget hold", () => {
+  assert.equal(canJoinTeam(ath("Elite"), "Elite", teams), true);
+  assert.equal(canJoinTeam(ath("Elite"), "Bredde", teams), false);
+  assert.equal(canJoinTeam(ath("Elite"), "Elite", teams, true), false);
+  assert.equal(canJoinTeam({ role: "TRAINER", teamId: null }, "Børn", teams), true);
+});
+
+test("hold findes ud fra tekst", () => {
+  assert.equal(matchTeam("born", teams)?.id, "Børn");
+  assert.equal(matchTeam("u-17", teams)?.id, "U17");
+  assert.equal(matchTeam("ELITE", teams)?.id, "Elite");
+  assert.equal(matchTeam("bredde ", teams)?.id, "Bredde");
+  assert.equal(matchTeam("x", teams), null);
+});
+
+test("børn og voksne ser aldrig hinandens hold", () => {
+  const mixed = [T("Elite", "ELITE", ["U17"]), T("U17", "BOERN", ["Bredde"], true), T("Bredde", "BREDDE", [], true)];
+  assert.deepEqual(visibleTeams(ath("Elite"), mixed), ["Elite"]);
+  assert.deepEqual(visibleTeams(ath("U17"), mixed), ["U17"]);
+  assert.deepEqual(visibleTeams(null, mixed), ["Bredde"]);
+  assert.deepEqual(visibleTeams(ath("U17"), mixed, true), ["U17"]);
+});
+
+test("holdledere ser og kan tilmelde sig de hold, de leder", () => {
+  const leader = { role: "ATHLETE" as const, teamId: "Bredde", leads: ["Elite", "Børn"] };
+  assert.deepEqual(visibleTeams(leader, teams), ["Elite", "Bredde"]); // aldrig et børnehold
+  assert.equal(canJoinTeam(leader, "Elite", teams), true);
+  assert.equal(canJoinTeam(leader, "Børn", teams), false);
+  assert.deepEqual(visibleTeams({ role: "ATHLETE", teamId: null, leads: ["Elite"] }, teams), ["Elite", "Bredde"]);
+});

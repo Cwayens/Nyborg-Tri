@@ -11,6 +11,11 @@ export const ROLES: Role[] = ["ATHLETE", "TRAINER", "ADMIN"];
 export const DISCIPLINE_LABEL: Record<Discipline, string> = {
   SWIM: "Svømning", BIKE: "Cykling", RUN: "Løb", STRENGTH: "Styrke", OTHER: "Andet",
 };
+export const DISCIPLINE_LABEL_EN: Record<Discipline, string> = {
+  SWIM: "Swimming", BIKE: "Cycling", RUN: "Running", STRENGTH: "Strength", OTHER: "Other",
+};
+/** Disciplinens navn på det valgte sprog */
+export const disciplineLabel = (d: Discipline, loc: "da" | "en" = "da") => (loc === "en" ? DISCIPLINE_LABEL_EN : DISCIPLINE_LABEL)[d];
 
 const RANK: Record<Role, number> = { ATHLETE: 0, TRAINER: 1, ADMIN: 2 };
 

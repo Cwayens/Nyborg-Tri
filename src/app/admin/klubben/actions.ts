@@ -12,12 +12,16 @@ import { lengthKm, parseGpx } from "@/lib/routes";
 import type { AboutContent, HomeContent } from "@/data/site-default";
 import type { ClubOverrides, Place } from "@/lib/club";
 
+// del kan have sproget med, fx "forside&sprog=en", så man lander på den engelske udgave igen
 const back = (del: string, q = "gemt=1"): never => redirect(`/admin/klubben?del=${del}&${q}`);
 const fail = (del: string, msg: string): never => back(del, `fejl=${encodeURIComponent(msg)}`);
 const done = (del: string): never => {
   revalidatePath("/", "layout");
   return back(del);
 };
+/** Engelsk udgave af teksten? (skjult felt "lang" i formularen) */
+const english = (fd: FormData) => fd.get("lang") === "en";
+const part = (del: string, fd: FormData) => (english(fd) ? `${del}&sprog=en` : del);
 
 /** Nyt billede, hvis der er valgt en fil, ellers det nuværende (skjult felt). Tomt, hvis "fjern" er krydset af. */
 async function image(fd: FormData, name: string, del: string, maxWidth = 1600): Promise<string> {
@@ -54,6 +58,7 @@ export async function saveClub(fd: FormData) {
 
 export async function saveHome(fd: FormData) {
   await requireAdmin();
+  const del = part("forside", fd);
   // Billeder til holdkort hentes separat, da rækkerne kan være sorteret fra
   const teamRows = [...fd.keys()].filter((k) => /^teams\.\d+\.title$/.test(k)).map((k) => +k.split(".")[1]).sort((a, b) => a - b);
   const teamOut: HomeContent["teams"] = [];
@@ -61,53 +66,54 @@ export async function saveHome(fd: FormData) {
     if (fd.get(`teams.${n}.slet`) === "on") continue;
     const title = str(fd, `teams.${n}.title`, 80);
     if (!title) continue;
-    teamOut.push({ label: str(fd, `teams.${n}.label`, 30), title, text: str(fd, `teams.${n}.text`, 400), alt: str(fd, `teams.${n}.alt`, 120), img: await image(fd, `teams.${n}.img`, "forside") });
+    teamOut.push({ label: str(fd, `teams.${n}.label`, 30), title, text: str(fd, `teams.${n}.text`, 400), alt: str(fd, `teams.${n}.alt`, 120), img: await image(fd, `teams.${n}.img`, del) });
   }
   const c: HomeContent = {
-    heroTitle: str(fd, "heroTitle", 120), heroLead: str(fd, "heroLead", 300), heroImage: await image(fd, "heroImage", "forside"), heroAlt: str(fd, "heroAlt", 120),
+    heroTitle: str(fd, "heroTitle", 120), heroLead: str(fd, "heroLead", 300), heroImage: await image(fd, "heroImage", del), heroAlt: str(fd, "heroAlt", 120),
     proof: rows(fd, "proof", ["value", "label"] as const, 60),
     teamsTitle: str(fd, "teamsTitle", 80), teamsLead: str(fd, "teamsLead", 300), teams: teamOut,
-    moreTitle: str(fd, "moreTitle", 80), moreImage: await image(fd, "moreImage", "forside"), more: lines(str(fd, "more", 2000)),
+    moreTitle: str(fd, "moreTitle", 80), moreImage: await image(fd, "moreImage", del), more: lines(str(fd, "more", 2000)),
     athletesLead: str(fd, "athletesLead", 300),
     faq: rows(fd, "faq", ["q", "a"] as const, 600).filter((f) => f.q),
-    ctaTitle: str(fd, "ctaTitle", 80), ctaImage: await image(fd, "ctaImage", "forside"),
+    ctaTitle: str(fd, "ctaTitle", 80), ctaImage: await image(fd, "ctaImage", del),
   };
-  if (!c.heroTitle) fail("forside", "Skriv en overskrift");
-  await saveSite("home", c);
-  done("forside");
+  if (!c.heroTitle) fail(del, "Skriv en overskrift");
+  await saveSite(english(fd) ? "home_en" : "home", c);
+  done(del);
 }
 
 // ---------- Om klubben ----------
 
 export async function saveAbout(fd: FormData) {
   await requireAdmin();
+  const del = part("om", fd);
   const tl = [...fd.keys()].filter((k) => /^timeline\.\d+\.title$/.test(k)).map((k) => +k.split(".")[1]).sort((a, b) => a - b);
   const timeline: AboutContent["timeline"] = [];
   for (const n of tl) {
     if (fd.get(`timeline.${n}.slet`) === "on") continue;
     const title = str(fd, `timeline.${n}.title`, 120);
     if (!title) continue;
-    timeline.push({ year: str(fd, `timeline.${n}.year`, 30), title, text: str(fd, `timeline.${n}.text`, 1000), img: await image(fd, `timeline.${n}.img`, "om", 900) });
+    timeline.push({ year: str(fd, `timeline.${n}.year`, 30), title, text: str(fd, `timeline.${n}.text`, 1000), img: await image(fd, `timeline.${n}.img`, del, 900) });
   }
   const gal = [...fd.keys()].filter((k) => /^gallery\.\d+\.alt$/.test(k)).map((k) => +k.split(".")[1]).sort((a, b) => a - b);
   const gallery: AboutContent["gallery"] = [];
   for (const n of gal) {
     if (fd.get(`gallery.${n}.slet`) === "on") continue;
-    const src = await image(fd, `gallery.${n}.src`, "om");
+    const src = await image(fd, `gallery.${n}.src`, del);
     if (src) gallery.push({ src, alt: str(fd, `gallery.${n}.alt`, 120) });
   }
   const a: AboutContent = {
-    title: str(fd, "title", 120), lead: str(fd, "lead", 600), image: await image(fd, "image", "om"),
+    title: str(fd, "title", 120), lead: str(fd, "lead", 600), image: await image(fd, "image", del),
     facts: rows(fd, "facts", ["value", "label"] as const, 60),
     timeline,
-    archive: { show: fd.get("archiveShow") === "on", image: await image(fd, "archiveImage", "om"), title: str(fd, "archiveTitle", 120), text: str(fd, "archiveText", 600) },
+    archive: { show: fd.get("archiveShow") === "on", image: await image(fd, "archiveImage", del), title: str(fd, "archiveTitle", 120), text: str(fd, "archiveText", 600) },
     partners: rows(fd, "partners", ["name", "what", "url"] as const, 400).filter((p) => p.name).map((p) => ({ ...p, url: /^https:\/\//.test(p.url) ? p.url : "" })),
     gallery,
     ctaTitle: str(fd, "ctaTitle", 80), ctaText: str(fd, "ctaText", 300),
   };
-  if (!a.title) fail("om", "Skriv en overskrift");
-  await saveSite("about", a);
-  done("om");
+  if (!a.title) fail(del, "Skriv en overskrift");
+  await saveSite(english(fd) ? "about_en" : "about", a);
+  done(del);
 }
 
 // ---------- Træningssteder ----------
@@ -163,16 +169,20 @@ export async function updateRoute(fd: FormData) {
 
 export async function savePrivacy(fd: FormData) {
   await requireAdmin();
-  await saveSite("privacy", { extra: str(fd, "extra", 5000) });
-  done("privatliv");
+  await saveSite(english(fd) ? "privacy_en" : "privacy", { extra: str(fd, "extra", 5000) });
+  done(part("privatliv", fd));
 }
 
 /** Gå tilbage til standardindholdet for en del. */
 export async function resetSection(fd: FormData) {
   await requireAdmin();
   const del = str(fd, "del");
-  const key = ({ klub: "club", forside: "home", om: "about", steder: "places", privatliv: "privacy" } as const)[del as "klub"];
-  if (key) await prisma.setting.deleteMany({ where: { key: SITE_KEYS[key] } });
+  const parts: Record<string, keyof typeof SITE_KEYS> = { klub: "club", forside: "home", om: "about", steder: "places", privatliv: "privacy" };
+  const key = parts[del];
+  // Engelsk: kun den engelske udgave slettes, så siden igen viser den danske tekst eller den engelske standard
+  const enKey = ({ home: "home_en", about: "about_en", privacy: "privacy_en" } as const)[key as "home"];
+  const en = english(fd) && !!enKey;
+  if (key) await prisma.setting.deleteMany({ where: { key: SITE_KEYS[en ? enKey : key] } });
   if (key === "club") await refreshClub(true);
-  done(del);
+  done(en ? `${del}&sprog=en` : del);
 }

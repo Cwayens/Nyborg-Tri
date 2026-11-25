@@ -3,8 +3,8 @@ import { prisma } from "@/lib/db";
 import { requireFeature } from "@/lib/features";
 import { hasRole } from "@/lib/roles";
 import { dato } from "@/lib/format";
-import { initials } from "@/components/Icons";
-import { endMentorship, requestMentor, setMentor } from "./actions";
+import { initials, MailIcon, PhoneIcon } from "@/components/Icons";
+import { assignWaiting, dismissWaiting, endMentorship, requestMentor, setMentor } from "./actions";
 
 export const metadata = { title: "Mentorordning" };
 
@@ -22,6 +22,8 @@ export default async function Mentor({ searchParams }: { searchParams: Promise<{
   ]);
   const admin = hasRole(user.role, "ADMIN");
   const all = admin ? await prisma.mentorship.findMany({ include: { mentor: { select: { name: true } }, mentee: { select: { name: true } } }, orderBy: { createdAt: "desc" } }) : [];
+  // Nye medlemmer, der ved indmeldelsen bad om en mentor, men endnu ikke har fået en
+  const waiting = admin ? await prisma.user.findMany({ where: { wantsMentor: true, deletedAt: null, mentee: null }, select: { id: true, name: true, createdAt: true }, orderBy: { createdAt: "asc" } }) : [];
 
   return (
     <>
@@ -34,7 +36,7 @@ export default async function Mentor({ searchParams }: { searchParams: Promise<{
       {ny && <p className="notice">Du har fået en mentor, og I har begge fået en mail.</p>}
 
       <div className="grid two">
-        <section className="card">
+        <section className="card" id="faa">
           <h2 className="h3" style={{ marginTop: 0 }}>Din mentor</h2>
           {mine ? (
             <Person p={mine.mentor} since={mine.createdAt} endId={mine.id} />
@@ -48,7 +50,7 @@ export default async function Mentor({ searchParams }: { searchParams: Promise<{
           )}
         </section>
 
-        <section className="card">
+        <section className="card" id="bliv">
           <h2 className="h3" style={{ marginTop: 0 }}>Bliv mentor</h2>
           <p style={{ marginTop: 0 }}>Har du været med et stykke tid? Hjælp et nyt medlem godt i gang. Det tager en tur eller to og lidt hjælp over mail.</p>
           <form action={setMentor}>
@@ -64,6 +66,22 @@ export default async function Mentor({ searchParams }: { searchParams: Promise<{
           )}
         </section>
       </div>
+
+      {admin && waiting.length > 0 && (
+        <section className="card" style={{ marginTop: 18 }}>
+          <h2 className="h3" style={{ marginTop: 0 }}>Venter på en mentor (kun admin)</h2>
+          <p className="muted" style={{ marginTop: 0 }}>De bad om en mentor ved indmeldelsen. De får automatisk en, når de har adgang og der er en ledig mentor, men du kan også gøre det her.</p>
+          <ul className="stack" style={{ paddingLeft: 18 }}>
+            {waiting.map((w) => (
+              <li key={w.id}>
+                {w.name ?? "Nyt medlem"} <small className="muted">· meldt ind {dato(w.createdAt)}</small>{" "}
+                <form action={assignWaiting} style={{ display: "inline" }}><input type="hidden" name="userId" value={w.id} /><button className="button small" type="submit">Find mentor</button></form>{" "}
+                <form action={dismissWaiting} style={{ display: "inline" }}><input type="hidden" name="userId" value={w.id} /><button className="linklike" type="submit"><small>Fjern fra listen</small></button></form>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {admin && all.length > 0 && (
         <section className="card" style={{ marginTop: 18 }}>
@@ -81,7 +99,7 @@ function Person({ p, since, endId }: { p: { name: string | null; email: string; 
       <span className="avatar">{initials(p.name)}</span>
       <div>
         <b>{p.name ?? "Medlem"}</b>
-        <div><a href={`mailto:${p.email}`}>{p.email}</a>{p.phone && <> · <a href={`tel:${p.phone}`}>{p.phone}</a></>}</div>
+        <div className="contact-chips"><a className="chip" href={`mailto:${p.email}`}><MailIcon size={16} /> {p.email}</a>{p.phone && <a className="chip" href={`tel:${p.phone}`}><PhoneIcon size={16} /> {p.phone}</a>}</div>
         <small className="muted">Siden {dato(since)} · </small>
         <form action={endMentorship} style={{ display: "inline" }}><input type="hidden" name="id" value={endId} /><button className="linklike" type="submit"><small>Afslut</small></button></form>
       </div>

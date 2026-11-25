@@ -49,6 +49,38 @@ Admin retter selv det meste under **Admin → Klubben**, uden at koden skal ænd
 Standardindholdet er Nyborgs og står i `src/data/site-default.ts`. Det, der stadig kræver en udvikler:
 begynderforløbet (`src/data/begynder.ts`), menupunktet NyborgTri Cup (`src/lib/navigation.ts`) og telefonikonerne (`public/icon-*.png`).
 
+## 3a. Hold
+
+Under **Admin → Hold** opretter klubben sine egne hold (fx U13, U17, Motion, Elite). Hvert hold har en type
+(konkurrence, motion/bredde eller børn og unge), som styrer reglerne: børnehold får mails via forældre og eget chatrum,
+konkurrencehold kan få atletprofiler. Et medlem ser sit eget holds træninger og de hold, holdet er sat til at se.
+Trænere og admins ser alt. Besøgende og prøvemedlemmer ser de åbne hold. En ny installation starter med Elite, Bredde og Børn.
+
+Børnesikkerhed: børnehold og voksenhold kan aldrig se hinanden, og børnehold kan ikke være åbne for besøgende.
+
+**Afdelinger (netværk):** Er I flere byer eller klubber i ét netværk, opretter I afdelinger nederst på Admin → Hold.
+Den første afdeling får de eksisterende hold. Hvert hold hører til en afdeling (eller hele netværket). Medlemmer og
+besøgende kan filtrere kalenderen på afdeling, trænere kan filtrere deres liste, og admin kan sende mail til en hel afdeling.
+Med kun én afdeling vises afdelinger ingen steder.
+
+## 3b. Roller
+
+Ud over atlet, træner og admin:
+
+- **Holdleder** (sættes på holdet under Admin → Hold): opretter og retter træninger og skriver mail, men kun for sine egne hold.
+  Børnehold ledes kun af trænere og admin, og børn kan ikke være holdledere (håndhæves også i databasen).
+- **Kasserer** (sættes på medlemmet under Admin → Medlemmer): betalinger, medlemstyper og medlemslisten (CSV), uden resten af administrationen.
+- **Frivillig** (sættes på medlemmet): står på listen over frivillige, og admin kan sende mail til alle frivillige.
+
+## 3c. Sprog
+
+Siden findes på dansk og engelsk. Den besøgende skifter sprog nederst på siden, og valget huskes i et år.
+
+- Menuer, knapper, kalender, tilmelding, profil, Træn sammen og chat er oversat i koden.
+- Forside, Om klubben og den ekstra tekst i privatlivspolitikken skriver I selv på engelsk under **Admin → Klubben → English**. Har I ikke gjort det, ser engelske besøgende jeres danske tekst, eller systemets engelske standardtekst, hvis I ikke har rettet den danske.
+- Er klubben international, kan engelsk være standard: sæt miljøvariablen `CLUB_LANG=en`.
+- Endnu kun på dansk: login-mails og andre mails, navne på medlemstyper, fejlbeskeder fra formularer, selve privatlivspolitikken (engelske besøgende får et kort resumé) og admin-området.
+
 ## 4. Funktioner
 
 Admin kan slå 18 funktioner til og fra under Admin → Funktioner. En ny klub kan starte med få og tænde flere senere.

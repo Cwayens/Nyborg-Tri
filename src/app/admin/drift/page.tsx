@@ -1,6 +1,5 @@
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/auth";
-import { AdminNav } from "@/components/AdminNav";
 import { prisma } from "@/lib/db";
 import { listBackups } from "@/lib/backup";
 import { sendMail } from "@/lib/mail";
@@ -34,7 +33,6 @@ export default async function Drift() {
   return (
     <>
       <h1>Drift</h1>
-      <AdminNav />
       <div className="grid" style={{ marginBottom: 20 }}>
         <div className="card"><strong style={{ fontSize: "1.6rem" }}>{dbOk ? "Kører" : "Fejl"}</strong><br /><span className="muted">database ({dbMs} ms)</span></div>
         <div className="card"><strong style={{ fontSize: "1.6rem" }}>{newest ? newest.uploadedAt.toLocaleDateString("da-DK", { timeZone: "Europe/Copenhagen" }) : "Ingen"}</strong><br /><span className="muted">seneste backup ({backups.length} gemt)</span></div>

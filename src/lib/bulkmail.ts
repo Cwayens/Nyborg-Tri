@@ -2,31 +2,52 @@ import type { AthleteGroup, Prisma } from "@prisma/client";
 import { prisma } from "./db";
 import { billingEmail } from "./guardian";
 import { sendMail } from "./mail";
-import { GROUP_LABEL, GROUPS } from "./roles";
+import { GROUP_LABEL } from "./roles";
+import { getBranches, getTeams } from "./visibility";
 import { CLUB } from "@/lib/club";
 
 // Mail til hold og medlemmer. Børn under 18 får mailen gennem deres forælder/værge.
 
-export type Audience = "ALL" | "TRIAL" | "TRAINERS" | `GROUP:${AthleteGroup}`;
+export type Audience = "ALL" | "TRIAL" | "TRAINERS" | "VOLUNTEERS" | `TEAM:${string}` | `BRANCH:${string}` | `GROUP:${AthleteGroup}`;
 export type MailKind = "NEWS" | "IMPORTANT";
+type AudienceOption = { value: Audience; label: string; trainerAllowed: boolean };
 
-export const AUDIENCES: { value: Audience; label: string; trainerAllowed: boolean }[] = [
-  { value: "ALL", label: "Alle aktive medlemmer", trainerAllowed: false },
-  ...GROUPS.map((g) => ({ value: `GROUP:${g}` as Audience, label: g === "BOERN" ? "Børn (sendes til forældre)" : `${GROUP_LABEL[g]}-holdet`, trainerAllowed: true })),
-  { value: "TRIAL", label: "Medlemmer på prøve", trainerAllowed: false },
-  { value: "TRAINERS", label: "Trænere og bestyrelse", trainerAllowed: true },
-];
+/** Modtagergrupper: alle, hvert aktivt hold, prøvemedlemmer og trænere. */
+export async function audiences(): Promise<AudienceOption[]> {
+  const [teams, branches] = await Promise.all([getTeams(), getBranches()]);
+  return [
+    { value: "ALL", label: "Alle aktive medlemmer", trainerAllowed: false },
+    ...(branches.length > 1 ? branches.map((b): AudienceOption => ({ value: `BRANCH:${b.id}`, label: `Afdeling ${b.name} (alle hold)`, trainerAllowed: false })) : []),
+    ...teams.filter((t) => t.active).map((t): AudienceOption => ({ value: `TEAM:${t.id}`, label: `Holdet ${t.label}${t.kind === "BOERN" ? " (sendes til forældre)" : ""}`, trainerAllowed: true })),
+    { value: "TRIAL", label: "Medlemmer på prøve", trainerAllowed: false },
+    { value: "TRAINERS", label: "Trænere og bestyrelse", trainerAllowed: true },
+    { value: "VOLUNTEERS", label: "Frivillige", trainerAllowed: false },
+  ];
+}
 
-export function isAudience(v: string): v is Audience {
-  return AUDIENCES.some((a) => a.value === v);
+/** Modtagergrupper, personen må skrive til: admin alle, trænere hold og trænere, holdledere kun egne hold. */
+export async function audiencesFor(s: { role: string; leads: string[] }): Promise<AudienceOption[]> {
+  const all = await audiences();
+  if (s.role === "ADMIN") return all;
+  if (s.role === "TRAINER") return all.filter((a) => a.trainerAllowed);
+  return all.filter((a) => a.value.startsWith("TEAM:") && s.leads.includes(a.value.slice(5)));
+}
+
+/** Navn til mailloggen; ældre mails kan være sendt til en gruppe. */
+export async function audienceLabel(v: string): Promise<string> {
+  if (v.startsWith("GROUP:")) return `${GROUP_LABEL[v.slice(6) as AthleteGroup] ?? v}-holdet`;
+  return (await audiences()).find((a) => a.value === v)?.label ?? v;
 }
 
 function where(audience: Audience, kind: MailKind, now: Date): Prisma.UserWhereInput {
   const active: Prisma.UserWhereInput = { memberships: { some: { endDate: { gt: now } } } };
   const base: Prisma.UserWhereInput = { deletedAt: null, ...(kind === "NEWS" ? { newsMail: true } : {}) };
+  if (audience === "VOLUNTEERS") return { ...base, duties: { has: "VOLUNTEER" } };
   if (audience === "TRAINERS") return { ...base, role: { in: ["TRAINER", "ADMIN"] } };
   if (audience === "TRIAL") return { ...base, memberships: { some: { endDate: { gt: now }, source: "TRIAL" } } };
   if (audience === "ALL") return { ...base, ...active };
+  if (audience.startsWith("BRANCH:")) return { ...base, ...active, team: { branchId: audience.slice(7) } };
+  if (audience.startsWith("TEAM:")) return { ...base, ...active, teamId: audience.slice(5) };
   return { ...base, ...active, athleteGroup: audience.slice(6) as AthleteGroup };
 }
 
