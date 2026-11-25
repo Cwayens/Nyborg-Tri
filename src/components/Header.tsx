@@ -2,7 +2,7 @@ import Link from "next/link";
 import { auth, signOut } from "@/auth";
 import { navigation } from "@/lib/navigation";
 import { hasRole } from "@/lib/roles";
-import { membershipExpired } from "@/lib/access";
+import { membershipEndingSoon, membershipExpired } from "@/lib/access";
 import { dato } from "@/lib/format";
 import { AppNav } from "./AppNav";
 import { hiddenHrefs } from "@/lib/features";
@@ -16,6 +16,7 @@ export async function Header() {
   const user = session?.user;
   const staff = user ? await staffOf(user.id) : null;
   const expired = user ? await membershipExpired(user.id) : null;
+  const endingSoon = user && !expired ? await membershipEndingSoon(user.id) : null;
   const hidden = await hiddenHrefs();
   const loc = await getLocale();
   const t = translator(loc);
@@ -91,6 +92,19 @@ export async function Header() {
           <div className="wrap">
             <strong>{t("Mangler betaling.", "Payment due.")}</strong> {t(`Dit medlemskab udløb ${dato(expired.endDate)}, så du kan ikke tilmelde dig træninger.`, `Your membership expired on ${dato(expired.endDate, loc)}, so you can't sign up for trainings.`)}{" "}
             <Link href="/bliv-medlem">{t("Forny medlemskab", "Renew membership")}</Link>
+          </div>
+        </div>
+      )}
+      {endingSoon && (
+        <div className="unpaid-bar soon" role="status">
+          <div className="wrap">
+            {endingSoon.trial ? (
+              <><strong>{t("Din prøveperiode slutter snart.", "Your trial ends soon.")}</strong> {t(`Den slutter ${dato(endingSoon.endDate)}. Meld dig ind, så du kan blive ved med at træne med.`, `It ends on ${dato(endingSoon.endDate, loc)}. Join the club to keep training with us.`)}{" "}
+              <Link href="/bliv-medlem">{t("Meld dig ind", "Join now")}</Link></>
+            ) : (
+              <><strong>{t("Tid til at forny.", "Time to renew.")}</strong> {t(`Dit medlemskab udløber ${dato(endingSoon.endDate)}. Forny i god tid, så du kan blive ved med at tilmelde dig træninger.`, `Your membership expires on ${dato(endingSoon.endDate, loc)}. Renew in good time so you can keep signing up for trainings.`)}{" "}
+              <Link href="/bliv-medlem">{t("Forny medlemskab", "Renew membership")}</Link></>
+            )}
           </div>
         </div>
       )}

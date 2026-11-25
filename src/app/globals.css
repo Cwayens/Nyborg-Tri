@@ -480,6 +480,10 @@ label.check { display: flex; gap: 8px; align-items: center; font-weight: 400; }
 .unpaid-bar { background: #fdecec; color: #8a1c1c; border-top: 2px solid #d92d20; border-bottom: 1px solid #f5c2c0; font-size: 0.88rem; padding: 6px 0; }
 .unpaid-bar a { color: #8a1c1c; font-weight: 700; }
 @media (prefers-color-scheme: dark) { .unpaid-bar { background: #3a1513; color: #ffb4ab; border-bottom-color: #5c201c; } .unpaid-bar a { color: #ffb4ab; } }
+/* Udløber inden for 30 dage: gul påmindelse */
+.unpaid-bar.soon { background: #fff7d6; color: #6b4e00; border-top-color: #e0a800; border-bottom-color: #f3df9a; }
+.unpaid-bar.soon a { color: #6b4e00; }
+@media (prefers-color-scheme: dark) { .unpaid-bar.soon { background: #352a05; color: #f5d77a; border-bottom-color: #54430c; } .unpaid-bar.soon a { color: #f5d77a; } }
 
 /* Mine tests: forslag fra uret */
 .bm-connect { display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 18px; border-left: 4px solid var(--accent); }
