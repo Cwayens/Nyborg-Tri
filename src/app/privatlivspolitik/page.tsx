@@ -2,8 +2,10 @@ import Link from "next/link";
 import { CLUB } from "@/lib/club";
 import { getPrivacy } from "@/lib/site";
 import { Inline } from "@/components/Inline";
+import { getLocale } from "@/lib/i18n";
 
 export async function generateMetadata() {
+  if ((await getLocale()) === "en") return { title: "Privacy policy", description: `How ${CLUB.name} handles your personal data.` };
   return { title: "Privatlivspolitik", description: `Sådan behandler ${CLUB.name} dine personoplysninger: hvad vi gemmer, hvorfor, hvor længe og dine rettigheder.` };
 }
 
@@ -29,8 +31,16 @@ const DATA: [string, string, string, string][] = [
 
 export default async function Privacy() {
   const extra = (await getPrivacy()).extra;
+  const en = (await getLocale()) === "en";
   return (
-    <article className="policy">
+    <article className="policy" lang="da">
+      {en && (
+        <p className="notice" lang="en">
+          Our privacy policy is written in Danish, and the Danish text is the one that applies. In short: we only store what we need to run the
+          club, we never sell your data, your watch data is only shown to you, and you can download or delete your data under My profile.
+          Questions? Write to <a href={`mailto:${CLUB.email}`}>{CLUB.email}</a>.
+        </p>
+      )}
       <p className="about-kicker">Senest opdateret {UPDATED}</p>
       <h1>Privatlivspolitik</h1>
       <p className="lead">

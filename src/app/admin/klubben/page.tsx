@@ -4,6 +4,7 @@ import { AdminNav } from "@/components/AdminNav";
 import { ENV_CLUB, CLUB } from "@/lib/club";
 import { DISCIPLINE_LABEL } from "@/lib/roles";
 import { getAbout, getClubOverrides, getHome, getPlaces, getPrivacy, getRoutes } from "@/lib/site";
+import type { Locale } from "@/lib/i18n-core";
 import { addRoute, resetSection, saveAbout, saveClub, saveHome, savePlaces, savePrivacy, updateRoute } from "./actions";
 
 export const metadata = { title: "Admin – klubben" };
@@ -18,12 +19,16 @@ const TABS = [
 ] as const;
 type Tab = (typeof TABS)[number][0];
 
-type Props = { searchParams: Promise<{ del?: string; gemt?: string; fejl?: string }> };
+type Props = { searchParams: Promise<{ del?: string; gemt?: string; fejl?: string; sprog?: string }> };
+
+/** Dele med tekst, der kan skrives på engelsk også */
+const BILINGUAL: Tab[] = ["forside", "om", "privatliv"];
 
 export default async function ClubAdmin({ searchParams }: Props) {
   await requireAdmin();
   const sp = await searchParams;
   const del: Tab = TABS.some(([k]) => k === sp.del) ? (sp.del as Tab) : "klub";
+  const loc: Locale = BILINGUAL.includes(del) && sp.sprog === "en" ? "en" : "da";
   return (
     <>
       <h1>Klubben</h1>
@@ -37,18 +42,33 @@ export default async function ClubAdmin({ searchParams }: Props) {
           <Link key={k} href={`/admin/klubben?del=${k}`} className={k === del ? "active" : undefined} aria-current={k === del ? "page" : undefined}>{label}</Link>
         ))}
       </nav>
+      {BILINGUAL.includes(del) && (
+        <>
+          <nav className="filters" aria-label="Sprog">
+            <Link href={`/admin/klubben?del=${del}`} className={loc === "da" ? "active" : undefined}>Dansk</Link>
+            <Link href={`/admin/klubben?del=${del}&sprog=en`} className={loc === "en" ? "active" : undefined}>English</Link>
+          </nav>
+          {loc === "en" && (
+            <p className="muted" style={{ maxWidth: 720 }}>
+              Den engelske udgave vises for dem, der vælger English nederst på siden. Har I ikke skrevet en engelsk tekst, ser de jeres
+              danske tekst, eller systemets engelske standardtekst, hvis I ikke har rettet den danske. Billeder gemmes for hvert sprog for sig.
+            </p>
+          )}
+        </>
+      )}
       {sp.gemt && <p className="notice">Gemt.</p>}
       {sp.fejl && <p className="status-warn">{sp.fejl}</p>}
       {del === "klub" && <ClubForm />}
-      {del === "forside" && <HomeForm />}
-      {del === "om" && <AboutForm />}
+      {del === "forside" && <HomeForm loc={loc} />}
+      {del === "om" && <AboutForm loc={loc} />}
       {del === "steder" && <PlacesForm />}
       {del === "ruter" && <RoutesForm />}
-      {del === "privatliv" && <PrivacyForm />}
+      {del === "privatliv" && <PrivacyForm loc={loc} />}
       {del !== "ruter" && (
         <form action={resetSection} className="reset-form">
           <input type="hidden" name="del" value={del} />
-          <button className="button ghost small" type="submit">Gå tilbage til standard for denne del</button>
+          <input type="hidden" name="lang" value={loc} />
+          <button className="button ghost small" type="submit">{loc === "en" ? "Slet den engelske udgave" : "Gå tilbage til standard for denne del"}</button>
         </form>
       )}
     </>
@@ -146,10 +166,11 @@ async function ClubForm() {
 
 // ---------- Forside ----------
 
-async function HomeForm() {
-  const c = await getHome();
+async function HomeForm({ loc }: { loc: Locale }) {
+  const c = await getHome(loc);
   return (
-    <form action={saveHome} className="stack card admin-form" encType="multipart/form-data">
+    <form action={saveHome} className="stack card admin-form" encType="multipart/form-data" lang={loc}>
+      <input type="hidden" name="lang" value={loc} />
       <h2 className="h3" style={{ margin: 0 }}>Toppen</h2>
       <F name="heroTitle" label="Overskrift" value={c.heroTitle} max={120} />
       <F name="heroLead" label="Tekst under overskriften" value={c.heroLead} area max={300} />
@@ -217,10 +238,11 @@ async function HomeForm() {
 
 // ---------- Om klubben ----------
 
-async function AboutForm() {
-  const a = await getAbout();
+async function AboutForm({ loc }: { loc: Locale }) {
+  const a = await getAbout(loc);
   return (
-    <form action={saveAbout} className="stack card admin-form" encType="multipart/form-data">
+    <form action={saveAbout} className="stack card admin-form" encType="multipart/form-data" lang={loc}>
+      <input type="hidden" name="lang" value={loc} />
       <F name="title" label="Overskrift" value={a.title} max={120} />
       <F name="lead" label="Indledning" value={a.lead} area max={600} />
       <Img name="image" label="Billede" value={a.image} />
@@ -358,10 +380,11 @@ async function RoutesForm() {
 
 // ---------- Privatlivspolitik ----------
 
-async function PrivacyForm() {
-  const p = await getPrivacy();
+async function PrivacyForm({ loc }: { loc: Locale }) {
+  const p = await getPrivacy(loc);
   return (
     <form action={savePrivacy} className="stack card admin-form">
+      <input type="hidden" name="lang" value={loc} />
       <p className="muted" style={{ margin: 0 }}>
         Privatlivspolitikken beskriver, hvad systemet gemmer, og bruger automatisk klubbens navn, CVR og mail. Her kan I tilføje det, der
         gælder netop jeres klub, fx billeder fra stævner eller en kontaktperson.

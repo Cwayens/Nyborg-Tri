@@ -148,3 +148,4 @@ Alle otte, og 10 af de øvrige funktioner (Træn sammen, programmer til uret, Mi
 - [ ] Kalender-abonnement i Google og Apple Kalender.
 - [ ] Aflys en træning og tjek at den vises som aflyst i kalender og abonnement.
 - [ ] Fejlovervågning (fx Vercel Logs eller Sentry), så fejl opdages.
+- [ ] Skift til English nederst på siden og gennemgå forside, Om klubben og Bliv medlem. Skriv evt. egne engelske tekster under Admin → Klubben → English.

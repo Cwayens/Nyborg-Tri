@@ -72,6 +72,15 @@ Ud over atlet, træner og admin:
 - **Kasserer** (sættes på medlemmet under Admin → Medlemmer): betalinger, medlemstyper og medlemslisten (CSV), uden resten af administrationen.
 - **Frivillig** (sættes på medlemmet): står på listen over frivillige, og admin kan sende mail til alle frivillige.
 
+## 3c. Sprog
+
+Siden findes på dansk og engelsk. Den besøgende skifter sprog nederst på siden, og valget huskes i et år.
+
+- Menuer, knapper, kalender, tilmelding, profil, Træn sammen og chat er oversat i koden.
+- Forside, Om klubben og den ekstra tekst i privatlivspolitikken skriver I selv på engelsk under **Admin → Klubben → English**. Har I ikke gjort det, ser engelske besøgende jeres danske tekst, eller systemets engelske standardtekst, hvis I ikke har rettet den danske.
+- Er klubben international, kan engelsk være standard: sæt miljøvariablen `CLUB_LANG=en`.
+- Endnu kun på dansk: login-mails og andre mails, navne på medlemstyper, fejlbeskeder fra formularer, selve privatlivspolitikken (engelske besøgende får et kort resumé) og admin-området.
+
 ## 4. Funktioner
 
 Admin kan slå 18 funktioner til og fra under Admin → Funktioner. En ny klub kan starte med få og tænde flere senere.
