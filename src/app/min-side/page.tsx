@@ -16,6 +16,7 @@ import { WorkoutView } from "@/components/WorkoutView";
 import { isWorkout, referencesFrom } from "@/lib/workout";
 import { toggleSignup } from "../kalender/actions";
 import { GrowSection } from "@/components/GrowSection";
+import { TrophySection } from "@/components/TrophySection";
 import { featuresOff } from "@/lib/features";
 
 export const metadata = { title: "Overblik" };
@@ -129,6 +130,8 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
           )}
         </section>
       </div>
+
+      <TrophySection userId={user.id} />
 
       {!off.has("tests") && (
       <section className="card" style={{ marginTop: 18 }}>

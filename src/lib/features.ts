@@ -13,6 +13,7 @@ export const FEATURES = {
   tests: { group: "Træning", href: "/benchmarks", label: "Mine tests", text: "Testresultater fra uret (5 km, FTP, 100 m m.fl.) og trænernes oversigt over testresultater." },
   statistik: { group: "Træning", href: "/statistik", label: "Statistik", text: "Klubbens og medlemmets træningsstatistik." },
   leaderboard: { group: "Fællesskab", href: "/leaderboard", label: "Leaderboard", text: "Frivillig rangliste med årets bedste præstationer og mest fremgang." },
+  maerker: { group: "Fællesskab", label: "Mærker og titler", text: "Medlemmer får sjove titler og mærker efter, hvor mange træninger de har været med til. Vises kun for medlemmet selv." },
   chat: { group: "Fællesskab", href: "/chat", label: "Chat", text: "Gruppechat for holdene og hele klubben." },
   tempo: { group: "Bredden", label: "Tempogrupper", text: "Trænere kan dele en klubtræning i tempogrupper, og man vælger gruppe ved tilmelding." },
   makker: { group: "Bredden", href: "/makker", label: "Find en makker", text: "Medlemmer udfylder en makkerprofil og finder andre på samme niveau og tidspunkt." },
