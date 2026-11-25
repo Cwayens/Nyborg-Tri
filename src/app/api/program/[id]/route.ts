@@ -6,6 +6,7 @@ import { slugify } from "@/lib/athletes";
 import { workoutToFit, workoutToZwo } from "@/lib/fit";
 import { KIND_LABEL, isWorkout, parseText, personalTarget, referencesFrom } from "@/lib/workout";
 import { PLAN_SESSIONS } from "@/data/begynder";
+import { groupsFor } from "@/lib/visibility";
 
 // Træningsprogram som fil til uret (.fit) eller Zwift (.zwo), med medlemmets egne watt og tempi.
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -19,9 +20,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const plan = kilde === "forloeb" ? PLAN_SESSIONS.find((s) => s.id === id) : null;
   const t = plan
     ? { title: `Begynder ${plan.id.replace("u", "uge ").replace("-", " pas ")}`, discipline: plan.discipline, startsAt: new Date(), workout: parseText(plan.program) as unknown }
-    : kilde === "tur"
-      ? await prisma.groupWorkout.findUnique({ where: { id } })
-      : await prisma.trainingSession.findUnique({ where: { id } });
+    : kilde === "eget"
+      ? await prisma.plannedWorkout.findFirst({ where: { id, userId: session.user.id } }).then((p) => p && { ...p, startsAt: new Date(`${p.day}T12:00:00Z`) })
+      : kilde === "tur"
+      ? ((await isOn("traensammen")) ? await prisma.groupWorkout.findUnique({ where: { id } }) : null)
+      : await prisma.trainingSession.findFirst({ where: { id, group: { in: await groupsFor(session.user.id) } } });
   if (!t || !isWorkout(t.workout)) return new Response("Træningen har intet program", { status: 404 });
 
   const refs = referencesFrom(

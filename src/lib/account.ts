@@ -31,6 +31,7 @@ export async function exportUserData(userId: string) {
       challenges: { select: { joinedAt: true, challenge: { select: { title: true } } } },
       raceEntries: { select: { distance: true, ride: true, seats: true, rideFrom: true, race: { select: { name: true, date: true } } } },
       tips: { select: { title: true, publishedAt: true } },
+      plannedWorkouts: { select: { day: true, time: true, title: true, discipline: true, durationMin: true, description: true, source: true } },
     },
   });
   const contact = await prisma.contactMessage.findMany({ where: { email: user.email }, select: { topic: true, message: true, createdAt: true } });
@@ -66,6 +67,7 @@ export async function deleteAccount(userId: string): Promise<DeleteResult> {
     prisma.beginnerPlan.deleteMany({ where: { userId } }),
     prisma.challengeParticipant.deleteMany({ where: { userId } }),
     prisma.raceEntry.deleteMany({ where: { userId } }),
+    prisma.plannedWorkout.deleteMany({ where: { userId } }),
     prisma.contactMessage.deleteMany({ where: { email: user.email } }),
     prisma.account.deleteMany({ where: { userId } }),
     prisma.session.deleteMany({ where: { userId } }), // logger ud på alle enheder

@@ -28,3 +28,17 @@ test("farver: kun gyldige hex-værdier bruges, og kun ændrede kommer i CSS", ()
   assert.equal(c.colors.dark, "#2b323c");
   assert.equal(clubCss(c), ":root{--accent:#1D4ED8;--link:#1D4ED8;--club-dark:#1D4ED8}");
 });
+
+test("admin skifter navn: logo og kort navn følger med", async () => {
+  const { mergeClub } = await import("./club");
+  const c = mergeClub(clubFrom({}), { name: "Testklub Fyn", email: "", colors: { accent: "#123456", dark: "nej" } });
+  assert.equal(c.logoTop, "Testklub");
+  assert.equal(c.logoSub, "Fyn");
+  assert.equal(c.shortName, "Testklub Fyn");
+  assert.equal(c.email, ""); // en anden klub arver ikke Nyborgs mail
+  assert.equal(mergeClub(clubFrom({}), { email: "a@b.dk" }).email, "a@b.dk");
+  assert.equal(mergeClub(clubFrom({}), { cvr: "" }).cvr, "34371571"); // tomt felt beholder standarden
+  assert.equal(c.colors.accent, "#123456");
+  assert.equal(c.colors.dark, "#2b323c");
+  assert.equal(mergeClub(clubFrom({}), { name: "X", logoTop: "Egen" }).logoTop, "Egen");
+});

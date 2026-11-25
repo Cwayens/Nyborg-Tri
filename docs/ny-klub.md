@@ -11,7 +11,15 @@ Klubbens navn, logo, farver og kontaktoplysninger sættes som miljøvariabler, s
    og klubbens egen Stripe-konto (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`). Se `.env.example`.
 4. Kør migreringerne. Det sker automatisk ved første deploy.
 
-## 2. Klubbens identitet
+## 2. Opstartsguiden
+
+Log ind som admin og gå til **Admin → Kom i gang**. Den viser, hvad der mangler, med links til hvert trin:
+navn, logo og farver, forside, træningssteder og ruter, medlemstyper og priser, import af medlemmer fra Excel (CSV),
+trænere og bestyrelse, funktioner, Stripe og mail. Knappen "Ryd eksempelindholdet" fjerner Nyborgs tekster, steder og ruter.
+
+## 2a. Klubbens identitet som miljøvariabler (valgfrit)
+
+Navn, logo og farver kan også sættes som miljøvariabler. Det, admin gemmer under Admin → Klubben, vinder.
 
 | Variabel | Eksempel | Bruges til |
 |---|---|---|
@@ -27,16 +35,19 @@ Klubbens navn, logo, farver og kontaktoplysninger sættes som miljøvariabler, s
 
 Når `CLUB_NAME` er en anden end Nyborg, bruges ingen af Nyborgs kontaktoplysninger som standard.
 
-## 3. Det, der stadig er Nyborg-indhold
+## 3. Klubbens indhold
 
-Disse ting er indhold, ikke indstillinger, og skal skrives om for hver klub, indtil admin selv kan rette dem:
+Admin retter selv det meste under **Admin → Klubben**, uden at koden skal ændres:
 
-- Forsiden og Om klubben (historie, stævner, samarbejdspartnere): `src/app/page.tsx`, `src/app/om/page.tsx`
-- Træningssteder og ruter: `PLACES` i `src/lib/club.ts` og `src/data/ruter.json`
-- Begynderforløbet: `src/data/begynder.ts`
-- Privatlivspolitikken: `src/app/privatlivspolitik/page.tsx`
-- Menupunktet NyborgTri Cup: `src/lib/navigation.ts`
-- Ikoner til telefonen: `public/icon-*.png` og `public/apple-icon.png`
+- Navn, logo, farver og kontaktoplysninger (lægges oven på `CLUB_*`-variablerne)
+- Forsiden: overskrift, tekster, billeder, holdkort, spørgsmål og svar
+- Om klubben: indledning, fakta, historie, arkiv, samarbejdspartnere og billeder
+- Træningssteder (vises på Kontakt og på kortet)
+- Ruter: tilføj fra GPX-filer, ret og slet
+- Ekstra tekst i privatlivspolitikken
+
+Standardindholdet er Nyborgs og står i `src/data/site-default.ts`. Det, der stadig kræver en udvikler:
+begynderforløbet (`src/data/begynder.ts`), menupunktet NyborgTri Cup (`src/lib/navigation.ts`) og telefonikonerne (`public/icon-*.png`).
 
 ## 4. Funktioner
 

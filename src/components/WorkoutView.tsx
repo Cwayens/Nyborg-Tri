@@ -11,7 +11,7 @@ const MISSING: Partial<Record<Discipline, string>> = {
 };
 
 // Programmet trin for trin med atletens personlige watt eller tempo
-export async function WorkoutView({ workout, discipline, refs, downloadId, kind }: { workout: Workout; discipline: Discipline; refs: References | null; downloadId?: string; kind?: "tur" | "forloeb" }) {
+export async function WorkoutView({ workout, discipline, refs, downloadId, kind }: { workout: Workout; discipline: Discipline; refs: References | null; downloadId?: string; kind?: "tur" | "forloeb" | "eget" }) {
   const total = totalDuration(workout);
   const files = await isOn("urfiler");
   const anyTarget = workout.blocks.some((b) => b.steps.some((s) => personalTarget(discipline, s, refs ?? {})));

@@ -16,7 +16,10 @@ import { WorkoutView } from "@/components/WorkoutView";
 import { isWorkout, referencesFrom } from "@/lib/workout";
 import { toggleSignup } from "../kalender/actions";
 import { GrowSection } from "@/components/GrowSection";
-import { featuresOff } from "@/lib/features";
+import { TrophySection } from "@/components/TrophySection";
+import { featuresOff, isOn } from "@/lib/features";
+import { NOT_CHILD } from "@/lib/child-safety";
+import { groupsFor } from "@/lib/visibility";
 
 export const metadata = { title: "Overblik" };
 
@@ -34,19 +37,22 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     currentMembership(user.id),
     canSignUp(user.id),
     prisma.trainingSession.findMany({ where: { startsAt: { gte: now }, signups: { some: { userId: user.id } } }, orderBy: { startsAt: "asc" }, take: 5 }),
-    user.athleteGroup
+    user.athleteGroup && (await groupsFor(user.id)).includes(user.athleteGroup)
       ? prisma.trainingSession.findMany({
           where: { startsAt: { gte: now, lt: in7 }, group: user.athleteGroup },
           include: { signups: { include: { user: { select: { id: true, name: true } } } } }, orderBy: { startsAt: "asc" }, take: 6,
         })
       : Promise.resolve([]),
-    prisma.groupWorkout.findMany({
-      where: { startsAt: { gte: now } },
-      include: { participants: { include: { user: { select: { id: true, name: true } } } } }, orderBy: { startsAt: "asc" }, take: 4,
-    }),
+    // Træn sammen: ikke for børn, og voksne ser aldrig børn på listerne (child-safety.ts)
+    (await isOn("traensammen"))
+      ? prisma.groupWorkout.findMany({
+          where: { startsAt: { gte: now }, host: NOT_CHILD },
+          include: { participants: { where: { user: NOT_CHILD }, include: { user: { select: { id: true, name: true } } } } }, orderBy: { startsAt: "asc" }, take: 4,
+        })
+      : Promise.resolve([]),
     personalWeeks(user.id, 6),
     personalTotals(user.id, startOfWeek(now)),
-    prisma.trainingSession.count({ where: { startsAt: { gte: now, lte: endOfToday } } }),
+    prisma.trainingSession.count({ where: { startsAt: { gte: now, lte: endOfToday }, group: { in: await groupsFor(user.id) } } }),
     prisma.benchmarkResult.findMany({ where: { userId: user.id, ...FROM_WEARABLE }, select: { test: true, seconds: true, watts: true } }),
     prisma.post.findMany({ where: { published: true }, orderBy: { publishedAt: "desc" }, take: 3, select: { slug: true, title: true, publishedAt: true } }),
   ]);
@@ -132,6 +138,8 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
           )}
         </section>
       </div>
+
+      <TrophySection userId={user.id} />
 
       {!off.has("tests") && (
       <section className="card" style={{ marginTop: 18 }}>

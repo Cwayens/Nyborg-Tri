@@ -1,3 +1,4 @@
+import { NOT_CHILD } from "@/lib/child-safety";
 import Link from "next/link";
 import type { BenchmarkTest, Gender } from "@prisma/client";
 import { requireMember } from "@/auth";
@@ -31,7 +32,7 @@ export default async function Leaderboard({ searchParams }: Props) {
   const def = TEST_BY_KEY[test];
 
   const users = await prisma.user.findMany({
-    where: { leaderboard: true, gender, birthDate: { not: null } },
+    where: { leaderboard: true, gender, birthDate: { not: null }, ...NOT_CHILD },
     select: { id: true, name: true, gender: true, birthDate: true, weightKg: true },
   });
   const athletes = users.map((u) => ({ ...u, gender: u.gender!, birthDate: u.birthDate! }));

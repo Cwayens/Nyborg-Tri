@@ -8,7 +8,8 @@ import { canSignUp } from "@/lib/access";
 import { prisma } from "@/lib/db";
 import { parseLocal } from "@/lib/time";
 import { readProgram, workoutValue } from "@/lib/program-upload";
-import { totalDuration, type Workout } from "@/lib/workout";
+import { isWorkout, totalDuration, type Workout } from "@/lib/workout";
+import { requireFeature } from "@/lib/features";
 
 const schema = z.object({
   discipline: z.enum(["SWIM", "BIKE", "RUN", "STRENGTH", "OTHER"]),
@@ -24,37 +25,44 @@ const schema = z.object({
 
 export async function createWorkout(formData: FormData) {
   const user = await requireUser("/traen-sammen");
+  await requireFeature("traensammen"); // også lukket for børn
   if (!(await canSignUp(user.id))) redirect("/bliv-medlem?fejl=" + encodeURIComponent("Kun medlemmer kan slå træningsture op"));
+  const plannedId = String(formData.get("plannedId") ?? "").replace(/[^a-z0-9]/gi, "");
+  const back = `/traen-sammen?ny=1${plannedId ? `&fra=${plannedId}` : ""}&fejl=`;
   const r = schema.safeParse(Object.fromEntries([...formData.entries()].filter(([, v]) => typeof v === "string")));
-  if (!r.success) redirect("/traen-sammen?ny=1&fejl=" + encodeURIComponent(r.error.issues[0].message));
+  if (!r.success) redirect(back + encodeURIComponent(r.error.issues[0].message));
   const d = r.data;
+  // Delt fra eget program: programmet følger med fra den planlagte træning
+  const planned = plannedId ? await prisma.plannedWorkout.findFirst({ where: { id: plannedId, userId: user.id, sharedId: null } }) : null;
   let workout: Workout | undefined;
   try {
-    workout = await readProgram(formData, user.id);
+    workout = planned && isWorkout(planned.workout) ? planned.workout : await readProgram(formData, user.id);
   } catch (e) {
-    redirect("/traen-sammen?ny=1&fejl=" + encodeURIComponent(e instanceof Error ? e.message : "Programmet kunne ikke læses"));
+    redirect(back + encodeURIComponent(e instanceof Error ? e.message : "Programmet kunne ikke læses"));
   }
   // Titel, sport og varighed kan komme fra programmet (fx en TrainingPeaks-fil)
   const title = d.title || workout?.name?.trim() || "";
-  if (title.length < 2) redirect("/traen-sammen?ny=1&fejl=" + encodeURIComponent("Skriv hvad I skal"));
+  if (title.length < 2) redirect(back + encodeURIComponent("Skriv hvad I skal"));
   const discipline = workout?.sport ?? d.discipline;
   const programMin = workout ? Math.round((totalDuration(workout) ?? 0) / 60) : 0;
   const durationMin = formData.get("durationAuto") === "1" && programMin >= 10 ? Math.min(programMin, 600) : d.durationMin;
   const startsAt = parseLocal(`${d.date}T${d.time}`);
-  if (startsAt < new Date()) redirect("/traen-sammen?ny=1&fejl=" + encodeURIComponent("Tidspunktet er allerede passeret"));
-  await prisma.groupWorkout.create({
+  if (startsAt < new Date()) redirect(back + encodeURIComponent("Tidspunktet er allerede passeret"));
+  const created = await prisma.groupWorkout.create({
     data: {
       hostId: user.id, discipline, title, location: d.location, startsAt, durationMin, workout: workoutValue(workout),
       level: d.level || null, description: d.description || null, maxPeople: d.maxPeople ?? null,
       participants: { create: { userId: user.id } },
     },
   });
+  if (planned) await prisma.plannedWorkout.update({ where: { id: planned.id }, data: { sharedId: created.id } });
   revalidatePath("/traen-sammen");
   redirect("/traen-sammen?oprettet=1");
 }
 
 export async function toggleJoin(formData: FormData) {
   const user = await requireUser("/traen-sammen");
+  await requireFeature("traensammen");
   const workoutId = String(formData.get("id"));
   const w = await prisma.groupWorkout.findUnique({ where: { id: workoutId }, include: { _count: { select: { participants: true } } } });
   if (!w || w.startsAt < new Date()) return;

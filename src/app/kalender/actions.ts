@@ -6,6 +6,7 @@ import { auth } from "@/auth";
 import { canSignUp } from "@/lib/access";
 import { canJoinGroup } from "@/lib/roles";
 import { prisma } from "@/lib/db";
+import { calendarViewer } from "@/lib/visibility";
 
 export async function toggleSignup(formData: FormData) {
   const session = await auth();
@@ -21,8 +22,9 @@ export async function toggleSignup(formData: FormData) {
     if (!(await canSignUp(userId))) redirect("/bliv-medlem?fejl=" + encodeURIComponent("Du skal være medlem for at tilmelde dig træninger"));
     const training = await prisma.trainingSession.findUnique({ where: { id: sessionId }, select: { startsAt: true, group: true, cancelledAt: true, paceGroups: true } });
     if (!training || training.startsAt < new Date() || training.cancelledAt) return;
-    // Atleter kan kun tilmelde sig træninger for deres egen gruppe
-    if (!canJoinGroup(session.user, training.group)) return;
+    // Atleter kan kun tilmelde sig træninger for deres egen gruppe, og kun dem de må se (rolle og gruppe slås op i databasen)
+    const viewer = await calendarViewer(userId);
+    if (!viewer || !canJoinGroup(viewer, training.group, viewer.trial)) return;
     await prisma.trainingSignup.upsert({
       where: { sessionId_userId: { sessionId, userId } },
       update: {},

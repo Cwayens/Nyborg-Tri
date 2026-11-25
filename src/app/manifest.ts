@@ -1,8 +1,10 @@
 import type { MetadataRoute } from "next";
 import { CLUB } from "@/lib/club";
+import { refreshClub } from "@/lib/site";
 
 // Gør det muligt at lægge siden på telefonens hjemmeskærm som en app
-export default function manifest(): MetadataRoute.Manifest {
+export default async function manifest(): Promise<MetadataRoute.Manifest> {
+  await refreshClub();
   return {
     name: CLUB.name,
     short_name: CLUB.shortName,

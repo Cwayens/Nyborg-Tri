@@ -6,6 +6,7 @@ import { CHANNELS, CHANNEL_LABEL, ROOM_LABEL, canDeleteMessage, canPost, isChann
 import { formatDay, formatTime } from "@/lib/time";
 import { ChatIcon, DisciplineIcon, initials } from "@/components/Icons";
 import { AutoRefresh } from "./AutoRefresh";
+import { EmojiButton } from "@/components/EmojiButton";
 import { deleteMessage, postMessage } from "./actions";
 import { requireFeature } from "@/lib/features";
 
@@ -106,6 +107,7 @@ export default async function Chat({ searchParams }: Props) {
         <input type="hidden" name="channel" value={channel} />
         <label className="sr-only" htmlFor="besked">Besked til {ROOM_LABEL[room]} · {CHANNEL_LABEL[channel]}</label>
         <textarea id="besked" name="body" rows={2} maxLength={MAX_LENGTH} required placeholder={`Skriv til ${CHANNEL_LABEL[channel]} · ${ROOM_LABEL[room]}`} />
+        <EmojiButton target="besked" />
         <button className="button" type="submit">Send</button>
       </form>
       ) : (
