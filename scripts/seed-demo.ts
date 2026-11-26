@@ -3,12 +3,16 @@
  * Køres automatisk ved build, når DEMO_MODE=1. Kan køres igen – data genskabes.
  *   DEMO_MODE=1 npx tsx scripts/seed-demo.ts
  */
-import { PrismaClient, type AthleteGroup, type Discipline } from "@prisma/client";
+import type { AthleteGroup, Discipline } from "@prisma/client";
+import { prisma } from "../src/lib/db";
+import { createLedgerEntry } from "../src/lib/finance-db";
+import { ensureClubBasics } from "../src/lib/club-setup";
+import { currentClubId } from "../src/lib/tenant";
+import { withClub } from "./_klub";
 import { DEMO_USERS, demoEmail } from "../src/lib/demo";
 import { addWeeksLocal, parseLocal } from "../src/lib/time";
 import { parseText } from "../src/lib/workout";
 
-const prisma = new PrismaClient();
 const DAY = 24 * 3600 * 1000;
 
 function localDate(offsetDays: number): string {
@@ -38,6 +42,8 @@ const WEEKLY: { day: number; start: string; end: string; title: string; d: Disci
 ];
 
 async function main() {
+  await ensureClubBasics();
+  const clubId = await currentClubId();
   const types = Object.fromEntries((await prisma.membershipType.findMany()).map((t) => [t.code, t]));
   if (!types.ADULT) throw new Error("Kør prisma/seed.ts først (medlemstyper mangler)");
 
@@ -72,7 +78,7 @@ async function main() {
       leaderboard: !!d.gender && d.group !== "BOERN" && d.key !== "proeve",
       duties: d.duties ?? [],
     };
-    users[d.key] = await prisma.user.upsert({ where: { email: demoEmail(d.key) }, update: data, create: { email: demoEmail(d.key), ...data } });
+    users[d.key] = await prisma.user.upsert({ where: { clubId_email: { clubId, email: demoEmail(d.key) } }, update: data, create: { email: demoEmail(d.key), ...data } });
   }
   const admin = users.admin.id;
   const coach = users.traener.id;
@@ -189,7 +195,7 @@ async function main() {
   for (const [i, [name, g, by, f]] of MATES.entries()) {
     const email = `klubkammerat-${i + 1}@${"demo.nyborgtri.dk"}`;
     const data = { name, role: "ATHLETE" as const, athleteGroup: (f < 1.2 ? "ELITE" : "BREDDE") as AthleteGroup, gender: g, birthDate: new Date(`${by}-0${(i % 9) + 1}-15`), leaderboard: true, weightKg: g === "MALE" ? 66 + ((i * 7) % 22) : 54 + ((i * 5) % 16) };
-    const u = await prisma.user.upsert({ where: { email }, update: data, create: { email, ...data } });
+    const u = await prisma.user.upsert({ where: { clubId_email: { clubId, email } }, update: data, create: { email, ...data } });
     mates.push({ id: u.id, g, f, seed: i + 3 });
   }
 
@@ -329,15 +335,19 @@ async function main() {
     const sponsor = await prisma.sponsor.findFirst({ orderBy: { sortOrder: "asc" }, select: { id: true } });
     for (const [m, d, kind, category, amountOre, text, counterparty] of LEDGER) {
       if (day(m, d) > now) continue;
-      await prisma.ledgerEntry.create({ data: { date: day(m, d), kind, category, amountOre, text, counterparty, sponsorId: category === "SPONSOR" ? sponsor?.id ?? null : null, createdById: users.kasserer.id } });
+      await createLedgerEntry({ date: day(m, d), kind, category, amountOre, text, counterparty, sponsorId: category === "SPONSOR" ? sponsor?.id ?? null : null, createdById: users.kasserer.id });
     }
     const BUDGET: Record<string, number> = { KONTINGENT: 9000000, SPONSOR: 1500000, TILSKUD: 1200000, STAEVNE_IND: 2000000, SALG: 500000, BANELEJE: 3800000, FORBUND: 650000, TRAENER: 800000, STAEVNE_UD: 1500000, UDSTYR: 800000, ARRANGEMENT: 500000, ADMIN: 150000 };
     for (const [category, amountOre] of Object.entries(BUDGET)) {
-      await prisma.budgetLine.upsert({ where: { year_category: { year, category } }, update: {}, create: { year, category, amountOre } });
+      await prisma.budgetLine.upsert({ where: { clubId_year_category: { clubId, year, category } }, update: {}, create: { year, category, amountOre } });
     }
   }
 
   console.log(`Demodata oprettet: ${DEMO_USERS.length} testbrugere, ${created.length} træninger`);
 }
 
-main().finally(() => prisma.$disconnect());
+// Klubben vælges med --klub=<slug> (standard: standardklubben), fx: npx tsx scripts/seed-demo.ts --klub=demo
+withClub(() => main()).catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

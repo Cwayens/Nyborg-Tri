@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 import { VISIBLE_ATHLETE, instagramUrl, lines } from "@/lib/athletes";
 import { AthletePhoto } from "@/components/AthleteCard";
 import { requireFeature } from "@/lib/features";
-import { CLUB } from "@/lib/club";
+import { getClub } from "@/lib/site";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -22,6 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function AthletePage({ params }: Props) {
+  const CLUB = await getClub();
   await requireFeature("atleter");
   const a = await load((await params).slug);
   if (!a) notFound();

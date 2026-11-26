@@ -1,5 +1,5 @@
 import { sendMail } from "./mail";
-import { CLUB } from "@/lib/club";
+import { getClub } from "@/lib/site";
 
 // Mail til den driftsansvarlige (ALERT_EMAIL), når noget går galt på serveren.
 // Samme fejl mailes højst én gang i timen pr. server, så en fejl i løkke ikke fylder indbakken.
@@ -16,5 +16,6 @@ export async function alert(subject: string, error: unknown, context?: string): 
   if ((lastSent.get(key) ?? 0) > now - QUIET_MS) return;
   lastSent.set(key, now);
   const stack = error instanceof Error && error.stack ? `\n\n${error.stack.split("\n").slice(0, 8).join("\n")}` : "";
-  await sendMail(to, `[${CLUB.shortName}] ${subject}`, `${msg}${context ? `\n\nHvor: ${context}` : ""}${stack}\n\nSe hele loggen i Vercel → Logs.`);
+  const club = await getClub().catch(() => null);
+  await sendMail(to, `[${club?.shortName ?? "Platform"}] ${subject}`, `${msg}${context ? `\n\nHvor: ${context}` : ""}${stack}\n\nSe hele loggen i Vercel → Logs.`);
 }

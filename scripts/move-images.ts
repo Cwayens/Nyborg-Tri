@@ -9,10 +9,10 @@
  *
  * Kør det efter sidste WordPress-import (ellers lægger importen de gamle adresser ind igen).
  */
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../src/lib/db";
+import { withClub } from "./_klub";
 import { blobEnabled, optimize, storeFile } from "../src/lib/upload";
 
-const prisma = new PrismaClient();
 const DRY = process.env.DRY_RUN === "1";
 const WP_URL = /https?:\/\/(?:www\.)?nyborgtri\.dk\/(?:wordpress\/|mhc\/wp\/)?wp-content\/uploads\/[^\s"'<>)]+/gi;
 const IMAGE = /\.(jpe?g|png|gif|webp)$/i;
@@ -90,4 +90,5 @@ async function main() {
   console.log(DRY ? `Prøvekørsel: ${done.size} filer fra WordPress ville blive flyttet` : `Færdig: ${n} rækker opdateret, ${done.size} filer flyttet fra WordPress`);
 }
 
-main().catch((e) => { console.error(e); process.exit(1); }).finally(() => prisma.$disconnect());
+// Klubben vælges med --klub=<slug> (standard: standardklubben)
+withClub(() => main()).catch((e) => { console.error(e); process.exit(1); });

@@ -10,7 +10,7 @@ Sæt `[x]`, når et punkt er klaret.
 - [ ] Gennemgå hvem der har adgang til Vercel, GitHub, databasen og Stripe (mindst 2 fra bestyrelsen, så klubben ikke afhænger af én person).
 - [ ] **Slå testbrugere fra**: fjern `DEMO_MODE` i Vercel, redeploy, og slet testdata med `npm run db:demo -- --slet` (fjerner alle brugere på @demo.nyborgtri.dk og deres træninger, aktiviteter og koder).
 - [ ] **2-trins-login** (to-faktor) på Vercel, GitHub, Neon, Stripe og mailudbyderen for alle med adgang. Den, der har adgang til én af dem, kan læse alle medlemmers data.
-- [ ] Sæt **`AUTH_URL`** til sidens rigtige adresse (fx `https://nyborgtri.dk`), så links i mails og betalinger altid peger på klubbens domæne.
+- [ ] Sæt **ikke** `AUTH_URL` (fjern den, hvis den findes): alle klubber kører fra samme installation, og adressen tages fra domænet. Sæt i stedet `PLATFORM_DOMAIN` og `CLUB_SECRETS_KEY` (se docs/ny-klub.md).
 - [ ] **Opgrader afhængigheder** (Prisma 7, Next.js 16, Zod 4, @vercel/blob 2). `npm audit` viser kendte, mindre alvorlige huller, som kræver større opgraderinger. Planlæg det efter go-live, og kør `npm audit` hver måned.
 - [ ] **Vercel-plan**: Hobby-planen er kun til ikke-kommerciel brug. Tjek om klubben (med betalinger) skal på Pro, eller om en anden hosting passer bedre.
 
@@ -57,7 +57,7 @@ Sæt `[x]`, når et punkt er klaret.
 - [ ] Overvej en Content-Security-Policy, når billeder er flyttet til egen lagring.
 
 - [ ] Peg **nyborgtri.dk** og www.nyborgtri.dk på Vercel (DNS hos den nuværende udbyder).
-- [ ] Opdater `AUTH_URL` til `https://www.nyborgtri.dk` og Stripe-webhook til det nye domæne.
+- [ ] Tjek at `nyborgtri.dk` og `www.nyborgtri.dk` står som Nyborgs domæner (`npm run klub -- liste`), og flyt Stripe-webhooken til det nye domæne.
 - [ ] Behold WordPress på et underdomæne i en overgangsperiode, til alt er flyttet.
 
 ## GDPR og privatliv
@@ -142,7 +142,7 @@ Alle otte, og 10 af de øvrige funktioner (Træn sammen, programmer til uret, Mi
 ## Andre klubber (senere)
 
 - [ ] Beslut ejerskab af selskabet (ApS) og aftalen med NyborgTri. Se planen "Platformen til andre klubber".
-- [ ] Hver ny klub sættes op som egen installation efter `docs/ny-klub.md`.
+- [ ] Nye klubber oprettes i samme installation med `npm run klub -- opret` efter `docs/ny-klub.md`.
 - [ ] Spørg Strava om en større kvote, før flere klubber bruger samme Strava-app.
 
 ## Kommunikation

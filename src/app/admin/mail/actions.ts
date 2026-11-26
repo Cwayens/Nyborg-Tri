@@ -5,7 +5,7 @@ import { requireTeamStaff } from "@/lib/staff";
 import { prisma } from "@/lib/db";
 import { audiencesFor, mailFooter, recipients, sendBulk, type MailKind } from "@/lib/bulkmail";
 import { sendMail } from "@/lib/mail";
-import { CLUB } from "@/lib/club";
+import { getClub } from "@/lib/site";
 
 export async function sendGroupMail(formData: FormData) {
   const user = await requireTeamStaff("/admin/mail");
@@ -19,7 +19,8 @@ export async function sendGroupMail(formData: FormData) {
   if (user.role === "TRAINER" && !a!.trainerAllowed) back("fejl=" + encodeURIComponent("Trænere kan kun skrive til et hold eller til trænerne"));
   if (subject.length < 3 || body.length < 10) back("fejl=" + encodeURIComponent("Skriv både emne og besked"));
 
-  const text = `${body}\n\nVenlig hilsen\n${user.name ?? CLUB.name}${mailFooter(kind)}`;
+  const CLUB = await getClub();
+  const text = `${body}\n\nVenlig hilsen\n${user.name ?? CLUB.name}${mailFooter(kind, CLUB)}`;
   if (formData.get("intent") === "test") {
     const ok = await sendMail(user.email!, `[Test] ${subject}`, text);
     back(ok ? "test=1" : "fejl=" + encodeURIComponent("Testmailen kunne ikke sendes. Tjek mailserveren under Drift."));

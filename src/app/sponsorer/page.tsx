@@ -2,11 +2,15 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { requireFeature } from "@/lib/features";
-import { CLUB } from "@/lib/club";
+import { getClub } from "@/lib/site";
 
-export const metadata = { title: "Sponsorer", description: `Virksomhederne bag ${CLUB.name}, og de fordele medlemmerne får.` };
+export async function generateMetadata() {
+  const CLUB = await getClub();
+  return { title: "Sponsorer", description: `Virksomhederne bag ${CLUB.name}, og de fordele medlemmerne får.` };
+}
 
 export default async function Sponsors() {
+  const CLUB = await getClub();
   await requireFeature("sponsorer");
   const member = !!(await auth())?.user;
   const sponsors = await prisma.sponsor.findMany({ where: { active: true }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }] });

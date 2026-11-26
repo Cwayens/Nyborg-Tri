@@ -22,7 +22,8 @@ test("personlige mål i FIT-enheder", () => {
 });
 
 test(".zwo med intervaller", () => {
-  const z = workoutToZwo(parseText("5x(4min 105%, 3min 55%)"), "Test & co", "BIKE");
+  const z = workoutToZwo(parseText("5x(4min 105%, 3min 55%)"), "Test & co", "BIKE", "Klub <A&B>");
+  assert.match(z, /<author>Klub &lt;A&amp;B&gt;<\/author>/);
   assert.match(z, /<IntervalsT Repeat="5" OnDuration="240" OffDuration="180" OnPower="1.05" OffPower="0.55"\/>/);
   assert.match(z, /<name>Test &amp; co<\/name>/);
 });

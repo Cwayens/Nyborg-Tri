@@ -9,6 +9,7 @@ import { readMembers, type ImportRow } from "@/lib/member-import";
 import { defaultGroupFor } from "@/lib/roles";
 import { matchTeam } from "@/lib/teams";
 import { getTeams } from "@/lib/visibility";
+import { currentClubId } from "@/lib/tenant";
 
 const key = (adminId: string) => `import_preview_${adminId}`;
 const fail = (msg: string): never => redirect(`/admin/import?fejl=${encodeURIComponent(msg)}`);
@@ -24,7 +25,7 @@ export async function previewImport(fd: FormData) {
   const r = readMembers(await file.text());
   if (r.missing.length) fail(r.missing.join(". "));
   const v = { rows: r.rows, mapped: r.mapped, name: file.name } as unknown as Prisma.InputJsonValue;
-  await prisma.setting.upsert({ where: { key: key(admin.id) }, update: { value: v }, create: { key: key(admin.id), value: v } });
+  await prisma.setting.upsert({ where: { clubId_key: { clubId: await currentClubId(), key: key(admin.id) } }, update: { value: v }, create: { key: key(admin.id), value: v } });
   redirect("/admin/import?vis=1");
 }
 
@@ -37,7 +38,7 @@ export async function cancelImport() {
 /** Trin 2: opret medlemmerne. Findes mailen allerede, springes rækken over, så intet overskrives. */
 export async function runImport() {
   const admin = await requireAdmin();
-  const saved = await prisma.setting.findUnique({ where: { key: key(admin.id) } });
+  const saved = await prisma.setting.findFirst({ where: { key: key(admin.id) } });
   const rows = ((saved?.value as { rows?: ImportRow[] } | null)?.rows ?? []).filter((r) => r.errors.length === 0);
   if (!rows.length) fail("Der er ingen rækker at importere");
   const types = await prisma.membershipType.findMany();

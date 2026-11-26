@@ -7,6 +7,7 @@ import { workoutToFit, workoutToZwo } from "@/lib/fit";
 import { KIND_LABEL, isWorkout, parseText, personalTarget, referencesFrom } from "@/lib/workout";
 import { PLAN_SESSIONS } from "@/data/begynder";
 import { teamsFor } from "@/lib/visibility";
+import { getClub } from "@/lib/site";
 
 // Træningsprogram som fil til uret (.fit) eller Zwift (.zwo), med medlemmets egne watt og tempi.
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -37,7 +38,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
   if (format === "zwo") {
     if (t.discipline === "SWIM") return new Response("Svømning kan ikke hentes som .zwo", { status: 400 });
-    return new Response(workoutToZwo(t.workout, name, t.discipline), {
+    return new Response(workoutToZwo(t.workout, name, t.discipline, (await getClub()).name), {
       headers: { "Content-Type": "application/xml; charset=utf-8", "Content-Disposition": `attachment; filename="${file}.zwo"` },
     });
   }

@@ -1,6 +1,5 @@
 import { randomInt } from "node:crypto";
-import type { Prisma } from "@prisma/client";
-import { prisma } from "./db";
+import { prisma, type Tx } from "./db";
 import { latestMembershipEnd } from "./membership";
 
 export const TRIAL_DAYS = 14;
@@ -54,7 +53,7 @@ export function addDays(d: Date, days: number): Date {
 
 /** Medlemskab uden betaling. Starter i dag, eller i forlængelse af et eksisterende medlemskab. */
 export async function grantMembership(
-  tx: Prisma.TransactionClient,
+  tx: Tx,
   args: { userId: string; typeId: string; days: number; source: "TRIAL" | "CODE" | "MANUAL" },
 ) {
   const now = new Date();
@@ -83,7 +82,7 @@ export type RedeemResult = { ok: true; endDate: Date } | { ok: false; error: str
 export async function redeemCode(userId: string, input: string): Promise<RedeemResult> {
   const code = normalizeCode(input);
   return prisma.$transaction(async (tx) => {
-    const found = await tx.accessCode.findUnique({ where: { code } });
+    const found = await tx.accessCode.findFirst({ where: { code } });
     if (!found) return { ok: false, error: "Koden findes ikke" };
     if (found.usedById) return { ok: false, error: "Koden er allerede brugt" };
     if (await tx.accessCode.findUnique({ where: { usedById: userId } })) {

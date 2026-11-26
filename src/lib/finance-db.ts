@@ -82,3 +82,19 @@ export async function exportRows(year: number): Promise<ExportRow[]> {
   ];
   return rows.sort((a, b) => a.date.localeCompare(b.date));
 }
+
+/**
+ * Opretter en postering med næste bilagsnummer i klubben. Bilagsnumre er fortløbende pr. klub; opretter to personer
+ * en postering samtidig, får den ene en dublet-fejl fra databasen og prøver igen med næste nummer.
+ */
+export async function createLedgerEntry(data: Omit<Parameters<typeof prisma.ledgerEntry.create>[0]["data"], "voucherNo">) {
+  for (let attempt = 0; ; attempt++) {
+    const max = await prisma.ledgerEntry.aggregate({ _max: { voucherNo: true } });
+    try {
+      return await prisma.ledgerEntry.create({ data: { ...data, voucherNo: (max._max.voucherNo ?? 0) + 1 } as Parameters<typeof prisma.ledgerEntry.create>[0]["data"] });
+    } catch (e) {
+      if (attempt < 4 && (e as { code?: string }).code === "P2002") continue;
+      throw e;
+    }
+  }
+}

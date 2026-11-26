@@ -2,12 +2,13 @@ import { prisma } from "@/lib/db";
 import { baseUrl } from "@/lib/url";
 import { buildIcs, type IcsEvent } from "@/lib/ics";
 import { DISCIPLINE_LABEL } from "@/lib/roles";
-import { CLUB } from "@/lib/club";
+import { getClub } from "@/lib/site";
 import { teamsFor } from "@/lib/visibility";
 import { isChild } from "@/lib/child-safety";
 
 // Personligt kalender-abonnement: dine tilmeldte træninger, dit holds træninger og Træn sammen-ture.
 export async function GET(_req: Request, { params }: { params: Promise<{ token: string }> }) {
+  const CLUB = await getClub();
   const { token } = await params;
   const user = await prisma.user.findUnique({ where: { calendarToken: token.replace(/\.ics$/, "") } });
   if (!user) return new Response("Not found", { status: 404 });
@@ -38,7 +39,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
       title: `Træn sammen – ${DISCIPLINE_LABEL[w.discipline]}: ${w.title}`, description: w.description ?? undefined, url: `${base}/traen-sammen`,
     })),
   ];
-  return new Response(buildIcs(`${CLUB.shortName} – min træning`, events), {
+  return new Response(buildIcs(`${CLUB.shortName} – min træning`, events, CLUB), {
     headers: { "Content-Type": "text/calendar; charset=utf-8", "Cache-Control": "private, max-age=900" },
   });
 }

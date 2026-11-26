@@ -8,11 +8,14 @@ import { MenuCloser } from "@/components/MenuCloser";
 import { demoEnabled } from "@/lib/demo";
 import "./globals.css";
 import { hiddenHrefs } from "@/lib/features";
-import { CLUB, clubCss } from "@/lib/club";
-import { refreshClub } from "@/lib/site";
+import { clubCss } from "@/lib/club";
+import { getClub } from "@/lib/site";
+
+// Hver side afhænger af domænet (klubben), så intet må bygges statisk og deles mellem klubber
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
-  await refreshClub();
+  const CLUB = await getClub();
   return {
     title: { default: CLUB.name, template: `%s · ${CLUB.name}` },
     description: CLUB.tagline,
@@ -22,14 +25,14 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export async function generateViewport(): Promise<Viewport> {
-  await refreshClub();
+  const CLUB = await getClub();
   return { themeColor: CLUB.colors.theme, width: "device-width", initialScale: 1 };
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  await refreshClub();
+  const CLUB = await getClub();
   const hidden = await hiddenHrefs();
-  const css = clubCss();
+  const css = clubCss(CLUB);
   const loc = await getLocale();
   const t = translator(loc);
   return (
@@ -37,7 +40,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       {css && <head><style dangerouslySetInnerHTML={{ __html: css }} /></head>}
       <body>
         <a href="#indhold" className="skip">{t("Spring til indhold", "Skip to content")}</a>
-        {demoEnabled() && (
+        {(await demoEnabled()) && (
           <div className="demo-banner">{t("Testversion med testbrugere", "Test version with test users")} · <Link href="/login">{t("Skift bruger", "Switch user")}</Link></div>
         )}
         <Header />

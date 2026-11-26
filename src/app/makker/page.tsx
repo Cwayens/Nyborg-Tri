@@ -7,12 +7,13 @@ import { DISCIPLINE_LABEL } from "@/lib/roles";
 import { TIMES, matchBuddy, minSec, type Time } from "@/lib/buddy";
 import { DisciplineIcon, initials } from "@/components/Icons";
 import { removeBuddy, saveBuddy } from "./actions";
-import { CLUB } from "@/lib/club";
+import { getClub } from "@/lib/site";
 import { adultFilter, isChild } from "@/lib/guardian";
 
 export const metadata = { title: "Find en makker" };
 
 export default async function Buddies({ searchParams }: { searchParams: Promise<{ gemt?: string; fejl?: string; ret?: string }> }) {
+  const CLUB = await getClub();
   const user = await requireMember("/makker");
   await requireFeature("makker");
   const { gemt, fejl, ret } = await searchParams;

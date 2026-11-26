@@ -13,7 +13,7 @@ type Props = { searchParams: Promise<{ vis?: string; fejl?: string; oprettet?: s
 export default async function ImportMembers({ searchParams }: Props) {
   const admin = await requireAdmin();
   const sp = await searchParams;
-  const saved = sp.vis ? await prisma.setting.findUnique({ where: { key: `import_preview_${admin.id}` } }) : null;
+  const saved = sp.vis ? await prisma.setting.findFirst({ where: { key: `import_preview_${admin.id}` } }) : null;
   const data = saved?.value as { rows: ImportRow[]; mapped: ImportField[]; name: string } | undefined;
   const teams = await getTeams();
   const teamOf = (r: ImportRow) => (r.groupText && matchTeam(r.groupText, teams)) || (r.group && teams.find((t) => t.active && t.kind === r.group)) || null;

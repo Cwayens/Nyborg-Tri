@@ -10,7 +10,7 @@ import { userTypeLabel } from "@/lib/roles";
 import { isEmail, needsGuardian } from "@/lib/guardian";
 import { deleteMyAccount } from "./actions";
 import { featuresOff } from "@/lib/features";
-import { CLUB } from "@/lib/club";
+import { getClub } from "@/lib/site";
 import { getLocale, translator } from "@/lib/i18n";
 
 export async function generateMetadata() {
@@ -53,6 +53,7 @@ async function saveProfile(formData: FormData) {
 }
 
 export default async function Profile({ searchParams }: { searchParams: Promise<{ fejl?: string; gemt?: string; velkommen?: string }> }) {
+  const CLUB = await getClub();
   const sessionUser = await requireUser("/profil");
   const { fejl, gemt, velkommen } = await searchParams;
   const user = await prisma.user.findUniqueOrThrow({ where: { id: sessionUser.id }, include: { athleteProfile: { select: { id: true } }, team: { select: { name: true, branch: { select: { name: true } } } } } });

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
 import { baseUrl } from "@/lib/url";
 import { kr } from "@/lib/format";
-import { CLUB } from "@/lib/club";
+import { getClub } from "@/lib/site";
 
 // Betalingslink til forælder/værge. Kræver ikke login: linket er hemmeligt og sendes kun til værgens e-mail.
 export const metadata = { title: "Betal kontingent", robots: { index: false } };
@@ -15,11 +15,12 @@ async function findPayment(token: string) {
 
 async function pay(formData: FormData) {
   "use server";
+  const CLUB = await getClub();
   const token = String(formData.get("token"));
   const p = await findPayment(token);
   if (!p || p.status === "PAID" || p.status === "REFUNDED" || !p.typeId) notFound();
   const base = await baseUrl();
-  const session = await stripe().checkout.sessions.create({
+  const session = await (await stripe()).checkout.sessions.create({
     mode: "payment",
     customer_email: p.payLinkSentTo ?? p.user.guardianEmail ?? undefined,
     locale: "da",
@@ -42,6 +43,7 @@ async function pay(formData: FormData) {
 }
 
 export default async function PayPage({ params, searchParams }: { params: Promise<{ token: string }>; searchParams: Promise<{ ok?: string }> }) {
+  const CLUB = await getClub();
   const { token } = await params;
   const { ok } = await searchParams;
   const p = await findPayment(token);

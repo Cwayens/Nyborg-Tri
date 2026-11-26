@@ -1,7 +1,9 @@
 import { cache } from "react";
 import type { Discipline, Prisma } from "@prisma/client";
 import { prisma } from "./db";
-import { PLACES, applyClubOverrides, type ClubOverrides, type Place } from "./club";
+import { PLACES, baseClub, mergeClub, type ClubConfig, type ClubOverrides, type Place } from "./club";
+import { currentClub, currentClubId, defaultClubSlug } from "./tenant";
+import { clubEnv } from "./club-secrets";
 import { ROUTES, type Route } from "./routes";
 import type { Locale } from "./i18n-core";
 import { DEFAULT_ABOUT, DEFAULT_ABOUT_EN, DEFAULT_HOME, DEFAULT_HOME_EN, DEFAULT_PRIVACY, type AboutContent, type HomeContent, type PrivacyContent } from "@/data/site-default";
@@ -34,19 +36,40 @@ export function overlay<T extends object>(base: T, saved: unknown): T {
 const load = cache(async () => {
   const rows = await prisma.setting.findMany({ where: { key: { in: Object.values(SITE_KEYS) } } }).catch(() => []);
   const get = (k: Key) => rows.find((r) => r.key === SITE_KEYS[k])?.value;
-  applyClubOverrides(obj(get("club")) as ClubOverrides | null);
-  lastLoad = Date.now();
   return { get };
 });
 
-let lastLoad = 0;
+// Klubbens oplysninger gemmes et halvt minut pr. klub, så sider og mails ikke spørger databasen hver gang
+const clubCache = new Map<string, { club: ClubConfig; at: number }>();
 
-/** Henter klubbens oplysninger fra databasen, så CLUB er opdateret. Kaldes af layoutet og ved opstart. */
-export async function refreshClub(force = false): Promise<void> {
-  if (!force && Date.now() - lastLoad < 30_000) return;
-  const row = await prisma.setting.findUnique({ where: { key: SITE_KEYS.club } }).catch(() => null);
-  applyClubOverrides(obj(row?.value) as ClubOverrides | null);
-  lastLoad = Date.now();
+/**
+ * Den aktuelle klubs navn, logo, farver og kontaktoplysninger: udgangspunktet (se baseClub) med det, admin har gemt
+ * under Admin → Klubben, ovenpå. Ændringer slår igennem inden for et halvt minut uden ny udgivelse.
+ */
+export async function getClub(): Promise<ClubConfig> {
+  const club = await currentClub();
+  const hit = clubCache.get(club.id);
+  if (hit && Date.now() - hit.at < 30_000) return hit.club;
+  const row = await prisma.setting.findFirst({ where: { key: SITE_KEYS.club } }).catch(() => null);
+  const merged = mergeClub(baseClub(club, club.slug === defaultClubSlug()), obj(row?.value) as ClubOverrides | null);
+  clubCache.set(club.id, { club: merged, at: Date.now() });
+  return merged;
+}
+
+/** Klubbens udgangspunkt (før admins ændringer), fx til pladsholdere i Admin → Klubben. */
+export async function getClubBase(): Promise<ClubConfig> {
+  const club = await currentClub();
+  return baseClub(club, club.slug === defaultClubSlug());
+}
+
+/** Glem den gemte udgave af klubbens oplysninger (efter admin har ændret dem). */
+export async function forgetClubConfig(): Promise<void> {
+  clubCache.delete(await currentClubId());
+}
+
+/** Hvor kontaktformularen sendes hen: klubbens CONTACT_EMAIL, ellers klubbens mail. */
+export async function contactInbox(): Promise<string> {
+  return (await clubEnv("CONTACT_EMAIL")) || (await getClub()).email;
 }
 
 
@@ -89,8 +112,9 @@ export async function getHomePlace(): Promise<Place | null> {
 
 export async function saveSite(key: Key, value: unknown): Promise<void> {
   const v = value as Prisma.InputJsonValue;
-  await prisma.setting.upsert({ where: { key: SITE_KEYS[key] }, update: { value: v }, create: { key: SITE_KEYS[key], value: v } });
-  if (key === "club") applyClubOverrides(obj(value) as ClubOverrides);
+  const clubId = await currentClubId();
+  await prisma.setting.upsert({ where: { clubId_key: { clubId, key: SITE_KEYS[key] } }, update: { value: v }, create: { key: SITE_KEYS[key], value: v } });
+  if (key === "club") clubCache.delete(clubId);
 }
 
 // ---------- Ruter ----------
@@ -106,7 +130,7 @@ export const getRoutes = cache(async (): Promise<Route[]> => {
 /** Første gang admin ændrer ruterne, kopieres standardruterne ind, så de kan rettes og slettes. */
 export async function ensureRoutesCopied(): Promise<void> {
   if ((await prisma.clubRoute.count()) > 0) return;
-  if (obj((await prisma.setting.findUnique({ where: { key: SITE_KEYS.routes } }))?.value)?.useDefault === false) return;
+  if (obj((await prisma.setting.findFirst({ where: { key: SITE_KEYS.routes } }))?.value)?.useDefault === false) return;
   await prisma.clubRoute.createMany({
     data: ROUTES.map((r, i) => ({ id: r.id, name: r.name, sport: r.sport, tag: r.tag, desc: r.desc, km: r.km, pts: r.pts as unknown as Prisma.InputJsonValue, sortOrder: i })),
     skipDuplicates: true,

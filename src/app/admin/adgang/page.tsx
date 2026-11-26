@@ -18,7 +18,7 @@ async function decideTrial(formData: FormData) {
     await tx.trialRequest.update({ where: { id }, data: { status: approve ? "APPROVED" : "REJECTED", decidedAt: new Date(), decidedById: admin.id } });
     if (approve) {
       const code = req.user.athleteGroup === "BOERN" ? "YOUTH" : "ADULT";
-      const type = await tx.membershipType.findUniqueOrThrow({ where: { code } });
+      const type = await tx.membershipType.findFirstOrThrow({ where: { code } });
       await grantMembership(tx, { userId: req.userId, typeId: type.id, days: TRIAL_DAYS, source: "TRIAL" });
       if (!req.user.athleteGroup) await tx.user.update({ where: { id: req.userId }, data: { athleteGroup: "BREDDE" } });
     }

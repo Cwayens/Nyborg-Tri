@@ -1,11 +1,12 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { MonthCalendar, type CalendarParams } from "@/components/MonthCalendar";
-import { CLUB } from "@/lib/club";
+import { getClub } from "@/lib/site";
 
 import { tr } from "@/lib/i18n";
 
 export async function generateMetadata() {
+  const CLUB = await getClub();
   const t = await tr();
   return { title: t("Træning", "Training"), description: t(`Se ${CLUB.name}s træninger i svøm, cykel og løb, og prøv gratis i 14 dage.`, `See ${CLUB.name}'s swim, bike and run trainings, and try free for 14 days.`) };
 }

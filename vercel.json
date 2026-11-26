@@ -1,4 +1,5 @@
 {
+  "regions": ["fra1"],
   "crons": [
     { "path": "/api/cron/efforts", "schedule": "30 3 * * *" },
     { "path": "/api/cron/backup", "schedule": "15 2 * * *" }

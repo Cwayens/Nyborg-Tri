@@ -4,7 +4,7 @@ import { billingEmail } from "./guardian";
 import { sendMail } from "./mail";
 import { GROUP_LABEL } from "./roles";
 import { getBranches, getTeams } from "./visibility";
-import { CLUB } from "@/lib/club";
+import type { ClubConfig } from "@/lib/club";
 
 // Mail til hold og medlemmer. Børn under 18 får mailen gennem deres forælder/værge.
 
@@ -57,7 +57,7 @@ export async function recipients(audience: Audience, kind: MailKind, now = new D
   return [...new Set(users.map((u) => billingEmail(u, now).toLowerCase()).filter((e) => !e.endsWith(".invalid")))];
 }
 
-export function mailFooter(kind: MailKind): string {
+export function mailFooter(kind: MailKind, CLUB: ClubConfig): string {
   return kind === "NEWS"
     ? `\n\n—\nDu får denne mail, fordi du er medlem af ${CLUB.name}. Vil du ikke have nyheder på mail, kan du slå det fra under Min profil${CLUB.domain ? ` på ${CLUB.domain}` : ""}.`
     : `\n\n—\nVigtig besked fra ${CLUB.name} til medlemmer.`;

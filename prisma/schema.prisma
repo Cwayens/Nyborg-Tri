@@ -29,12 +29,69 @@ enum AthleteGroup {
   BOERN
 }
 
+// ---------- Klubber (flere klubber i samme database) ----------
+
+/// En klub på platformen. Alle andre tabeller (undtagen Account) har clubId, og src/lib/db.ts sørger for,
+/// at en forespørgsel kun ser den aktuelle klubs rækker. Klubben findes ud fra domænet (src/lib/tenant.ts).
+model Club {
+  id        String   @id @default(cuid())
+  slug      String   @unique // fx "nyborg"; giver adressen <slug>.<PLATFORM_DOMAIN>
+  name      String
+  domains   String[] @default([]) // egne domæner, fx ["nyborgtri.dk", "www.nyborgtri.dk"]
+  secrets   String?  @db.Text // krypterede nøgler (Stripe, e-conomic m.fl.), se src/lib/club-secrets.ts
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  users                    User[]
+  sessions                 Session[]
+  verificationTokens       VerificationToken[]
+  membershipTypes          MembershipType[]
+  memberships              Membership[]
+  payments                 Payment[]
+  pages                    Page[]
+  posts                    Post[]
+  postReactions            PostReaction[]
+  trainingSessions         TrainingSession[]
+  trainingSignups          TrainingSignup[]
+  trialRequests            TrialRequest[]
+  accessCodes              AccessCode[]
+  wearableConnections      WearableConnection[]
+  activitys                Activity[]
+  groupWorkouts            GroupWorkout[]
+  groupWorkoutParticipants GroupWorkoutParticipant[]
+  efforts                  Effort[]
+  benchmarkResults         BenchmarkResult[]
+  chatMessages             ChatMessage[]
+  sponsors                 Sponsor[]
+  athleteProfiles          AthleteProfile[]
+  contactPersons           ContactPerson[]
+  contactMessages          ContactMessage[]
+  mailLogs                 MailLog[]
+  settings                 Setting[]
+  buddyProfiles            BuddyProfile[]
+  mentorships              Mentorship[]
+  beginnerPlans            BeginnerPlan[]
+  tips                     Tip[]
+  challenges               Challenge[]
+  challengeParticipants    ChallengeParticipant[]
+  races                    Race[]
+  raceEntrys               RaceEntry[]
+  plannedWorkouts          PlannedWorkout[]
+  clubRoutes               ClubRoute[]
+  teams                    Team[]
+  branchs                  Branch[]
+  ledgerEntrys             LedgerEntry[]
+  budgetLines              BudgetLine[]
+}
+
 // ---------- Brugere (Auth.js-modeller + medlemsoplysninger) ----------
 
 model User {
   id            String        @id @default(cuid())
+  clubId        String        @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club          Club          @relation(fields: [clubId], references: [id], onDelete: Restrict)
   name          String?
-  email         String        @unique
+  email         String // unik pr. klub
   emailVerified DateTime?
   image         String?
   role          Role          @default(ATHLETE)
@@ -97,6 +154,8 @@ model User {
   plannedWorkouts PlannedWorkout[]
   postReactions   PostReaction[]
   ledgerEntries   LedgerEntry[]
+
+  @@unique([clubId, email])
 }
 
 model Account {
@@ -120,25 +179,34 @@ model Account {
 
 model Session {
   id           String   @id @default(cuid())
+  clubId       String   @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club         Club     @relation(fields: [clubId], references: [id], onDelete: Restrict)
   sessionToken String   @unique
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([clubId])
 }
 
 model VerificationToken {
   identifier String
+  clubId     String   @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club       Club     @relation(fields: [clubId], references: [id], onDelete: Restrict)
   token      String   @unique
   expires    DateTime
 
   @@unique([identifier, token])
+  @@index([clubId])
 }
 
 // ---------- Medlemskab og betaling ----------
 
 model MembershipType {
   id          String  @id @default(cuid())
-  code        String  @unique // ADULT, YOUTH, PASSIVE
+  clubId      String  @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club        Club    @relation(fields: [clubId], references: [id], onDelete: Restrict)
+  code        String // unik pr. klub // ADULT, YOUTH, PASSIVE
   name        String
   description String?
   priceOre    Int // pris i øre (1.000 kr = 100000)
@@ -147,6 +215,8 @@ model MembershipType {
 
   memberships Membership[]
   accessCodes AccessCode[]
+
+  @@unique([clubId, code])
 }
 
 // Hvordan medlemskabet er opnået
@@ -159,6 +229,8 @@ enum MembershipSource {
 
 model Membership {
   id        String           @id @default(cuid())
+  clubId    String           @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club      Club             @relation(fields: [clubId], references: [id], onDelete: Restrict)
   userId    String
   typeId    String
   startDate DateTime
@@ -171,6 +243,7 @@ model Membership {
   payment Payment?
 
   @@index([userId, endDate])
+  @@index([clubId])
 }
 
 enum PaymentStatus {
@@ -189,6 +262,8 @@ enum AccountingStatus {
 
 model Payment {
   id                      String        @id @default(cuid())
+  clubId                  String        @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club                    Club          @relation(fields: [clubId], references: [id], onDelete: Restrict)
   userId                  String
   membershipId            String?       @unique
   amountOre               Int
@@ -213,6 +288,7 @@ model Payment {
   membership Membership? @relation(fields: [membershipId], references: [id])
 
   @@index([paidAt])
+  @@index([clubId])
 }
 
 // ---------- Indhold ----------
@@ -224,18 +300,25 @@ enum ContentFormat {
 
 model Page {
   id        String        @id @default(cuid())
-  path      String        @unique // fx "om/bestyrelse" – samme stier som den gamle side
+  clubId    String        @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club      Club          @relation(fields: [clubId], references: [id], onDelete: Restrict)
+  path      String // unik pr. klub, fx "om/bestyrelse" – samme stier som den gamle side
   title     String
   body      String        @db.Text
   format    ContentFormat @default(MARKDOWN)
   published Boolean       @default(true)
-  wpId      Int?          @unique
+  wpId      Int?
   updatedAt DateTime      @updatedAt
+
+  @@unique([clubId, path])
+  @@unique([clubId, wpId])
 }
 
 model Post {
   id            String         @id @default(cuid())
-  slug          String         @unique // samme slug som på den gamle side, så gamle links virker
+  clubId        String         @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club          Club           @relation(fields: [clubId], references: [id], onDelete: Restrict)
+  slug          String // unik pr. klub; samme slug som på den gamle side, så gamle links virker
   title         String
   excerpt       String?
   body          String         @db.Text
@@ -247,16 +330,20 @@ model Post {
   author        String?
   published     Boolean        @default(true)
   publishedAt   DateTime       @default(now())
-  wpId          Int?           @unique
+  wpId          Int?
   updatedAt     DateTime       @updatedAt
   reactions     PostReaction[]
 
+  @@unique([clubId, slug])
+  @@unique([clubId, wpId])
   @@index([publishedAt])
 }
 
 /// Emoji-reaktion på en nyhed. Kun antal vises, ikke hvem, og der er ingen kommentarer (børn må kun skrive med børn og trænere).
 model PostReaction {
   id        String   @id @default(cuid())
+  clubId    String   @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club      Club     @relation(fields: [clubId], references: [id], onDelete: Restrict)
   postId    String
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   userId    String
@@ -266,6 +353,7 @@ model PostReaction {
 
   @@unique([postId, userId, emoji])
   @@index([postId])
+  @@index([clubId])
 }
 
 // ---------- Træningskalender ----------
@@ -280,6 +368,8 @@ enum Discipline {
 
 model TrainingSession {
   id           String         @id @default(cuid())
+  clubId       String         @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club         Club           @relation(fields: [clubId], references: [id], onDelete: Restrict)
   title        String
   description  String?        @db.Text
   discipline   Discipline
@@ -305,10 +395,13 @@ model TrainingSession {
   @@index([startsAt])
   @@index([group, startsAt])
   @@index([seriesId])
+  @@index([clubId])
 }
 
 model TrainingSignup {
   id        String   @id @default(cuid())
+  clubId    String   @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club      Club     @relation(fields: [clubId], references: [id], onDelete: Restrict)
   sessionId String
   userId    String
   paceGroup String? // valgt tempogruppe
@@ -319,6 +412,7 @@ model TrainingSignup {
 
   @@unique([sessionId, userId])
   @@index([userId])
+  @@index([clubId])
 }
 
 // ---------- Adgang uden betaling ----------
@@ -332,6 +426,8 @@ enum TrialStatus {
 // Ansøgning om 14 dages prøveperiode. Én pr. bruger.
 model TrialRequest {
   id          String      @id @default(cuid())
+  clubId      String      @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club        Club        @relation(fields: [clubId], references: [id], onDelete: Restrict)
   userId      String      @unique
   message     String?
   status      TrialStatus @default(PENDING)
@@ -341,12 +437,16 @@ model TrialRequest {
 
   user      User  @relation("TrialRequester", fields: [userId], references: [id], onDelete: Cascade)
   decidedBy User? @relation("TrialDecider", fields: [decidedById], references: [id])
+
+  @@index([clubId])
 }
 
 // Engangskode der giver medlemskab af en bestemt type i et antal dage.
 model AccessCode {
   id          String    @id @default(cuid())
-  code        String    @unique
+  clubId      String    @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club        Club      @relation(fields: [clubId], references: [id], onDelete: Restrict)
+  code        String // unik pr. klub
   typeId      String
   days        Int
   note        String?
@@ -358,6 +458,8 @@ model AccessCode {
   type      MembershipType @relation(fields: [typeId], references: [id])
   createdBy User           @relation("CodeCreator", fields: [createdById], references: [id])
   usedBy    User?          @relation("CodeUser", fields: [usedById], references: [id])
+
+  @@unique([clubId, code])
 }
 
 // ---------- Wearables og aktiviteter ----------
@@ -375,6 +477,8 @@ enum Provider {
 
 model WearableConnection {
   id                String    @id @default(cuid())
+  clubId            String    @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club              Club      @relation(fields: [clubId], references: [id], onDelete: Restrict)
   userId            String
   provider          Provider
   externalAthleteId String
@@ -388,11 +492,14 @@ model WearableConnection {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, provider])
-  @@unique([provider, externalAthleteId])
+  @@unique([clubId, provider, externalAthleteId])
+  @@index([clubId])
 }
 
 model Activity {
   id         String     @id @default(cuid())
+  clubId     String     @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club       Club       @relation(fields: [clubId], references: [id], onDelete: Restrict)
   userId     String
   provider   Provider
   externalId String?
@@ -412,10 +519,11 @@ model Activity {
   user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   efforts Effort[]
 
-  @@unique([provider, externalId])
+  @@unique([clubId, provider, externalId])
   @@index([effortsAt])
   @@index([userId, startAt])
   @@index([startAt])
+  @@index([clubId])
 }
 
 // ---------- Træn sammen ----------
@@ -423,6 +531,8 @@ model Activity {
 // Medlemmer slår selv en træningstur op, som andre kan hoppe med på
 model GroupWorkout {
   id          String     @id @default(cuid())
+  clubId      String     @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club        Club       @relation(fields: [clubId], references: [id], onDelete: Restrict)
   hostId      String
   discipline  Discipline
   title       String
@@ -440,10 +550,13 @@ model GroupWorkout {
   planned      PlannedWorkout[]
 
   @@index([startsAt])
+  @@index([clubId])
 }
 
 model GroupWorkoutParticipant {
   id        String   @id @default(cuid())
+  clubId    String   @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club      Club     @relation(fields: [clubId], references: [id], onDelete: Restrict)
   workoutId String
   userId    String
   createdAt DateTime @default(now())
@@ -452,6 +565,7 @@ model GroupWorkoutParticipant {
   user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([workoutId, userId])
+  @@index([clubId])
 }
 
 // ---------- Benchmarks (testresultater) ----------
@@ -475,6 +589,8 @@ enum Gender {
 /// Udtrækkes automatisk, også når turen er længere end distancen (fx bedste 5 km i et 8 km-løb).
 model Effort {
   id         String        @id @default(cuid())
+  clubId     String        @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club       Club          @relation(fields: [clubId], references: [id], onDelete: Restrict)
   userId     String
   activityId String
   test       BenchmarkTest
@@ -490,10 +606,13 @@ model Effort {
   @@unique([activityId, test])
   @@index([test, date])
   @@index([userId, test])
+  @@index([clubId])
 }
 
 model BenchmarkResult {
   id        String        @id @default(cuid())
+  clubId    String        @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club      Club          @relation(fields: [clubId], references: [id], onDelete: Restrict)
   userId    String
   test      BenchmarkTest
   date      DateTime
@@ -508,6 +627,7 @@ model BenchmarkResult {
   effort Effort? @relation(fields: [effortId], references: [id], onDelete: SetNull)
 
   @@index([userId, test, date])
+  @@index([clubId])
 }
 
 // ---------- Chat ----------
@@ -527,6 +647,8 @@ enum ChatChannel {
 
 model ChatMessage {
   id          String      @id @default(cuid())
+  clubId      String      @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club        Club        @relation(fields: [clubId], references: [id], onDelete: Restrict)
   room        ChatRoom
   channel     ChatChannel
   userId      String
@@ -538,11 +660,14 @@ model ChatMessage {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([room, channel, createdAt])
+  @@index([clubId])
 }
 
 /// Sponsorer i bjælken på forsiden. Admin redigerer under Administration > Sponsorer.
 model Sponsor {
   id          String   @id @default(cuid())
+  clubId      String   @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club        Club     @relation(fields: [clubId], references: [id], onDelete: Restrict)
   name        String
   url         String?
   logo        String   @db.Text // sti i /public eller data-URL for uploadet logo
@@ -556,13 +681,17 @@ model Sponsor {
 
   athletes AthleteProfile[]
   ledger   LedgerEntry[]
+
+  @@index([clubId])
 }
 
 /// Offentlig profil på /atleter. Admin opretter og fremhæver; atleten skal give samtykke, før den vises.
 model AthleteProfile {
   id        String    @id @default(cuid())
+  clubId    String    @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club      Club      @relation(fields: [clubId], references: [id], onDelete: Restrict)
   userId    String    @unique
-  slug      String    @unique
+  slug      String // unik pr. klub
   headline  String? // fx "Ironman-atlet · AG 30-34"
   bio       String?   @db.Text
   goals     String?   @db.Text // mål for sæsonen, én pr. linje
@@ -578,22 +707,30 @@ model AthleteProfile {
 
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   sponsors Sponsor[]
+
+  @@unique([clubId, slug])
 }
 
 // Kontaktpersoner på /om/kontakt (redigeres af admin)
 model ContactPerson {
   id        String  @id @default(cuid())
+  clubId    String  @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club      Club    @relation(fields: [clubId], references: [id], onDelete: Restrict)
   role      String // fx "Formand"
   name      String
   phone     String?
   email     String?
   photo     String? @db.Text // data-URL
   sortOrder Int     @default(0)
+
+  @@index([clubId])
 }
 
 // Henvendelser fra kontaktformularen
 model ContactMessage {
   id        String    @id @default(cuid())
+  clubId    String    @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club      Club      @relation(fields: [clubId], references: [id], onDelete: Restrict)
   name      String
   email     String
   phone     String?
@@ -604,11 +741,14 @@ model ContactMessage {
 
   @@index([createdAt])
   @@index([email, createdAt])
+  @@index([clubId])
 }
 
 // Mails sendt til hold og medlemmer fra Admin → Mail
 model MailLog {
   id         String   @id @default(cuid())
+  clubId     String   @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club       Club     @relation(fields: [clubId], references: [id], onDelete: Restrict)
   audience   String // fx "ALL", "GROUP:BOERN", "TRAINERS"
   kind       String // "NEWS" (kun dem der vil have nyheder) eller "IMPORTANT"
   subject    String
@@ -620,14 +760,19 @@ model MailLog {
   createdAt  DateTime @default(now())
 
   @@index([createdAt])
+  @@index([clubId])
 }
 
 // ---------- Funktioner der kan slås til og fra ----------
 
 model Setting {
-  key       String   @id
+  key       String
+  clubId    String   @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club      Club     @relation(fields: [clubId], references: [id], onDelete: Restrict)
   value     Json
   updatedAt DateTime @updatedAt
+
+  @@id([clubId, key])
 }
 
 // ---------- Bredden: makker, mentor, begynderforløb, tips, udfordringer og stævner ----------
@@ -635,6 +780,8 @@ model Setting {
 // Frivillig makkerprofil, så medlemmer på samme niveau kan finde hinanden
 model BuddyProfile {
   userId      String       @id
+  clubId      String       @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club        Club         @relation(fields: [clubId], references: [id], onDelete: Restrict)
   disciplines Discipline[]
   runPace     Int? // sekunder pr. km på en rolig tur
   bikeSpeed   Int? // km/t på en rolig tur
@@ -644,10 +791,14 @@ model BuddyProfile {
   updatedAt   DateTime     @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([clubId])
 }
 
 model Mentorship {
   id        String    @id @default(cuid())
+  clubId    String    @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club      Club      @relation(fields: [clubId], references: [id], onDelete: Restrict)
   menteeId  String    @unique
   mentorId  String
   createdAt DateTime  @default(now())
@@ -657,19 +808,26 @@ model Mentorship {
   mentor User @relation("Mentor", fields: [mentorId], references: [id], onDelete: Cascade)
 
   @@index([mentorId])
+  @@index([clubId])
 }
 
 model BeginnerPlan {
   userId    String   @id
+  clubId    String   @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club      Club     @relation(fields: [clubId], references: [id], onDelete: Restrict)
   startedAt DateTime
   done      String[] @default([]) // id'er på gennemførte pas, fx "u3-2"
   checklist String[] @default([]) // afkrydsede punkter på stævne-tjeklisten
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([clubId])
 }
 
 model Tip {
   id          String      @id @default(cuid())
+  clubId      String      @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club        Club        @relation(fields: [clubId], references: [id], onDelete: Restrict)
   title       String
   body        String      @db.Text
   discipline  Discipline?
@@ -680,6 +838,7 @@ model Tip {
   author User @relation(fields: [authorId], references: [id])
 
   @@index([publishedAt])
+  @@index([clubId])
 }
 
 enum ChallengeMetric {
@@ -690,6 +849,8 @@ enum ChallengeMetric {
 
 model Challenge {
   id          String          @id @default(cuid())
+  clubId      String          @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club        Club            @relation(fields: [clubId], references: [id], onDelete: Restrict)
   title       String
   description String?
   discipline  Discipline? // null = alle sportsgrene
@@ -702,10 +863,14 @@ model Challenge {
 
   createdBy    User                   @relation(fields: [createdById], references: [id])
   participants ChallengeParticipant[]
+
+  @@index([clubId])
 }
 
 model ChallengeParticipant {
   id          String   @id @default(cuid())
+  clubId      String   @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club        Club     @relation(fields: [clubId], references: [id], onDelete: Restrict)
   challengeId String
   userId      String
   joinedAt    DateTime @default(now())
@@ -714,10 +879,13 @@ model ChallengeParticipant {
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([challengeId, userId])
+  @@index([clubId])
 }
 
 model Race {
   id          String   @id @default(cuid())
+  clubId      String   @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club        Club     @relation(fields: [clubId], references: [id], onDelete: Restrict)
   name        String
   date        DateTime
   location    String
@@ -731,6 +899,7 @@ model Race {
   entries   RaceEntry[]
 
   @@index([date])
+  @@index([clubId])
 }
 
 enum RideRole {
@@ -741,6 +910,8 @@ enum RideRole {
 
 model RaceEntry {
   id        String   @id @default(cuid())
+  clubId    String   @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club      Club     @relation(fields: [clubId], references: [id], onDelete: Restrict)
   raceId    String
   userId    String
   distance  String?
@@ -753,12 +924,15 @@ model RaceEntry {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([raceId, userId])
+  @@index([clubId])
 }
 
 // Medlemmets egne planlagte træninger, importeret fra TrainingPeaks m.fl. Vises kun for medlemmet selv i kalenderen
 // og kan deles til Træn sammen.
 model PlannedWorkout {
   id          String     @id @default(cuid())
+  clubId      String     @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club        Club       @relation(fields: [clubId], references: [id], onDelete: Restrict)
   userId      String
   day         String // "2026-12-01" (dansk dato)
   time        String? // "06:30", hvis kalenderfilen havde et klokkeslæt
@@ -777,11 +951,14 @@ model PlannedWorkout {
 
   @@unique([userId, uid])
   @@index([userId, day])
+  @@index([clubId])
 }
 
 // Klubbens ruter på kortet. Tom tabel = standardruterne i src/data/ruter.json. Admin kan tilføje ruter fra GPX-filer.
 model ClubRoute {
-  id        String     @id // bruges i adressen /ruter/<id>
+  id        String // bruges i adressen /ruter/<id>; unik pr. klub
+  clubId    String     @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club      Club       @relation(fields: [clubId], references: [id], onDelete: Restrict)
   name      String
   sport     Discipline
   tag       String
@@ -790,6 +967,8 @@ model ClubRoute {
   pts       Json // [[lat, lng], ...] forenklet til kortet
   sortOrder Int        @default(0)
   createdAt DateTime   @default(now())
+
+  @@id([clubId, id])
 }
 
 // Klubbens hold, fx Elite, Bredde, Masters og Børn. Hvert hold har en type (kind), som styrer børnebeskyttelse,
@@ -797,6 +976,8 @@ model ClubRoute {
 // (databasetrigger i migrationen 20261125050000_hold).
 model Team {
   id        String       @id @default(cuid())
+  clubId    String       @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club      Club         @relation(fields: [clubId], references: [id], onDelete: Restrict)
   name      String
   kind      AthleteGroup
   sees      String[]     @default([]) // andre hold, som holdets medlemmer kan se træninger for
@@ -810,6 +991,8 @@ model Team {
   members   User[]
   leaders   User[]            @relation("TeamLeaders")
   trainings TrainingSession[]
+
+  @@index([clubId])
 }
 
 /// Ekstra roller. Holdleder er ikke her, men på holdet (Team.leaders).
@@ -821,11 +1004,15 @@ enum Duty {
 /// Afdeling i et netværk (fx en by). Holdene hører til en afdeling; med kun én afdeling vises den ingen steder.
 model Branch {
   id        String   @id @default(cuid())
+  clubId    String   @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club      Club     @relation(fields: [clubId], references: [id], onDelete: Restrict)
   name      String
   city      String?
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
   teams     Team[]
+
+  @@index([clubId])
 }
 
 // ---------- Økonomi (kasserer og admin) ----------
@@ -838,7 +1025,9 @@ enum LedgerKind {
 /// En postering i klubbens regnskab, skrevet ind af kassereren. Kontingent betalt med kort kommer fra Payment og står ikke her.
 model LedgerEntry {
   id           String     @id @default(cuid())
-  voucherNo    Int        @unique @default(autoincrement()) // bilagsnummer
+  clubId       String     @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club         Club       @relation(fields: [clubId], references: [id], onDelete: Restrict)
+  voucherNo    Int // bilagsnummer, fortløbende pr. klub (se nextVoucherNo)
   date         DateTime   @db.Date
   kind         LedgerKind
   category     String // kode fra FINANCE_CATEGORIES i src/lib/finance.ts
@@ -853,15 +1042,19 @@ model LedgerEntry {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
+  @@unique([clubId, voucherNo])
   @@index([date])
 }
 
 /// Budget pr. kategori og år
 model BudgetLine {
   id        String @id @default(cuid())
+  clubId    String @default("") // sættes af src/lib/db.ts; "" er ingen klub, så databasen afviser rækken
+  club      Club   @relation(fields: [clubId], references: [id], onDelete: Restrict)
   year      Int
   category  String
   amountOre Int
 
-  @@unique([year, category])
+  @@unique([clubId, year, category])
+  @@index([clubId])
 }

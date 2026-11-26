@@ -1,32 +1,30 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma, prismaUnscoped } from "../src/lib/db";
+import { activeClubs, defaultClubSlug, runAsClub } from "../src/lib/tenant";
+import { ensureAdmins, ensureClubBasics } from "../src/lib/club-setup";
 
-const prisma = new PrismaClient();
-
-// Kontingentsatser fra nyborgtri.dk/bliv-medlem (nov. 2026)
-const membershipTypes = [
-  { code: "ADULT", name: "Voksen", priceOre: 100000, sortOrder: 1, description: "Fuldt medlemskab, 18 år og op" },
-  { code: "YOUTH", name: "Ung under 18 år", priceOre: 50000, sortOrder: 2, description: "Fuldt medlemskab for unge under 18 år" },
-  { code: "PASSIVE", name: "Passiv", priceOre: 20000, sortOrder: 3, description: "Støttemedlem uden træning" },
-];
+// Køres ved hver udgivelse (scripts/build.sh). Alle klubber får medlemstyper og hold, hvis de mangler.
+// Standardklubben får admins fra ADMIN_EMAILS, og Nyborg får sine faste tekster, sponsorer og kontaktpersoner.
 
 async function main() {
-  for (const t of membershipTypes) {
-    await prisma.membershipType.upsert({ where: { code: t.code }, update: t, create: t });
+  for (const club of await activeClubs()) {
+    await runAsClub(club.id, async () => {
+      await ensureClubBasics();
+      if (club.slug === defaultClubSlug()) {
+        // ADMIN_EMAIL (eller ADMIN_EMAILS) kan indeholde flere adresser adskilt af komma
+        const adminEmails = (process.env.ADMIN_EMAILS ?? process.env.ADMIN_EMAIL ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
+        await ensureAdmins(adminEmails);
+        for (const email of adminEmails) console.log(`Administrator (${club.slug}): ${email}`);
+      }
+      if (club.slug === "nyborg") await nyborg();
+    });
   }
+  console.log("Seed færdig");
+}
 
-  // ADMIN_EMAIL (eller ADMIN_EMAILS) kan indeholde flere adresser adskilt af komma
-  const adminEmails = (process.env.ADMIN_EMAILS ?? process.env.ADMIN_EMAIL ?? "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-  for (const email of adminEmails) {
-    await prisma.user.upsert({ where: { email }, update: { role: "ADMIN" }, create: { email, role: "ADMIN" } });
-    console.log(`Administrator: ${email}`);
-  }
-
+async function nyborg() {
   // Ny "Bliv medlem"-tekst – den gamle henviste til Klubmodul
   await prisma.page.upsert({
-    where: { path: "bliv-medlem" },
+    where: { clubId_path: { clubId: "nyborg", path: "bliv-medlem" } },
     update: {},
     create: {
       path: "bliv-medlem",
@@ -81,7 +79,6 @@ async function main() {
     });
   }
 
-  console.log("Seed færdig");
 }
 
-main().finally(() => prisma.$disconnect());
+main().finally(() => prismaUnscoped.$disconnect());

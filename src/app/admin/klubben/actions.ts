@@ -7,7 +7,7 @@ import { requireAdmin } from "@/auth";
 import { prisma } from "@/lib/db";
 import { readImage } from "@/lib/upload";
 import { lines, parseCoords, rows, slug, str } from "@/lib/form-rows";
-import { SITE_KEYS, ensureRoutesCopied, refreshClub, saveSite } from "@/lib/site";
+import { SITE_KEYS, ensureRoutesCopied, forgetClubConfig, saveSite } from "@/lib/site";
 import { lengthKm, parseGpx } from "@/lib/routes";
 import type { AboutContent, HomeContent } from "@/data/site-default";
 import type { ClubOverrides, Place } from "@/lib/club";
@@ -147,7 +147,7 @@ export async function addRoute(fd: FormData) {
   const sport = DISCIPLINES.includes(fd.get("sport") as Discipline) ? (fd.get("sport") as Discipline) : "RUN";
   await ensureRoutesCopied();
   let id = slug(name);
-  if (await prisma.clubRoute.findUnique({ where: { id } })) id = `${id}-${Date.now().toString(36).slice(-4)}`;
+  if (await prisma.clubRoute.findFirst({ where: { id } })) id = `${id}-${Date.now().toString(36).slice(-4)}`;
   const max = await prisma.clubRoute.aggregate({ _max: { sortOrder: true } });
   await prisma.clubRoute.create({
     data: { id, name, sport, tag: str(fd, "tag", 40), desc: str(fd, "desc", 600), km: lengthKm(parsed!.pts), pts: parsed!.pts as unknown as Prisma.InputJsonValue, sortOrder: (max._max.sortOrder ?? 0) + 1 },
@@ -183,6 +183,6 @@ export async function resetSection(fd: FormData) {
   const enKey = ({ home: "home_en", about: "about_en", privacy: "privacy_en" } as const)[key as "home"];
   const en = english(fd) && !!enKey;
   if (key) await prisma.setting.deleteMany({ where: { key: SITE_KEYS[en ? enKey : key] } });
-  if (key === "club") await refreshClub(true);
+  if (key === "club") await forgetClubConfig();
   done(en ? `${del}&sprog=en` : del);
 }

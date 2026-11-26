@@ -1,10 +1,11 @@
 import type { MetadataRoute } from "next";
-import { CLUB } from "@/lib/club";
-import { refreshClub } from "@/lib/site";
+import { getClub } from "@/lib/site";
+
+export const dynamic = "force-dynamic"; // pr. klub (domæne)
 
 // Gør det muligt at lægge siden på telefonens hjemmeskærm som en app
 export default async function manifest(): Promise<MetadataRoute.Manifest> {
-  await refreshClub();
+  const CLUB = await getClub();
   return {
     name: CLUB.name,
     short_name: CLUB.shortName,

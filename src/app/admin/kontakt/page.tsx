@@ -2,13 +2,14 @@ import { requireAdmin } from "@/auth";
 import { prisma } from "@/lib/db";
 import { initials } from "@/components/Icons";
 import { addContact, deleteContact, moveContact, toggleHandled, updateContact } from "./actions";
-import { CLUB } from "@/lib/club";
+import { getClub } from "@/lib/site";
 
 export const metadata = { title: "Admin – kontakt" };
 
 const IMG = "image/png,image/jpeg,image/webp,image/gif";
 
 export default async function AdminContact({ searchParams }: { searchParams: Promise<{ fejl?: string; gemt?: string }> }) {
+  const CLUB = await getClub();
   await requireAdmin();
   const sp = await searchParams;
   const [people, messages] = await Promise.all([

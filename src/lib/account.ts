@@ -1,6 +1,6 @@
 import { prisma } from "./db";
 import { disconnect as disconnectStrava } from "./wearables/strava";
-import { CLUB } from "./club";
+import { getClub } from "./site";
 
 // Medlemmets ret til indsigt (download af egne data) og sletning (GDPR art. 15, 17 og 20).
 
@@ -36,7 +36,7 @@ export async function exportUserData(userId: string) {
     },
   });
   const contact = await prisma.contactMessage.findMany({ where: { email: user.email }, select: { topic: true, message: true, createdAt: true } });
-  return { exportedAt: new Date().toISOString(), club: CLUB.name, ...user, contactMessages: contact };
+  return { exportedAt: new Date().toISOString(), club: (await getClub()).name, ...user, contactMessages: contact };
 }
 
 export type DeleteResult = { ok: true } | { ok: false; error: string };

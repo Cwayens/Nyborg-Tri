@@ -1,5 +1,6 @@
 import type { Discipline } from "@prisma/client";
-import { prisma } from "@/lib/db";
+import { prisma, prismaUnscoped } from "@/lib/db";
+import { currentClubId, runAsClub } from "@/lib/tenant";
 import { extractEfforts, worthChecking, type Streams } from "@/lib/efforts";
 
 // Strava API v3. Docs: https://developers.strava.com/docs/
@@ -149,9 +150,23 @@ export async function syncRecent(userId: string): Promise<number> {
   return count;
 }
 
-/** Håndterer én webhook-hændelse fra Strava. */
-export async function handleWebhookEvent(e: { object_type: string; aspect_type: string; object_id: number; owner_id: number; updates?: Record<string, string> }) {
-  const c = await prisma.wearableConnection.findUnique({ where: { provider_externalAthleteId: { provider: "STRAVA", externalAthleteId: String(e.owner_id) } } });
+type WebhookEvent = { object_type: string; aspect_type: string; object_id: number; owner_id: number; updates?: Record<string, string> };
+
+/**
+ * Håndterer én webhook-hændelse fra Strava. Strava har kun én webhook for hele platformen, så hændelsen kan høre til
+ * flere klubber (samme person er medlem af to klubber). Vi finder forbindelserne på tværs af klubber og behandler
+ * hver enkelt som sin egen klub.
+ */
+export async function handleWebhookEvent(e: WebhookEvent) {
+  const conns = await prismaUnscoped.wearableConnection.findMany({
+    where: { provider: "STRAVA", externalAthleteId: String(e.owner_id) },
+    select: { id: true, clubId: true },
+  });
+  for (const c of conns) await runAsClub(c.clubId, () => handleForClub(c.id, e));
+}
+
+async function handleForClub(connectionId: string, e: WebhookEvent) {
+  const c = await prisma.wearableConnection.findUnique({ where: { id: connectionId } });
   if (!c) return;
   if (e.object_type === "athlete" && e.updates?.authorized === "false") {
     if (!(await confirmGone(c.id, "/athlete"))) return;
@@ -175,7 +190,7 @@ export async function handleWebhookEvent(e: { object_type: string; aspect_type: 
 
 /** Gemmer en aktivitet. Ændres distance eller tid, skal præstationerne udtrækkes igen. */
 async function upsertActivity(data: ReturnType<typeof toActivityData>) {
-  const where = { provider_externalId: { provider: "STRAVA" as const, externalId: data.externalId } };
+  const where = { clubId_provider_externalId: { clubId: await currentClubId(), provider: "STRAVA" as const, externalId: data.externalId } };
   const old = await prisma.activity.findUnique({ where, select: { distanceM: true, movingSec: true, sport: true } });
   const changed = !old || old.distanceM !== data.distanceM || old.movingSec !== data.movingSec || old.sport !== data.sport;
   return prisma.activity.upsert({ where, update: { ...data, ...(changed ? { effortsAt: null } : {}) }, create: data });

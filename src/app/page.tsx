@@ -8,7 +8,7 @@ import { SponsorBar } from "@/components/SponsorBar";
 import { AthleteCard } from "@/components/AthleteCard";
 import { VISIBLE_ATHLETE } from "@/lib/athletes";
 import { isOn } from "@/lib/features";
-import { CLUB } from "@/lib/club";
+import { getClub } from "@/lib/site";
 import { teamNames, teamsFor } from "@/lib/visibility";
 import { getHome } from "@/lib/site";
 import { Inline } from "@/components/Inline";
@@ -20,6 +20,7 @@ import { getLocale, translator } from "@/lib/i18n";
 // Teksterne og billederne rettes under Admin → Klubben → Forside (standard i src/data/site-default.ts).
 
 export default async function Home() {
+  const CLUB = await getClub();
   const session = await auth();
   const member = !!session?.user;
   const [teams, names] = await Promise.all([teamsFor(session?.user.id), teamNames()]);

@@ -1,4 +1,4 @@
-import { CLUB } from "./club";
+import type { ClubConfig } from "./club";
 // Minimal iCalendar-generator (RFC 5545) til kalender-abonnement.
 export type IcsEvent = { cancelled?: boolean; uid: string; start: Date; end: Date; title: string; location?: string; description?: string; url?: string };
 
@@ -17,7 +17,7 @@ function fold(line: string): string {
   return out.join("\r\n");
 }
 
-export function buildIcs(name: string, events: IcsEvent[]): string {
+export function buildIcs(name: string, events: IcsEvent[], CLUB: Pick<ClubConfig, "name" | "domain">): string {
   const now = stamp(new Date());
   const lines = [
     "BEGIN:VCALENDAR", "VERSION:2.0", `PRODID:-//${CLUB.name}//DA`, "CALSCALE:GREGORIAN", "METHOD:PUBLISH",

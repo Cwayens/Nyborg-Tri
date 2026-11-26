@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { requireAdmin } from "@/auth";
-import { ENV_CLUB, CLUB } from "@/lib/club";
 import { DISCIPLINE_LABEL } from "@/lib/roles";
-import { getAbout, getClubOverrides, getHome, getPlaces, getPrivacy, getRoutes } from "@/lib/site";
+import { getAbout, getClub, getClubBase, getClubOverrides, getHome, getPlaces, getPrivacy, getRoutes } from "@/lib/site";
 import type { Locale } from "@/lib/i18n-core";
 import { addRoute, resetSection, saveAbout, saveClub, saveHome, savePlaces, savePrivacy, updateRoute } from "./actions";
 
@@ -110,7 +109,8 @@ const withBlanks = <T,>(items: T[], blank: T, n = 2) => [...items, ...Array.from
 
 async function ClubForm() {
   const o = await getClubOverrides();
-  const c = CLUB;
+  const c = await getClub();
+  const ENV_CLUB = await getClubBase();
   const colors = [
     ["accent", "Knapper og links", c.colors.accent],
     ["accentDark", "Knapper, mørk", c.colors.accentDark],

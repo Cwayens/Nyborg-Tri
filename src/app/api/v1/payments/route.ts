@@ -1,15 +1,16 @@
 import { timingSafeEqual } from "node:crypto";
 import { prisma } from "@/lib/db";
 import { isoDate } from "@/lib/format";
+import { clubEnv } from "@/lib/club-secrets";
 
 /**
  * Læse-API til økonomisystem eller kasserer:
  *   GET /api/v1/payments?since=2026-01-01
  *   Authorization: Bearer <ACCOUNTING_API_TOKEN>
- * Returnerer betalte og refunderede kontingenter.
+ * Returnerer betalte og refunderede kontingenter for klubben på domænet (hver klub har sin egen nøgle).
  */
-function authorized(req: Request) {
-  const token = process.env.ACCOUNTING_API_TOKEN;
+async function authorized(req: Request) {
+  const token = await clubEnv("ACCOUNTING_API_TOKEN");
   const header = req.headers.get("authorization") ?? "";
   if (!token || !header.startsWith("Bearer ")) return false;
   const a = Buffer.from(header.slice(7));
@@ -18,7 +19,7 @@ function authorized(req: Request) {
 }
 
 export async function GET(req: Request) {
-  if (!authorized(req)) return new Response("Unauthorized", { status: 401 });
+  if (!(await authorized(req))) return new Response("Unauthorized", { status: 401 });
   const since = new URL(req.url).searchParams.get("since");
   const payments = await prisma.payment.findMany({
     where: { status: { in: ["PAID", "REFUNDED"] }, ...(since ? { paidAt: { gte: new Date(since) } } : {}) },
